@@ -71,8 +71,11 @@ const Collection = ({ collection, searchText }) => {
   const dispatch = useDispatch();
   const isLoading = collection.isLoading;
   const collectionRef = useRef(null);
+  const tabs = useSelector((state) => state.tabs?.tabs || []);
+  const activeTabUid = useSelector((state) => state.tabs?.activeTabUid);
   // Only count persisted items; transients don't affect empty state
   const itemCount = collection.items?.filter((i) => !i.isTransient).length || 0;
+  const activeTab = tabs.find((tab) => tab.uid === activeTabUid) || null;
 
   const isCollectionFocused = useSelector(isTabForItemActive({ itemUid: collection.uid }));
   const { hasCopiedItems } = useSelector((state) => state.app.clipboard);
@@ -292,6 +295,16 @@ const Collection = ({ collection, searchText }) => {
       }
     }
   }, [isCollectionFocused]);
+
+  useEffect(() => {
+    const activeTabBelongsToCollection = activeTab?.collectionUid === collection.uid;
+    if (!activeTabBelongsToCollection || !collection.collapsed) {
+      return;
+    }
+
+    ensureCollectionIsMounted();
+    dispatch(toggleCollection(collection.uid));
+  }, [activeTab?.collectionUid, collection.collapsed, collection.uid, dispatch]);
 
   // Listen for clone-item-open event from Hotkeys provider
   const isFocusedRef = useRef(isKeyboardFocused);

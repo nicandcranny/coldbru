@@ -204,6 +204,7 @@ Add `All` group to the active tabs list to see all active tabs in one place.
   - `col:` for collections
   - `req:` for requests
   - `doc:` for documents
+- Global search now directly jumps and auto-scroll to the selected item on the left sidebar
 
 ### Activity Bar Menu
 

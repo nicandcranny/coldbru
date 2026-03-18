@@ -49,7 +49,7 @@ import { scrollToTheActiveTab } from 'utils/tabs';
 import { isTabForItemActive as isTabForItemActiveSelector, isTabForItemPresent as isTabForItemPresentSelector } from 'src/selectors/tab';
 import { isEqual } from 'lodash';
 import { createEmptyStateMenuItems } from 'utils/collections/emptyStateRequest';
-import { calculateDraggedItemNewPathname, getInitialExampleName, findParentItemInCollection } from 'utils/collections/index';
+import { calculateDraggedItemNewPathname, getInitialExampleName, findParentItemInCollection, flattenItems } from 'utils/collections/index';
 import { sortByNameThenSequence } from 'utils/common/index';
 import { getRevealInFolderLabel } from 'utils/common/platform';
 import CreateExampleModal from 'components/ResponseExample/CreateExampleModal';
@@ -99,6 +99,10 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   const hasSearchText = searchText && searchText?.trim()?.length;
   const isFolder = isItemAFolder(item);
   const searchState = hasSearchText && isFolder ? getFolderSearchState(item, searchText) : null;
+  const tabs = useSelector((state) => state.tabs?.tabs || []);
+  const activeTabUid = useSelector((state) => state.tabs?.activeTabUid);
+  const activeTab = tabs.find((tab) => tab.uid === activeTabUid) || null;
+  const activeSidebarItemUid = activeTab?.itemUid || activeTabUid;
   const itemIsCollapsed = hasSearchText
     ? (isFolder ? (searchState.isCollapsedInSearch ? !isSearchExpanded : false) : false)
     : item.collapsed;
@@ -138,6 +142,31 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
       }
     }
   }, [isTabForItemActive]);
+
+  useEffect(() => {
+    if (!isFolder || !item.collapsed || !activeSidebarItemUid) {
+      return;
+    }
+
+    const itemContainsActiveDescendant = flattenItems(item.items || []).some((childItem) => childItem.uid === activeSidebarItemUid);
+    if (!itemContainsActiveDescendant) {
+      return;
+    }
+
+    dispatch(
+      toggleCollectionItem({
+        itemUid: item.uid,
+        collectionUid
+      })
+    );
+  }, [activeSidebarItemUid, collectionUid, dispatch, isFolder, item.collapsed, item.items, item.uid]);
+
+  useEffect(() => {
+    const activeExampleBelongsToRequest = activeTab?.type === 'response-example' && activeTab?.itemUid === item.uid;
+    if (activeExampleBelongsToRequest && !examplesExpanded) {
+      setExamplesExpanded(true);
+    }
+  }, [activeTab?.itemUid, activeTab?.type, examplesExpanded, item.uid]);
 
   // Listen for clone-item-open event from Hotkeys provider
   const isFocusedRef = useRef(isKeyboardFocused);
