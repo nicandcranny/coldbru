@@ -47,12 +47,24 @@ const CollectionHeader = ({ collection, viewMode }) => {
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
   const resolvedRequestTabView = useSelector(selectResolvedRequestTabView);
+  const activeTab = tabs.find((tab) => tab.uid === activeTabUid) || null;
 
   const currentWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
   const activeCollectionContext = viewMode === 'collection' ? collection : null;
   const isHomeView = viewMode === 'home';
   const isAllView = viewMode === 'all';
   const showCollectionActions = !!activeCollectionContext;
+  const collectionEnvExcludedTabTypes = new Set([
+    'global-environment-settings',
+    'workspaceOverview',
+    'workspaceEnvironments',
+    'preferences',
+    'openapi-spec'
+  ]);
+  const showCollectionEnvironment = !!activeTab?.collectionUid && !collectionEnvExcludedTabTypes.has(activeTab.type);
+  const environmentSelectorCollection = showCollectionEnvironment
+    ? collections.find((item) => item.uid === activeTab?.collectionUid) || activeCollectionContext
+    : null;
 
   const [isRenamingWorkspace, setIsRenamingWorkspace] = useState(false);
   const [workspaceNameInput, setWorkspaceNameInput] = useState('');
@@ -603,38 +615,43 @@ const CollectionHeader = ({ collection, viewMode }) => {
           )}
         </div>
 
-        {showCollectionActions && (
-          <div className="flex flex-grow gap-1.5 items-center justify-end">
-            {hasOpenApiSyncConfigured && (
-              <ToolHint
-                text={hasOpenApiError ? 'OpenAPI Error' : hasOpenApiUpdates ? 'OpenAPI Updates Available' : 'OpenAPI'}
-                toolhintId="OpenApiSyncToolhintId"
-                place="bottom"
-              >
-                <ActionIcon onClick={viewOpenApiSync} aria-label="OpenAPI" size="sm" className="relative">
-                  <OpenAPISyncIcon size={15} />
-                  {(hasOpenApiUpdates || hasOpenApiError) && (
-                    <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hasOpenApiError ? theme.status.danger.text : theme.status.warning.text }} />
-                  )}
+        <div className="flex flex-grow gap-1.5 items-center justify-end">
+          {showCollectionActions && (
+            <>
+              {hasOpenApiSyncConfigured && (
+                <ToolHint
+                  text={hasOpenApiError ? 'OpenAPI Error' : hasOpenApiUpdates ? 'OpenAPI Updates Available' : 'OpenAPI'}
+                  toolhintId="OpenApiSyncToolhintId"
+                  place="bottom"
+                >
+                  <ActionIcon onClick={viewOpenApiSync} aria-label="OpenAPI" size="sm" className="relative">
+                    <OpenAPISyncIcon size={15} />
+                    {(hasOpenApiUpdates || hasOpenApiError) && (
+                      <span className="absolute top-0 right-0 w-1.5 h-1.5 rounded-full" style={{ backgroundColor: hasOpenApiError ? theme.status.danger.text : theme.status.warning.text }} />
+                    )}
+                  </ActionIcon>
+                </ToolHint>
+              )}
+              <ToolHint text="Runner" toolhintId="RunnerToolhintId" place="bottom">
+                <ActionIcon onClick={handleRun} aria-label="Runner" size="sm">
+                  <IconRun size={16} strokeWidth={1.5} />
                 </ActionIcon>
               </ToolHint>
-            )}
-            <ToolHint text="Runner" toolhintId="RunnerToolhintId" place="bottom">
-              <ActionIcon onClick={handleRun} aria-label="Runner" size="sm">
-                <IconRun size={16} strokeWidth={1.5} />
-              </ActionIcon>
-            </ToolHint>
-            <JsSandboxMode collection={activeCollectionContext} />
-            <MenuDropdown items={overflowMenuItems} placement="bottom-end">
-              <ActionIcon label="More actions" size="sm" style={{ border: `1px solid ${theme.border.border1}`, borderRadius: theme.border.radius.base, width: 24, marginRight: 4, marginLeft: 4 }}>
-                <IconDots size={16} strokeWidth={1.5} />
-              </ActionIcon>
-            </MenuDropdown>
-            <span>
-              <EnvironmentSelector collection={activeCollectionContext} />
-            </span>
-          </div>
-        )}
+              <JsSandboxMode collection={activeCollectionContext} />
+              <MenuDropdown items={overflowMenuItems} placement="bottom-end">
+                <ActionIcon label="More actions" size="sm" style={{ border: `1px solid ${theme.border.border1}`, borderRadius: theme.border.radius.base, width: 24, marginRight: 4, marginLeft: 4 }}>
+                  <IconDots size={16} strokeWidth={1.5} />
+                </ActionIcon>
+              </MenuDropdown>
+            </>
+          )}
+          <span>
+            <EnvironmentSelector
+              collection={environmentSelectorCollection}
+              showCollectionEnv={showCollectionEnvironment}
+            />
+          </span>
+        </div>
       </div>
     </StyledWrapper>
   );

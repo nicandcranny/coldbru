@@ -22,9 +22,6 @@ class ErrorBoundary extends React.Component {
   }
 
   returnToApp() {
-    const { ipcRenderer } = window;
-    ipcRenderer.invoke('open-file');
-
     this.setState({ hasError: false, error: null, errorInfo: null });
   }
 

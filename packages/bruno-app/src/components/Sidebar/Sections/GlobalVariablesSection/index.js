@@ -74,6 +74,20 @@ const GlobalVariablesSection = ({ collapsible = true }) => {
   const activeSidebarEnvironmentUid = activeGlobalEnvironmentTab?.environmentUid;
 
   useEffect(() => {
+    if (!activeSidebarEnvironmentUid) {
+      return;
+    }
+
+    const element = environmentItemRefs.current[activeSidebarEnvironmentUid];
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [activeSidebarEnvironmentUid]);
+
+  useEffect(() => {
     const handleSidebarSectionOpen = (event) => {
       if (event?.detail?.sectionId !== 'global-variables') {
         return;

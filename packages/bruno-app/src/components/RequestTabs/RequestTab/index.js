@@ -44,6 +44,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
   const menuDropdownRef = useRef();
 
   const item = findItemInCollection(collection, tab.uid);
+  const activeCollectionEnvironmentName = collection?.environments?.find((env) => env.uid === collection?.activeEnvironmentUid)?.name;
 
   const method = useMemo(() => {
     if (!item) return;
@@ -413,7 +414,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
         ) : tab.type === 'collection-settings' ? (
           <SpecialTab handleCloseClick={handleCloseCollectionSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={collection?.name} hasDraft={hasDraft} />
         ) : tab.type === 'environment-settings' ? (
-          <SpecialTab handleCloseClick={handleCloseEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} hasDraft={hasEnvironmentDraft} />
+          <SpecialTab handleCloseClick={handleCloseEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={activeCollectionEnvironmentName} hasDraft={hasEnvironmentDraft} />
         ) : tab.type === 'global-environment-settings' ? (
           <SpecialTab handleCloseClick={handleCloseGlobalEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={tab.tabName} hasDraft={hasGlobalEnvironmentDraft} />
         ) : tab.type === 'workspaceOverview' ? (

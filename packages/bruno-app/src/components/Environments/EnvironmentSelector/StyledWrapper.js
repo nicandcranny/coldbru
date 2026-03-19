@@ -41,6 +41,10 @@ const Wrapper = styled.div`
       max-width: 100%;
     }
 
+    .env-text-placeholder {
+      color: ${(props) => props.theme.colors.text.muted};
+    }
+
     .env-separator {
       background-color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.separator};
     }
@@ -60,6 +64,10 @@ const Wrapper = styled.div`
       &:hover {
         border-color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.noEnvironment.hoverBorder};
         background-color: ${(props) => props.theme.app.collection.toolbar.environmentSelector.noEnvironment.hoverBg};
+      }
+
+      .env-separator {
+        opacity: 0.4;
       }
     }
   }

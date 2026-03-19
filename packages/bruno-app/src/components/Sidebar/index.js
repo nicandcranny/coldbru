@@ -10,6 +10,7 @@ import ApiSpecsSection from './Sections/ApiSpecsSection/index';
 import GlobalVariablesSection from './Sections/GlobalVariablesSection';
 import SourceControlSection from './Sections/SourceControlSection';
 import { IconBox, IconFileCode, IconGitBranch, IconWorld } from '@tabler/icons';
+import { openSidebarSection } from 'utils/sidebar';
 
 const MIN_LEFT_SIDEBAR_WIDTH = 220;
 const MAX_LEFT_SIDEBAR_WIDTH = 600;
@@ -57,10 +58,13 @@ const SIDEBAR_SECTIONS = [
 const Sidebar = () => {
   const leftSidebarWidth = useSelector((state) => state.app.leftSidebarWidth);
   const sidebarCollapsed = useSelector((state) => state.app.sidebarCollapsed);
+  const tabs = useSelector((state) => state.tabs?.tabs || []);
+  const activeTabUid = useSelector((state) => state.tabs?.activeTabUid);
   const [asideWidth, setAsideWidth] = useState(leftSidebarWidth);
   const lastWidthRef = useRef(leftSidebarWidth);
   const [activeSectionId, setActiveSectionId] = useState('collections');
   const [collectionSearchTrigger, setCollectionSearchTrigger] = useState(0);
+  const activeTab = tabs.find((tab) => tab.uid === activeTabUid) || null;
 
   const dispatch = useDispatch();
   const [dragging, setDragging] = useState(false);
@@ -142,6 +146,20 @@ const Sidebar = () => {
       window.removeEventListener('sidebar-section-open', handleSidebarSectionOpen);
     };
   }, []);
+
+  useEffect(() => {
+    if (activeTab?.type !== 'global-environment-settings' || !activeTab.environmentUid) {
+      return;
+    }
+
+    setActiveSectionId('global-variables');
+
+    setTimeout(() => {
+      openSidebarSection('global-variables', {
+        focusEnvironmentUid: activeTab.environmentUid
+      });
+    }, 0);
+  }, [activeTab?.environmentUid, activeTab?.type]);
 
   return (
     <SidebarAccordionProvider defaultExpanded={['collections']}>
