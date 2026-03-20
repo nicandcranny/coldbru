@@ -311,6 +311,7 @@ const DotEnvFileEditor = ({
           onChange={handleRawChange}
           onSave={handleSaveRaw}
           onReset={handleReset}
+          isModified={isModified}
           isSaving={isSaving}
         />
       </StyledWrapper>
@@ -335,6 +336,7 @@ const DotEnvFileEditor = ({
         onRemoveVar={handleRemoveVar}
         onSave={handleSave}
         onReset={handleReset}
+        isModified={isModified}
         isSaving={isSaving}
       />
     </StyledWrapper>

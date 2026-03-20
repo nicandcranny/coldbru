@@ -25,6 +25,7 @@ import {
 } from 'providers/ReduxStore/slices/collections/actions';
 import { setEnvironmentsDraft, clearEnvironmentsDraft } from 'providers/ReduxStore/slices/collections';
 import { setEnvVarSearchQuery, setEnvVarSearchExpanded } from 'providers/ReduxStore/slices/app';
+import { updateTab } from 'providers/ReduxStore/slices/tabs';
 import { validateName, validateNameError } from 'utils/common/regex';
 import toast from 'react-hot-toast';
 import classnames from 'classnames';
@@ -42,6 +43,7 @@ const EnvironmentList = ({
   setShowExportModal
 }) => {
   const dispatch = useDispatch();
+  const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const envSearchQuery = useSelector((state) => state.app.envVarSearch?.collection?.query ?? '');
   const isEnvSearchExpanded = useSelector((state) => state.app.envVarSearch?.collection?.expanded ?? false);
   const setEnvSearchQuery = (q) => dispatch(setEnvVarSearchQuery({ context: 'collection', query: q }));
@@ -172,6 +174,25 @@ const EnvironmentList = ({
       block: 'nearest'
     });
   }, [activeView, selectedEnvironment?.uid, environments, searchText]);
+
+  useEffect(() => {
+    if (!activeTabUid) {
+      return;
+    }
+
+    const environmentUid = activeView === 'dotenv'
+      ? (selectedDotEnvFile ? `dotenv:${selectedDotEnvFile}` : null)
+      : (selectedEnvironment?.uid || null);
+    const tabName = activeView === 'dotenv'
+      ? (selectedDotEnvFile || 'Environments')
+      : (selectedEnvironment?.name || 'Environments');
+
+    dispatch(updateTab({
+      uid: activeTabUid,
+      environmentUid,
+      tabName
+    }));
+  }, [activeTabUid, activeView, dispatch, selectedDotEnvFile, selectedEnvironment?.name, selectedEnvironment?.uid]);
 
   const handleEnvironmentClick = (env) => {
     if (activeView === 'dotenv' && isDotEnvModified) {

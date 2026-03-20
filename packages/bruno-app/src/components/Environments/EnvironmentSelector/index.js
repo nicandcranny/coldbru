@@ -3,7 +3,8 @@ import find from 'lodash/find';
 import Dropdown from 'components/Dropdown';
 import { IconWorld, IconDatabase, IconCaretDown } from '@tabler/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { addTab } from 'providers/ReduxStore/slices/tabs';
+import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
+import { setRequestTabView } from 'providers/ReduxStore/slices/requestTabView';
 import { selectEnvironment } from 'providers/ReduxStore/slices/collections/actions';
 import { selectGlobalEnvironment } from 'providers/ReduxStore/slices/global-environments';
 import toast from 'react-hot-toast';
@@ -14,7 +15,6 @@ import CreateGlobalEnvironment from 'components/WorkspaceHome/WorkspaceEnvironme
 import ToolHint from 'components/ToolHint';
 import StyledWrapper from './StyledWrapper';
 import { transparentize } from 'polished';
-import { openSidebarSection } from 'utils/sidebar';
 
 const TABS = [
   { id: 'collection', label: 'Collection', icon: <IconDatabase size={16} strokeWidth={1.5} /> },
@@ -156,11 +156,15 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
   const [showImportCollectionModal, setShowImportCollectionModal] = useState(false);
   const [searchText, setSearchText] = useState('');
 
+  const workspaces = useSelector((state) => state.workspaces.workspaces);
+  const activeWorkspaceUid = useSelector((state) => state.workspaces.activeWorkspaceUid);
+  const tabs = useSelector((state) => state.tabs.tabs);
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
   const activeGlobalEnvironmentUid = useSelector((state) => state.globalEnvironments.activeGlobalEnvironmentUid);
   const activeGlobalEnvironment = activeGlobalEnvironmentUid
     ? find(globalEnvironments, (e) => e.uid === activeGlobalEnvironmentUid)
     : null;
+  const activeWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid) || null;
 
   const safeCollection = collection || {
     uid: null,
@@ -223,10 +227,43 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
       });
   };
 
+  const openGlobalEnvironmentSettingsTab = () => {
+    const scratchCollectionUid = activeWorkspace?.scratchCollectionUid;
+    const environmentToOpen = activeGlobalEnvironment || globalEnvironments[0];
+
+    if (!scratchCollectionUid || !environmentToOpen?.uid) {
+      return;
+    }
+
+    const globalEnvironmentTabUid = `${scratchCollectionUid}-global-environment-settings`;
+
+    dispatch(setRequestTabView({ mode: 'home', collectionUid: null }));
+
+    const existingTab = find(tabs, (tab) => tab.uid === globalEnvironmentTabUid);
+
+    if (existingTab) {
+      dispatch(updateTab({
+        uid: globalEnvironmentTabUid,
+        environmentUid: environmentToOpen.uid,
+        tabName: environmentToOpen.name
+      }));
+      dispatch(focusTab({ uid: globalEnvironmentTabUid }));
+      return;
+    }
+
+    dispatch(addTab({
+      uid: globalEnvironmentTabUid,
+      collectionUid: scratchCollectionUid,
+      type: 'global-environment-settings',
+      environmentUid: environmentToOpen.uid,
+      tabName: environmentToOpen.name
+    }));
+  };
+
   const handleSettingsClick = () => {
     const isCollection = activeTab === 'collection';
     if (!isCollection || !safeCollection.uid) {
-      openSidebarSection('global-variables');
+      openGlobalEnvironmentSettingsTab();
       hideDropdown();
       return;
     }
@@ -327,7 +364,7 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
       {showCreateGlobalModal && (
         <CreateGlobalEnvironment
           onClose={() => setShowCreateGlobalModal(false)}
-          onEnvironmentCreated={() => openSidebarSection('global-variables')}
+          onEnvironmentCreated={openGlobalEnvironmentSettingsTab}
         />
       )}
 
@@ -335,7 +372,7 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
         <ImportEnvironmentModal
           type="global"
           onClose={() => setShowImportGlobalModal(false)}
-          onEnvironmentCreated={() => openSidebarSection('global-variables')}
+          onEnvironmentCreated={openGlobalEnvironmentSettingsTab}
         />
       )}
 

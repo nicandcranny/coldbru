@@ -205,20 +205,22 @@ const EnvironmentVariablesTable = ({
     return JSON.stringify((environment.variables || []).map(stripEnvVarUid));
   }, [environment.variables]);
 
-  // Sync modified state
-  useEffect(() => {
+  const hasActualChanges = useMemo(() => {
     const currentValues = formik.values.filter((variable) => variable.name && variable.name.trim() !== '');
     const currentValuesJson = JSON.stringify(currentValues.map(stripEnvVarUid));
-    const hasActualChanges = currentValuesJson !== savedValuesJson;
+    return currentValuesJson !== savedValuesJson;
+  }, [formik.values, savedValuesJson]);
+
+  // Sync modified state
+  useEffect(() => {
     setIsModified(hasActualChanges);
-  }, [formik.values, savedValuesJson, setIsModified]);
+  }, [hasActualChanges, setIsModified]);
 
   // Sync draft state
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       const currentValues = formik.values.filter((variable) => variable.name && variable.name.trim() !== '');
       const currentValuesJson = JSON.stringify(currentValues.map(stripEnvVarUid));
-      const hasActualChanges = currentValuesJson !== savedValuesJson;
 
       const existingDraftVariables = hasDraftForThisEnv ? draft?.variables : null;
       const existingDraftJson = existingDraftVariables ? JSON.stringify(existingDraftVariables.map(stripEnvVarUid)) : null;
@@ -233,7 +235,7 @@ const EnvironmentVariablesTable = ({
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [formik.values, savedValuesJson, environment.uid, hasDraftForThisEnv, draft?.variables, onDraftChange, onDraftClear]);
+  }, [formik.values, hasActualChanges, savedValuesJson, environment.uid, hasDraftForThisEnv, draft?.variables, onDraftChange, onDraftClear]);
 
   const ErrorMessage = ({ name, index }) => {
     const meta = formik.getFieldMeta(name);
@@ -575,7 +577,7 @@ const EnvironmentVariablesTable = ({
 
       <div className="button-container">
         <div className="flex items-center">
-          <button type="button" className="submit" onClick={handleSave} data-testid="save-env">
+          <button type="button" className="submit" onClick={handleSave} disabled={!hasActualChanges} data-testid="save-env">
             Save
           </button>
           <button type="button" className="submit reset ml-2" onClick={handleReset} data-testid="reset-env">

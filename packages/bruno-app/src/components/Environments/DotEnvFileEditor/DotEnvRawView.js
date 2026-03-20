@@ -9,6 +9,7 @@ const DotEnvRawView = ({
   onChange,
   onSave,
   onReset,
+  isModified,
   isSaving
 }) => {
   return (
@@ -28,7 +29,7 @@ const DotEnvRawView = ({
       </div>
       <div className="button-container">
         <div className="flex items-center">
-          <button type="button" className="submit" onClick={onSave} disabled={isSaving} data-testid="save-dotenv-raw">
+          <button type="button" className="submit" onClick={onSave} disabled={isSaving || !isModified} data-testid="save-dotenv-raw">
             {isSaving ? 'Saving...' : 'Save'}
           </button>
           <button type="button" className="submit reset ml-2" onClick={onReset} disabled={isSaving} data-testid="reset-dotenv-raw">

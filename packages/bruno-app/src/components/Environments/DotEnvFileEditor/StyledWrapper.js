@@ -143,6 +143,15 @@ const StyledWrapper = styled.div`
     &:hover {
       opacity: 0.9;
     }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &:disabled:hover {
+      opacity: 0.5;
+    }
   }
 
   .reset {

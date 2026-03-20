@@ -25,6 +25,7 @@ const DotEnvTableView = ({
   onRemoveVar,
   onSave,
   onReset,
+  isModified,
   isSaving
 }) => {
   const handleTotalHeightChanged = useCallback((h) => {
@@ -115,7 +116,7 @@ const DotEnvTableView = ({
       />
       <div className="button-container">
         <div className="flex items-center">
-          <button type="button" className="submit" onClick={onSave} disabled={isSaving} data-testid="save-dotenv">
+          <button type="button" className="submit" onClick={onSave} disabled={isSaving || !isModified} data-testid="save-dotenv">
             {isSaving ? 'Saving...' : 'Save'}
           </button>
           <button type="button" className="submit reset ml-2" onClick={onReset} disabled={isSaving} data-testid="reset-dotenv">

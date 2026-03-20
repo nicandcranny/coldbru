@@ -228,14 +228,19 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
     'git-diff'
   ];
 
+  const collectionEnvironmentDraft = collection?.environmentsDraft;
   const hasDraft = tab.type === 'collection-settings' && collection?.draft;
   const hasFolderDraft = tab.type === 'folder-settings' && folder?.draft;
-  const hasEnvironmentDraft = tab.type === 'environment-settings' && collection?.environmentsDraft;
+  const hasEnvironmentDraft = tab.type === 'environment-settings'
+    && collectionEnvironmentDraft
+    && (!tab.environmentUid || collectionEnvironmentDraft.environmentUid === tab.environmentUid);
   const globalEnvironmentDraft = useSelector((state) => state.globalEnvironments.globalEnvironmentDraft);
-  const hasGlobalEnvironmentDraft = tab.type === 'global-environment-settings' && globalEnvironmentDraft;
+  const hasGlobalEnvironmentDraft = tab.type === 'global-environment-settings'
+    && globalEnvironmentDraft
+    && (!tab.environmentUid || globalEnvironmentDraft.environmentUid === tab.environmentUid);
 
   const handleCloseEnvironmentSettings = (event) => {
-    if (!collection?.environmentsDraft) {
+    if (!hasEnvironmentDraft) {
       return handleCloseClick(event);
     }
 
@@ -245,7 +250,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
   };
 
   const handleCloseGlobalEnvironmentSettings = (event) => {
-    if (!globalEnvironmentDraft) {
+    if (!hasGlobalEnvironmentDraft) {
       return handleCloseClick(event);
     }
 
@@ -414,7 +419,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
         ) : tab.type === 'collection-settings' ? (
           <SpecialTab handleCloseClick={handleCloseCollectionSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={collection?.name} hasDraft={hasDraft} />
         ) : tab.type === 'environment-settings' ? (
-          <SpecialTab handleCloseClick={handleCloseEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={activeCollectionEnvironmentName} hasDraft={hasEnvironmentDraft} />
+          <SpecialTab handleCloseClick={handleCloseEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={tab.tabName || activeCollectionEnvironmentName} hasDraft={hasEnvironmentDraft} />
         ) : tab.type === 'global-environment-settings' ? (
           <SpecialTab handleCloseClick={handleCloseGlobalEnvironmentSettings} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={tab.tabName} hasDraft={hasGlobalEnvironmentDraft} />
         ) : tab.type === 'workspaceOverview' ? (

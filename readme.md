@@ -73,10 +73,11 @@ You can explore our [paid versions](https://www.usebruno.com/pricing) to see if 
 - [Differences from Original Bruno](#differences-from-original-bruno)
   - [All Section](#all-section)
   - [Global Search Improvement](#global-search-improvement)
+  - [Global Environment as a Global Settings](#global-environment-as-a-global-settings)
   - [Activity Bar Menu](#activity-bar-menu)
   - [Improve Request Search](#improve-request-search)
   - [Minor Bug Fixes](#minor-bug-fixes)
-- [TODOs](#todos)
+- [Future Improvements](#future-improvements)
 
 ## Installation
 
@@ -206,6 +207,10 @@ Add `All` group to the active tabs list to see all active tabs in one place.
   - `doc:` for documents
 - Global search now directly jumps and auto-scroll to the selected item on the left sidebar
 
+### Global Environment as a Global Settings
+
+- Global environment is now a generic settings applied to all collections, where the dropdown is always shown on the top bar
+
 ### Activity Bar Menu
 
 - Create a new activity bar menu (vs-code like) and move the menu to choose between collections, API specs, and global environment variables to the activity bar menu
@@ -218,12 +223,10 @@ Improve request search on the sidebar to allow search for collection names, fold
 
 - Flaky global environment variables sort is fixed
 
-## TODOs
+## Future Improvements
 
-1. Favorite feature for collections (stay on top)
-2. Instant action (like cmd+shift+p) - for git, etc.
-3. Save button on environment should be disabled when there are no changes - also environment should have the dot on the tab when there are unsaved changes
-4. Interaction on global search should auto select and focus on the item
-5. API spec into tabs
-6. Focus button on the sidebar
-8. Fix configure button on global environments to directly go to the global env page
+- Favorite feature for collections (stay on top) on 
+- Instant action (like cmd+shift+p) - for git, etc.
+- API spec into tabs
+- Option to choose between autoreveal file or button to focus
+- Add revert button to Git
