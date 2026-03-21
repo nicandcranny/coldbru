@@ -73,6 +73,11 @@ const getCollectionGitRootPath = (collectionPath) => {
   return gitRootPath;
 };
 
+const setCollectionGitRootPath = (collectionPath, gitRootPath) => {
+  collectionPathToGitRootPathMap.set(collectionPath, gitRootPath);
+  return gitRootPath;
+};
+
 const getCollectionGitRepoUrl = async (gitRootPath) => {
   return new Promise((resolve, reject) => {
     const git = getSimpleGitInstanceForPath(gitRootPath);
@@ -1762,6 +1767,7 @@ const getGitGraph = async (gitRootPath, branchName, limit = 50) => {
 
 module.exports = {
   getCollectionGitRootPath,
+  setCollectionGitRootPath,
   getCollectionGitRepoUrl,
   stageChanges,
   unstageChanges,

@@ -6,6 +6,8 @@ const initialState = {
   collectionStates: {}
 };
 
+const operationsToPreserveDuringRefresh = new Set(['commit', 'sync', 'push', 'pull', 'add-remote', 'init']);
+
 const gitSlice = createSlice({
   name: 'git',
   initialState,
@@ -41,7 +43,8 @@ const gitSlice = createSlice({
   }
 });
 
-export const refreshCollectionGitStatus = (collectionUid) => async (dispatch, getState) => {
+export const refreshCollectionGitStatus = (collectionUid, options = {}) => async (dispatch, getState) => {
+  const { preserveOperation = false } = options;
   const state = getState();
   const target = getGitTarget(state, collectionUid);
   if (!target?.path) {
@@ -51,20 +54,27 @@ export const refreshCollectionGitStatus = (collectionUid) => async (dispatch, ge
     return null;
   }
 
+  const currentGitState = state.git.collectionStates[target.scopeId];
+
   try {
-    if (!state.git.collectionStates[target.scopeId]) {
+    if (!currentGitState) {
       dispatch(setCollectionGitLoading({ collectionUid: target.scopeId, loading: true }));
     }
     const data = await window.ipcRenderer.invoke('renderer:get-collection-git-status', {
       collectionPath: target.path
     });
 
+    const latestGitState = getState().git.collectionStates[target.scopeId];
+    const shouldPreserveOperation = preserveOperation
+      && latestGitState?.loading
+      && operationsToPreserveDuringRefresh.has(latestGitState.operation);
+
     dispatch(
       setCollectionGitState({
         collectionUid: target.scopeId,
         data: {
-          loading: false,
-          operation: null,
+          loading: shouldPreserveOperation ? latestGitState.loading : false,
+          operation: shouldPreserveOperation ? latestGitState.operation : null,
           ...(data || { isRepository: false })
         }
       })
@@ -72,6 +82,15 @@ export const refreshCollectionGitStatus = (collectionUid) => async (dispatch, ge
 
     return data;
   } catch (error) {
+    const latestGitState = getState().git.collectionStates[target.scopeId];
+    const shouldPreserveOperation = preserveOperation
+      && latestGitState?.loading
+      && operationsToPreserveDuringRefresh.has(latestGitState.operation);
+
+    if (shouldPreserveOperation) {
+      return null;
+    }
+
     dispatch(setCollectionGitError({ collectionUid: target.scopeId, error: error.message || 'Failed to load git status' }));
     return null;
   }
@@ -168,6 +187,42 @@ export const commitGitChanges = (collectionUid, message) => async (dispatch, get
     action: (target) => window.ipcRenderer.invoke('renderer:commit-git-changes', {
       collectionPath: target.path,
       message: trimmedMessage
+    })
+  });
+};
+
+export const initializeGitRepository = (collectionUid) => async (dispatch, getState) => {
+  return runGitOperation({
+    dispatch,
+    getState,
+    collectionUid,
+    operation: 'init',
+    successMessage: 'Repository initialized',
+    action: (target) => window.ipcRenderer.invoke('renderer:init-git-repository', {
+      collectionPath: target.path
+    })
+  });
+};
+
+export const addGitRemote = (collectionUid, { remoteName, remoteUrl }) => async (dispatch, getState) => {
+  const normalizedRemoteName = remoteName?.trim() || 'origin';
+  const normalizedRemoteUrl = remoteUrl?.trim();
+
+  if (!normalizedRemoteUrl) {
+    toast.error('Please enter a remote URL');
+    return;
+  }
+
+  return runGitOperation({
+    dispatch,
+    getState,
+    collectionUid,
+    operation: 'add-remote',
+    successMessage: `Remote ${normalizedRemoteName} added`,
+    action: (target) => window.ipcRenderer.invoke('renderer:add-git-remote', {
+      collectionPath: target.path,
+      remoteName: normalizedRemoteName,
+      remoteUrl: normalizedRemoteUrl
     })
   });
 };

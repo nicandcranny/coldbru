@@ -1,9 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { IconRefresh, IconGitCommit, IconMinus, IconPlus, IconArrowBackUp } from '@tabler/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
 import {
+  addGitRemote,
   commitGitChanges,
+  initializeGitRepository,
+  pushGitChanges,
   refreshCollectionGitStatus,
   revertGitFiles,
   stageGitFiles,
@@ -11,6 +15,7 @@ import {
   unstageGitFiles
 } from 'providers/ReduxStore/slices/git';
 import Modal from 'components/Modal';
+import { isGitRepositoryUrl } from 'utils/git';
 import { getGitTarget } from 'utils/git/target';
 import useGitStatusMonitor from 'components/Git/useGitStatusMonitor';
 import StyledWrapper from './StyledWrapper';
@@ -143,6 +148,9 @@ const SourceControlSection = () => {
   const gitState = useSelector((state) => gitTarget ? state.git.collectionStates[gitTarget.scopeId] : null);
   const [commitMessage, setCommitMessage] = useState('');
   const [revertConfirmation, setRevertConfirmation] = useState(null);
+  const [remoteModal, setRemoteModal] = useState(null);
+  const [remoteName, setRemoteName] = useState('origin');
+  const [remoteUrl, setRemoteUrl] = useState('');
 
   useGitStatusMonitor(activeTab?.collectionUid, {
     enabled: Boolean(gitTarget?.path)
@@ -152,13 +160,19 @@ const SourceControlSection = () => {
     setCommitMessage('');
   }, [gitTarget?.scopeId]);
 
+  useEffect(() => {
+    setRemoteName(gitState?.remoteName || 'origin');
+    setRemoteUrl(gitState?.gitRepoUrl || '');
+  }, [gitState?.remoteName, gitState?.gitRepoUrl, gitTarget?.scopeId]);
+
   const staged = gitState?.changedFiles?.staged || [];
   const unstaged = gitState?.changedFiles?.unstaged || [];
   const conflicted = gitState?.changedFiles?.conflicted || [];
   const hasStagedChanges = staged.length > 0;
   const hasSyncWork = (gitState?.ahead || 0) > 0 || (gitState?.behind || 0) > 0;
   const isBusy = Boolean(gitState?.loading);
-  const primaryAction = hasStagedChanges ? 'commit' : hasSyncWork ? 'sync' : null;
+  const needsRemoteSetup = !gitState?.hasRemote && (gitState?.ahead || 0) > 0;
+  const primaryAction = hasStagedChanges ? 'commit' : needsRemoteSetup ? 'publish' : hasSyncWork ? 'sync' : null;
   const currentOperation = gitState?.operation;
 
   const summaryText = useMemo(() => {
@@ -257,7 +271,45 @@ const SourceControlSection = () => {
       return;
     }
 
+    if (primaryAction === 'publish') {
+      setRemoteModal({ shouldPush: true });
+      return;
+    }
+
     await dispatch(syncGitChanges(activeTab.collectionUid));
+  };
+
+  const handleInitializeRepository = async () => {
+    if (!activeTab?.collectionUid) {
+      return;
+    }
+
+    await dispatch(initializeGitRepository(activeTab.collectionUid));
+  };
+
+  const handleSubmitRemote = async () => {
+    if (!activeTab?.collectionUid) {
+      return;
+    }
+
+    const normalizedRemoteUrl = remoteUrl.trim();
+    const normalizedRemoteName = remoteName.trim() || 'origin';
+
+    if (!isGitRepositoryUrl(normalizedRemoteUrl)) {
+      toast.error('Please enter a valid git repository URL');
+      return;
+    }
+
+    await dispatch(addGitRemote(activeTab.collectionUid, {
+      remoteName: normalizedRemoteName,
+      remoteUrl: normalizedRemoteUrl
+    }));
+
+    if (remoteModal?.shouldPush) {
+      await dispatch(pushGitChanges(activeTab.collectionUid));
+    }
+
+    setRemoteModal(null);
   };
 
   if (!activeCollection?.uid) {
@@ -271,7 +323,20 @@ const SourceControlSection = () => {
   if (gitState && gitState.isRepository === false) {
     return (
       <StyledWrapper>
-        <div className="source-control-empty">This collection is not inside a git repository.</div>
+        <div className="source-control-empty">
+          <div>This collection is not inside a git repository.</div>
+          <button
+            type="button"
+            className="source-control-button source-control-empty-action"
+            onClick={handleInitializeRepository}
+            disabled={isBusy}
+          >
+            {currentOperation === 'init' ? (
+              <IconRefresh size={14} strokeWidth={1.5} className="is-spinning" />
+            ) : null}
+            Initialize Repository
+          </button>
+        </div>
       </StyledWrapper>
     );
   }
@@ -294,7 +359,7 @@ const SourceControlSection = () => {
         <button
           type="button"
           className="source-control-button"
-          onClick={() => dispatch(refreshCollectionGitStatus(activeTab.collectionUid))}
+          onClick={() => dispatch(refreshCollectionGitStatus(activeTab.collectionUid, { preserveOperation: true }))}
         >
           <IconRefresh size={14} strokeWidth={1.5} className={isBusy ? 'is-spinning' : ''} />
         </button>
@@ -322,11 +387,23 @@ const SourceControlSection = () => {
           >
             {primaryAction === 'commit' ? (
               <IconGitCommit size={14} strokeWidth={1.5} className={currentOperation === 'commit' ? 'is-spinning' : ''} />
+            ) : primaryAction === 'publish' ? (
+              <IconRefresh size={14} strokeWidth={1.5} className={currentOperation === 'push' || currentOperation === 'add-remote' ? 'is-spinning' : ''} />
             ) : (
               <IconRefresh size={14} strokeWidth={1.5} className={currentOperation === 'sync' ? 'is-spinning' : ''} />
             )}
-            {primaryAction === 'commit' ? 'Commit' : primaryAction === 'sync' ? 'Sync' : 'Commit'}
+            {primaryAction === 'commit' ? 'Commit' : primaryAction === 'publish' ? 'Publish' : primaryAction === 'sync' ? 'Sync' : 'Commit'}
           </button>
+          {!gitState?.hasRemote ? (
+            <button
+              type="button"
+              className="source-control-button"
+              disabled={isBusy}
+              onClick={() => setRemoteModal({ shouldPush: false })}
+            >
+              Add Remote
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -385,6 +462,43 @@ const SourceControlSection = () => {
           confirmButtonColor="danger"
         >
           <div>{revertConfirmation.message}</div>
+        </Modal>
+      ) : null}
+
+      {remoteModal ? (
+        <Modal
+          size="sm"
+          title={remoteModal.shouldPush ? 'Publish Repository' : 'Add Remote'}
+          confirmText={remoteModal.shouldPush ? 'Add Remote and Push' : 'Add Remote'}
+          cancelText="Cancel"
+          handleCancel={() => setRemoteModal(null)}
+          handleConfirm={handleSubmitRemote}
+          confirmDisabled={isBusy || !remoteUrl.trim()}
+        >
+          <div className="source-control-form">
+            <label className="source-control-field">
+              <span className="source-control-field-label">Remote Name</span>
+              <input
+                type="text"
+                value={remoteName}
+                onChange={(event) => setRemoteName(event.target.value)}
+                className="source-control-text-input"
+                placeholder="origin"
+              />
+            </label>
+
+            <label className="source-control-field">
+              <span className="source-control-field-label">Remote URL</span>
+              <input
+                type="text"
+                value={remoteUrl}
+                onChange={(event) => setRemoteUrl(event.target.value)}
+                className="source-control-text-input"
+                placeholder="https://github.com/owner/repo.git"
+                autoFocus
+              />
+            </label>
+          </div>
         </Modal>
       ) : null}
     </StyledWrapper>

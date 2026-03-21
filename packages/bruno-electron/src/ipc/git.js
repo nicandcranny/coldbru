@@ -1,6 +1,7 @@
 const { ipcMain } = require('electron');
 const path = require('path');
 const {
+  addRemote,
   cloneGitRepository,
   commitChanges,
   discardChanges,
@@ -12,8 +13,10 @@ const {
   getRenamedFileDiff,
   getStagedFileDiff,
   getUnstagedFileDiff,
+  initGit,
   pullGitChanges,
   pushGitChanges,
+  setCollectionGitRootPath,
   stageChanges,
   unstageChanges
 } = require('../utils/git');
@@ -68,6 +71,14 @@ const registerGitIpc = (mainWindow) => {
       changedFiles,
       ahead: aheadBehind.ahead,
       behind: aheadBehind.behind
+    };
+  });
+
+  ipcMain.handle('renderer:init-git-repository', async (event, { collectionPath }) => {
+    await initGit(collectionPath);
+    setCollectionGitRootPath(collectionPath, collectionPath);
+    return {
+      isRepository: true
     };
   });
 
@@ -133,6 +144,19 @@ const registerGitIpc = (mainWindow) => {
     }
 
     return commitChanges(gitRootPath, message);
+  });
+
+  ipcMain.handle('renderer:add-git-remote', async (event, { collectionPath, remoteName = 'origin', remoteUrl }) => {
+    const gitRootPath = getCollectionGitRootPath(collectionPath);
+    if (!gitRootPath) {
+      throw new Error('Not a git repository');
+    }
+
+    return addRemote({
+      gitRootPath,
+      remoteName,
+      remoteUrl
+    });
   });
 
   ipcMain.handle('renderer:push-git-changes', async (event, { collectionPath, remoteName = 'origin', remoteBranch }) => {

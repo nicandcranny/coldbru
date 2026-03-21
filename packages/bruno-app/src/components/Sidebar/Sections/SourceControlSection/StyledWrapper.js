@@ -52,6 +52,11 @@ const StyledWrapper = styled.div`
     line-height: 1.5;
   }
 
+  .source-control-empty-action {
+    width: 100%;
+    margin-top: 14px;
+  }
+
   .change-group {
     margin-bottom: 12px;
   }
@@ -262,9 +267,46 @@ const StyledWrapper = styled.div`
     cursor: pointer;
   }
 
+  .source-control-button:hover:not(:disabled) {
+    background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
+  }
+
   .source-control-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .source-control-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .source-control-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .source-control-field-label {
+    color: ${(props) => props.theme.sidebar.muted};
+    font-size: ${(props) => props.theme.font.size.sm};
+    font-weight: 500;
+  }
+
+  .source-control-text-input {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    border: 1px solid ${(props) => props.theme.sidebar.collection.item.hoverBg};
+    border-radius: 8px;
+    background: ${(props) => props.theme.sidebar.bg};
+    color: ${(props) => props.theme.sidebar.color};
+  }
+
+  .source-control-text-input:focus {
+    outline: none;
+    border-color: ${(props) => props.theme.sidebar.color};
   }
 
   .is-spinning {

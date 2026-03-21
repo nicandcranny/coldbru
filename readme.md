@@ -226,7 +226,6 @@ Improve request search on the sidebar to allow search for collection names, fold
 ## Future Improvements
 
 - Instant action (like cmd+shift+p) - for git, etc.
-- API spec into tabs + on the viewer add explanation that this supports openapi v3. Add search button too. + add to global search
 - Option to choose between autoreveal file or button to focus
 - Add git init if it's not inside a git on the source control action bar
 - Add open file feature in the Git 
