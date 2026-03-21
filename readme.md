@@ -204,7 +204,6 @@ Add `All` group to the active tabs list to see all active tabs inasefasef one pl
   - `env:` for environment variable
   - `col:` for collections
   - `req:` for requests
-  - `doc:` for documents
 - Global search now directly jumps and auto-scroll to the selected item on the left sidebar
 
 ### Global Environment as a Global Settings

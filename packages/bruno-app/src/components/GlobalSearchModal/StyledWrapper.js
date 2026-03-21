@@ -287,21 +287,6 @@ const StyledWrapper = styled.div`
     border: 1px solid ${(props) => rgba(props.theme.textLink, 0.2)};
     flex-shrink: 0;
   }
-  .result-item[data-type="documentation"] {
-    .result-icon {
-      color: ${(props) => props.theme.colors.text.muted};
-      opacity: 0.8;
-    }
-    .result-path {
-      font-size: ${(props) => props.theme.font.size.sm};
-      color: ${(props) => props.theme.colors.text.muted};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      letter-spacing: 0.1px;
-      opacity: 0.8;
-    }
-  }
   .no-results,
   .empty-state {
     padding: 24px 16px;

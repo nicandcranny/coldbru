@@ -58,10 +58,6 @@ export const highlightText = (text, searchQuery) => {
 
 export const sortResults = (results) => {
   return results.sort((a, b) => {
-    // Documentation always first
-    if (a.type === SEARCH_TYPES.DOCUMENTATION) return -1;
-    if (b.type === SEARCH_TYPES.DOCUMENTATION) return 1;
-
     // Sort by match type priority
     const matchTypeOrder = {
       [MATCH_TYPES.COLLECTION]: 0,
@@ -101,8 +97,6 @@ const getResultIdentity = (result) => {
   const itemPath = normalizePath(result?.item?.pathname || result?.path || '');
 
   switch (result?.type) {
-    case SEARCH_TYPES.DOCUMENTATION:
-      return SEARCH_TYPES.DOCUMENTATION;
     case SEARCH_TYPES.COLLECTION:
       return `${SEARCH_TYPES.COLLECTION}:${collectionPath || normalizePath(result?.path || '') || result?.name}`;
     case SEARCH_TYPES.ENVIRONMENT:
@@ -135,7 +129,6 @@ export const dedupeSearchResults = (results = []) => {
 
 export const getTypeLabel = (type) => {
   const baseLabels = {
-    [SEARCH_TYPES.DOCUMENTATION]: 'Documentation',
     [SEARCH_TYPES.COLLECTION]: 'Collection',
     [SEARCH_TYPES.ENVIRONMENT]: 'Environment',
     [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: 'Global Environment',
