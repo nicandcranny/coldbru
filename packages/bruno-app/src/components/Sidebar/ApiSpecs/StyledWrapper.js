@@ -19,6 +19,10 @@ const Wrapper = styled.div`
     overflow-x: hidden;
   }
 
+  .api-specs-search {
+    padding: 0 8px 8px;
+  }
+
   .api-spec-item {
     height: 1.6rem;
     cursor: pointer;

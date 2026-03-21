@@ -5,12 +5,12 @@ import { IconFileCode, IconDots } from '@tabler/icons';
 import StyledWrapper from './StyledWrapper';
 import SpecViewer from './SpecViewer';
 import Dropdown from 'components/Dropdown';
-import { openApiSpec, saveApiSpecToFile } from 'providers/ReduxStore/slices/apiSpec';
+import { openApiSpec, saveApiSpecToFile, setActiveApiSpecUid } from 'providers/ReduxStore/slices/apiSpec';
 import { useState } from 'react';
 import CreateApiSpec from 'components/Sidebar/ApiSpecs/CreateApiSpec';
 import toast from 'react-hot-toast';
 
-const ApiSpecPanel = () => {
+const ApiSpecPanel = ({ apiSpecUid }) => {
   const dispatch = useDispatch();
 
   const [createApiSpecModalOpen, setCreateApiSpecModalOpen] = useState(false);
@@ -20,8 +20,15 @@ const ApiSpecPanel = () => {
   const dropdownTippyRef = useRef();
   const onDropdownCreate = (ref) => (dropdownTippyRef.current = ref);
 
-  let apiSpec = find(apiSpecs, (c) => c.uid === activeApiSpecUid);
+  const resolvedApiSpecUid = apiSpecUid || activeApiSpecUid;
+  const apiSpec = find(apiSpecs, (c) => c.uid === resolvedApiSpecUid);
   const { filename, pathname, raw, uid } = apiSpec || {};
+  React.useEffect(() => {
+    if (resolvedApiSpecUid && resolvedApiSpecUid !== activeApiSpecUid) {
+      dispatch(setActiveApiSpecUid({ uid: resolvedApiSpecUid }));
+    }
+  }, [dispatch, resolvedApiSpecUid, activeApiSpecUid]);
+
   if (!uid) {
     return <div className="p-4 opacity-50">API Spec not found!</div>;
   }

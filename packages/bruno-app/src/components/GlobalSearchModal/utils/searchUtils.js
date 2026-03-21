@@ -63,14 +63,15 @@ export const sortResults = (results) => {
       [MATCH_TYPES.COLLECTION]: 0,
       [MATCH_TYPES.ENVIRONMENT]: 1,
       [MATCH_TYPES.GLOBAL_ENVIRONMENT]: 2,
-      [MATCH_TYPES.FOLDER]: 3,
-      [MATCH_TYPES.REQUEST]: 4,
-      [MATCH_TYPES.VARIABLE]: 5,
-      [MATCH_TYPES.URL]: 6,
-      [MATCH_TYPES.PATH]: 7
+      [MATCH_TYPES.API_SPEC]: 3,
+      [MATCH_TYPES.FOLDER]: 4,
+      [MATCH_TYPES.REQUEST]: 5,
+      [MATCH_TYPES.VARIABLE]: 6,
+      [MATCH_TYPES.URL]: 7,
+      [MATCH_TYPES.PATH]: 8
     };
-    const aMatchType = matchTypeOrder[a.matchType] ?? 8;
-    const bMatchType = matchTypeOrder[b.matchType] ?? 8;
+    const aMatchType = matchTypeOrder[a.matchType] ?? 9;
+    const bMatchType = matchTypeOrder[b.matchType] ?? 9;
 
     if (aMatchType !== bMatchType) return aMatchType - bMatchType;
 
@@ -79,11 +80,12 @@ export const sortResults = (results) => {
       [SEARCH_TYPES.COLLECTION]: 0,
       [SEARCH_TYPES.ENVIRONMENT]: 1,
       [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: 2,
-      [SEARCH_TYPES.FOLDER]: 3,
-      [SEARCH_TYPES.REQUEST]: 4
+      [SEARCH_TYPES.API_SPEC]: 3,
+      [SEARCH_TYPES.FOLDER]: 4,
+      [SEARCH_TYPES.REQUEST]: 5
     };
-    const aType = typeOrder[a.type] ?? 5;
-    const bType = typeOrder[b.type] ?? 5;
+    const aType = typeOrder[a.type] ?? 6;
+    const bType = typeOrder[b.type] ?? 6;
 
     if (aType !== bType) return aType - bType;
 
@@ -103,6 +105,8 @@ const getResultIdentity = (result) => {
       return `${SEARCH_TYPES.ENVIRONMENT}:${collectionPath || result?.collectionUid || 'unknown'}:${result?.environmentUid || result?.item?.uid || result?.name}`;
     case SEARCH_TYPES.GLOBAL_ENVIRONMENT:
       return `${SEARCH_TYPES.GLOBAL_ENVIRONMENT}:${result?.environmentUid || result?.item?.uid || result?.name}`;
+    case SEARCH_TYPES.API_SPEC:
+      return `${SEARCH_TYPES.API_SPEC}:${normalizePath(result?.item?.pathname || result?.path || '') || result?.item?.uid || result?.name}`;
     case SEARCH_TYPES.FOLDER:
       return `${SEARCH_TYPES.FOLDER}:${collectionPath || result?.collectionUid || 'unknown'}:${itemPath || result?.item?.uid || result?.name}`;
     case SEARCH_TYPES.REQUEST:
@@ -132,6 +136,7 @@ export const getTypeLabel = (type) => {
     [SEARCH_TYPES.COLLECTION]: 'Collection',
     [SEARCH_TYPES.ENVIRONMENT]: 'Environment',
     [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: 'Global Environment',
+    [SEARCH_TYPES.API_SPEC]: 'API Spec',
     [SEARCH_TYPES.FOLDER]: 'Folder'
   };
 
@@ -267,4 +272,24 @@ export const searchGlobalEnvironments = (globalEnvironments = [], searchTerms = 
 
     return results;
   }, []);
+};
+
+export const filterApiSpecsByWorkspace = (apiSpecs = [], workspace = null) => {
+  if (!workspace) {
+    return [];
+  }
+
+  const workspaceApiSpecPaths = new Set(
+    (workspace.apiSpecs || [])
+      .filter((apiSpec) => apiSpec?.path)
+      .map((apiSpec) => normalizePath(apiSpec.path))
+  );
+
+  return apiSpecs.filter((apiSpec) => {
+    if (!apiSpec?.pathname) {
+      return false;
+    }
+
+    return workspaceApiSpecPaths.has(normalizePath(apiSpec.pathname));
+  });
 };

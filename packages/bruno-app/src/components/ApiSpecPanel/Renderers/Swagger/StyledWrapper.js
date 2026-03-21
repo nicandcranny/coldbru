@@ -867,6 +867,31 @@ const StyledWrapper = styled.div`
       }
     }
   }
+
+  .swagger-root.swagger-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .swagger-empty-state-copy {
+    max-width: 320px;
+    text-align: center;
+  }
+
+  .swagger-empty-state-title {
+    font-size: ${(props) => props.theme.font.size.base};
+    font-weight: 600;
+    color: ${(props) => props.theme.text};
+  }
+
+  .swagger-empty-state-description {
+    margin-top: 8px;
+    font-size: ${(props) => props.theme.font.size.sm};
+    color: ${(props) => props.theme.colors.text.muted};
+    line-height: 1.5;
+  }
 `;
 
 export default StyledWrapper;

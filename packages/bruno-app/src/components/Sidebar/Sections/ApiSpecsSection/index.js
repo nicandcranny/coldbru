@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useDispatch } from 'react-redux';
-import { IconFileCode, IconPlus } from '@tabler/icons';
+import { IconFileCode, IconPlus, IconSearch } from '@tabler/icons';
 
 import { openApiSpec } from 'providers/ReduxStore/slices/apiSpec';
 import MenuDropdown from 'ui/MenuDropdown';
@@ -13,6 +13,8 @@ import SidebarSection from 'components/Sidebar/SidebarSection';
 const ApiSpecsSection = ({ collapsible = true }) => {
   const dispatch = useDispatch();
   const [createApiSpecModalOpen, setCreateApiSpecModalOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchText, setSearchText] = useState('');
 
   const handleOpenApiSpec = () => {
     dispatch(openApiSpec()).catch((err) => {
@@ -42,6 +44,17 @@ const ApiSpecsSection = ({ collapsible = true }) => {
 
   const sectionActions = (
     <>
+      <ActionIcon
+        onClick={() => {
+          setShowSearch((value) => !value);
+          if (showSearch) {
+            setSearchText('');
+          }
+        }}
+        label="Search API specs"
+      >
+        <IconSearch size={14} stroke={1.5} aria-hidden="true" />
+      </ActionIcon>
       <MenuDropdown
         data-testid="api-specs-header-add-menu"
         items={addDropdownItems}
@@ -71,7 +84,7 @@ const ApiSpecsSection = ({ collapsible = true }) => {
         className="api-specs-section"
         collapsible={collapsible}
       >
-        <ApiSpecs />
+        <ApiSpecs showSearch={showSearch} searchText={searchText} setSearchText={setSearchText} />
       </SidebarSection>
     </>
   );

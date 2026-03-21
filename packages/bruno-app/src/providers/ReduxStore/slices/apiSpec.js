@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { find } from 'lodash';
 import toast from 'react-hot-toast';
+import { addTab, focusTab } from './tabs';
+import { setRequestTabView } from './requestTabView';
 
 const initialState = {
   apiSpecs: [],
@@ -76,6 +78,38 @@ export default apiSpecSlice.reducer;
 
 const findApiSpecByUid = (apiSpecs, uid) => {
   return find(apiSpecs, (apiSpec) => apiSpec.uid === uid);
+};
+
+const getApiSpecTabUid = (uid) => `api-spec:${uid}`;
+
+export const openApiSpecTab = ({ uid }) => (dispatch, getState) => {
+  const state = getState();
+  const apiSpec = findApiSpecByUid(state.apiSpec.apiSpecs, uid);
+  const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === state.workspaces.activeWorkspaceUid);
+  const scratchCollectionUid = activeWorkspace?.scratchCollectionUid;
+
+  if (!apiSpec || !scratchCollectionUid) {
+    return;
+  }
+
+  const tabUid = getApiSpecTabUid(uid);
+  const existingTab = state.tabs.tabs.find((tab) => tab.uid === tabUid);
+
+  dispatch(setActiveApiSpecUid({ uid }));
+  dispatch(setRequestTabView({ mode: 'all', collectionUid: null }));
+
+  if (existingTab) {
+    dispatch(focusTab({ uid: tabUid }));
+    return;
+  }
+
+  dispatch(addTab({
+    uid: tabUid,
+    collectionUid: scratchCollectionUid,
+    type: 'api-spec',
+    apiSpecUid: uid,
+    tabName: apiSpec.name
+  }));
 };
 
 export const openApiSpec = (workspacePath = null) => (dispatch, getState) => {

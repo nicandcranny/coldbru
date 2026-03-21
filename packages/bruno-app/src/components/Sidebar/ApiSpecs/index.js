@@ -6,12 +6,13 @@ import { openApiSpec } from 'providers/ReduxStore/slices/apiSpec';
 import ApiSpecItem from './ApiSpecItem';
 import StyledWrapper from './StyledWrapper';
 import toast from 'react-hot-toast';
+import CollectionSearch from 'components/Sidebar/Collections/CollectionSearch';
 
 const LinkStyle = styled.span`
   color: ${(props) => props.theme['text-link']};
 `;
 
-const ApiSpecs = () => {
+const ApiSpecs = ({ showSearch = false, searchText = '', setSearchText = () => {} }) => {
   const dispatch = useDispatch();
   const { theme } = useTheme();
   const allApiSpecs = useSelector((state) => state.apiSpec.apiSpecs);
@@ -28,8 +29,23 @@ const ApiSpecs = () => {
     return workspaceApiSpecs.map((ws) => {
       const loadedApiSpec = allApiSpecs.find((apiSpec) => apiSpec.pathname === ws.path);
       return loadedApiSpec;
-    }).filter(Boolean);
+    })
+      .filter(Boolean)
+      .sort((left, right) => (left?.name || '').localeCompare(right?.name || '', undefined, { sensitivity: 'base' }));
   }, [allApiSpecs, activeWorkspace, activeWorkspace?.apiSpecs]);
+
+  const filteredApiSpecs = React.useMemo(() => {
+    const query = searchText.trim().toLowerCase();
+    if (!query) {
+      return apiSpecs;
+    }
+
+    return apiSpecs.filter((apiSpec) => {
+      const name = apiSpec?.name?.toLowerCase() || '';
+      const pathname = apiSpec?.pathname?.toLowerCase() || '';
+      return name.includes(query) || pathname.includes(query);
+    });
+  }, [apiSpecs, searchText]);
 
   const handleOpenApiSpec = () => {
     dispatch(openApiSpec()).catch(
@@ -58,12 +74,21 @@ const ApiSpecs = () => {
 
   return (
     <StyledWrapper>
+      {showSearch ? (
+        <div className="api-specs-search">
+          <CollectionSearch searchText={searchText} setSearchText={setSearchText} />
+        </div>
+      ) : null}
       <div className="api-specs-list">
-        {apiSpecs && apiSpecs.length
-          ? apiSpecs.map((apiSpec) => {
+        {filteredApiSpecs && filteredApiSpecs.length
+          ? filteredApiSpecs.map((apiSpec) => {
               return <ApiSpecItem apiSpec={apiSpec} key={apiSpec.uid} />;
             })
-          : null}
+          : (
+              <div className="text-xs text-center placeholder py-4">
+                {apiSpecs.length ? 'No API specs found.' : 'No API Specs found.'}
+              </div>
+            )}
       </div>
     </StyledWrapper>
   );

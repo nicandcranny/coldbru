@@ -2,6 +2,7 @@ const { describe, it, expect } = require('@jest/globals');
 const { MATCH_TYPES, SEARCH_SCOPES, SEARCH_TYPES } = require('../constants');
 const {
   dedupeSearchResults,
+  filterApiSpecsByWorkspace,
   filterCollectionsByWorkspace,
   parseSearchQuery,
   searchCollectionEnvironments,
@@ -27,6 +28,17 @@ describe('global search query parsing', () => {
         hasRecognizedPrefix: false,
         normalizedQuery: 'foo:bar',
         searchTerms: ['foo:bar']
+      })
+    );
+  });
+
+  it('recognizes the spec prefix', () => {
+    expect(parseSearchQuery('spec:petstore')).toEqual(
+      expect.objectContaining({
+        scope: SEARCH_SCOPES.API_SPEC,
+        matchedPrefix: 'spec:',
+        normalizedQuery: 'petstore',
+        searchTerms: ['petstore']
       })
     );
   });
@@ -85,6 +97,22 @@ describe('global search workspace scoping', () => {
     expect(results).toEqual([
       expect.objectContaining({ uid: 'scratch-1' }),
       expect.objectContaining({ uid: 'col-1' })
+    ]);
+  });
+
+  it('filters API specs to the active workspace specs', () => {
+    const results = filterApiSpecsByWorkspace(
+      [
+        { uid: 'spec-1', pathname: '/workspace-a/specs/billing.yaml' },
+        { uid: 'spec-2', pathname: '/workspace-b/specs/catalog.yaml' }
+      ],
+      {
+        apiSpecs: [{ path: '/workspace-a/specs/billing.yaml' }]
+      }
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({ uid: 'spec-1' })
     ]);
   });
 });
@@ -201,5 +229,26 @@ describe('global search result deduplication', () => {
     }));
 
     expect(dedupedResults).toEqual([expect.objectContaining({ matchType: MATCH_TYPES.REQUEST })]);
+  });
+
+  it('deduplicates API spec results by pathname identity', () => {
+    const duplicatedResults = [
+      {
+        type: SEARCH_TYPES.API_SPEC,
+        item: { uid: 'spec-1', pathname: '/specs/petstore.yaml' },
+        name: 'Petstore',
+        path: '/specs/petstore.yaml',
+        matchType: MATCH_TYPES.API_SPEC
+      },
+      {
+        type: SEARCH_TYPES.API_SPEC,
+        item: { uid: 'spec-2', pathname: '/specs/petstore.yaml' },
+        name: 'Petstore copy',
+        path: '/specs/petstore.yaml',
+        matchType: MATCH_TYPES.PATH
+      }
+    ];
+
+    expect(dedupeSearchResults(duplicatedResults)).toEqual([duplicatedResults[0]]);
   });
 });

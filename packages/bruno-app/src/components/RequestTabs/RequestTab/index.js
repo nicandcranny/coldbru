@@ -225,7 +225,8 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
     'workspaceEnvironments',
     'openapi-sync',
     'openapi-spec',
-    'git-diff'
+    'git-diff',
+    'api-spec'
   ];
 
   const collectionEnvironmentDraft = collection?.environmentsDraft;
@@ -427,7 +428,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
         ) : tab.type === 'workspaceEnvironments' ? (
           <SpecialTab handleCloseClick={null} type={tab.type} />
         ) : (
-          <SpecialTab handleCloseClick={handleCloseClick} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} />
+          <SpecialTab handleCloseClick={handleCloseClick} handleDoubleClick={() => dispatch(makeTabPermanent({ uid: tab.uid }))} type={tab.type} tabName={tab.tabName} />
         )}
       </StyledWrapper>
     );

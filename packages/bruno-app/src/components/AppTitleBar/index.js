@@ -9,6 +9,7 @@ import { closeConsole, openConsole } from 'providers/ReduxStore/slices/logs';
 import { openWorkspaceDialog, switchWorkspace } from 'providers/ReduxStore/slices/workspaces/actions';
 import { sortWorkspaces, toggleWorkspacePin } from 'utils/workspaces';
 import { focusTab } from 'providers/ReduxStore/slices/tabs';
+import { setRequestTabView } from 'providers/ReduxStore/slices/requestTabView';
 
 import Bruno from 'components/Bruno';
 import MenuDropdown from 'ui/MenuDropdown';
@@ -132,6 +133,7 @@ const AppTitleBar = () => {
   const handleHomeClick = () => {
     const scratchCollectionUid = activeWorkspace?.scratchCollectionUid;
     if (scratchCollectionUid) {
+      dispatch(setRequestTabView({ mode: 'home', collectionUid: null }));
       dispatch(focusTab({ uid: `${scratchCollectionUid}-overview` }));
     }
   };

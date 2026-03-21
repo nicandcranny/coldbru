@@ -13,6 +13,7 @@ import { flattenItems, isItemARequest, isItemAFolder, findParentItemInCollection
 import { addTab, focusTab, updateTab } from 'providers/ReduxStore/slices/tabs';
 import { toggleCollectionItem, toggleCollection } from 'providers/ReduxStore/slices/collections';
 import { mountCollection, selectEnvironment } from 'providers/ReduxStore/slices/collections/actions';
+import { openApiSpecTab } from 'providers/ReduxStore/slices/apiSpec';
 import { getDefaultRequestPaneTab } from 'utils/collections';
 import { openSidebarSection } from 'utils/sidebar';
 import {
@@ -20,6 +21,7 @@ import {
   isValidQuery,
   highlightText,
   filterCollectionsByWorkspace,
+  filterApiSpecsByWorkspace,
   sortResults,
   dedupeSearchResults,
   getTypeLabel,
@@ -46,13 +48,14 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
 
   const collections = useSelector((state) => state.collections.collections);
+  const apiSpecs = useSelector((state) => state.apiSpec.apiSpecs);
   const globalEnvironments = useSelector((state) => state.globalEnvironments.globalEnvironments);
   const { workspaces, activeWorkspaceUid } = useSelector((state) => state.workspaces);
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
-  const activeTab = tabs.find((tab) => tab.uid === activeTabUid);
   const activeWorkspace = workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
   const scopedCollections = filterCollectionsByWorkspace(collections, activeWorkspace);
+  const scopedApiSpecs = filterApiSpecsByWorkspace(apiSpecs, activeWorkspace);
 
   const createCollectionResults = useCallback(() => {
     return scopedCollections.map((collection) => ({
@@ -106,6 +109,16 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
     ];
   }, [scopedCollections, globalEnvironments]);
 
+  const createApiSpecResults = useCallback(() => {
+    return scopedApiSpecs.map((apiSpec) => ({
+      type: SEARCH_TYPES.API_SPEC,
+      item: apiSpec,
+      name: apiSpec.name,
+      path: apiSpec.pathname,
+      matchType: MATCH_TYPES.API_SPEC
+    }));
+  }, [scopedApiSpecs]);
+
   const searchInCollections = useCallback((searchTerms, enablePathMatch, scope) => {
     const scopedResults = [];
 
@@ -119,6 +132,10 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
 
     if (scope === SEARCH_SCOPES.ENVIRONMENT && !searchTerms.length) {
       return createEnvironmentResults();
+    }
+
+    if (scope === SEARCH_SCOPES.API_SPEC && !searchTerms.length) {
+      return createApiSpecResults();
     }
 
     if (!searchTerms.length) {
@@ -202,13 +219,36 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
       return scopedResults;
     }
 
+    if (scope === SEARCH_SCOPES.ALL || scope === SEARCH_SCOPES.API_SPEC) {
+      scopedApiSpecs.forEach((apiSpec) => {
+        const name = apiSpec?.name?.toLowerCase() || '';
+        const pathname = apiSpec?.pathname?.toLowerCase() || '';
+        const nameMatch = searchTerms.every((term) => name.includes(term));
+        const pathMatch = searchTerms.every((term) => pathname.includes(term));
+
+        if (nameMatch || pathMatch) {
+          scopedResults.push({
+            type: SEARCH_TYPES.API_SPEC,
+            item: apiSpec,
+            name: apiSpec.name,
+            path: apiSpec.pathname,
+            matchType: nameMatch ? MATCH_TYPES.API_SPEC : MATCH_TYPES.PATH
+          });
+        }
+      });
+    }
+
+    if (scope === SEARCH_SCOPES.API_SPEC) {
+      return scopedResults;
+    }
+
     if (scope === SEARCH_SCOPES.ALL || scope === SEARCH_SCOPES.ENVIRONMENT) {
       scopedResults.push(...searchCollectionEnvironments(scopedCollections, searchTerms));
       scopedResults.push(...searchGlobalEnvironments(globalEnvironments, searchTerms));
     }
 
     return scopedResults;
-  }, [scopedCollections, globalEnvironments, createCollectionResults, createEnvironmentResults, createRequestResults]);
+  }, [scopedCollections, scopedApiSpecs, globalEnvironments, createCollectionResults, createEnvironmentResults, createRequestResults, createApiSpecResults]);
 
   const performSearch = useCallback((searchQuery) => {
     const { scope, normalizedQuery, searchTerms } = parseSearchQuery(searchQuery);
@@ -343,6 +383,13 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
         }));
       }
 
+      onClose();
+      return;
+    }
+
+    if (result.type === SEARCH_TYPES.API_SPEC) {
+      dispatch(openApiSpecTab({ uid: result.item.uid }));
+      openSidebarSectionAfterMount('api-specs');
       onClose();
       return;
     }
@@ -500,6 +547,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
       [SEARCH_TYPES.COLLECTION]: IconBox,
       [SEARCH_TYPES.ENVIRONMENT]: IconDatabase,
       [SEARCH_TYPES.GLOBAL_ENVIRONMENT]: IconWorld,
+      [SEARCH_TYPES.API_SPEC]: IconFileText,
       [SEARCH_TYPES.FOLDER]: IconFolder,
       [SEARCH_TYPES.REQUEST]: IconFileText
     };
@@ -525,7 +573,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
         <div className="command-k-modal" onClick={(e) => e.stopPropagation()}>
           <h1 id="search-modal-title" className="sr-only">Global Search</h1>
           <p id="search-modal-description" className="sr-only">
-            Search through collections, environments, requests, and folders. Use arrow keys to navigate results and Enter to select.
+            Search through collections, API specs, environments, requests, and folders. Use arrow keys to navigate results and Enter to select.
           </p>
           <div aria-live="polite" aria-atomic="true" className="sr-only">
             {results.length > 0 && query
@@ -545,7 +593,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder={matchedPrefix ? 'Type to refine this scope...' : 'Try col:, env:, or req:'}
+                placeholder={matchedPrefix ? 'Type to refine this scope...' : 'Try col:, spec:, env:, or req:'}
                 value={activeSearchText}
                 onChange={handleQueryChange}
                 onKeyDown={handleKeyNavigation}
@@ -554,7 +602,7 @@ const GlobalSearchModal = ({ isOpen, onClose }) => {
                 autoCorrect="off"
                 autoCapitalize="off"
                 spellCheck="false"
-                aria-label="Search collections, environments, requests, or folders"
+                aria-label="Search collections, API specs, environments, requests, or folders"
                 aria-expanded={results.length > 0}
                 aria-controls="search-results"
                 aria-activedescendant={results.length > 0 ? `search-result-${selectedIndex}` : undefined}

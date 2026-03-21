@@ -204,6 +204,7 @@ Add `All` group to the active tabs list to see all active tabs inasefasef one pl
   - `env:` for environment variable
   - `col:` for collections
   - `req:` for requests
+  - `spec:` for API specs
 - Global search now directly jumps and auto-scroll to the selected item on the left sidebar
 
 ### Global Environment as a Global Settings
@@ -224,10 +225,8 @@ Improve request search on the sidebar to allow search for collection names, fold
 
 ## Future Improvements
 
-- Favorite feature for collections (stay on top) on Sort A-Z (default) and Sort Z-A (For custom sort, leave as is)
 - Instant action (like cmd+shift+p) - for git, etc.
-- API spec into tabs + on the viewer add explanation that this supports openapi v3. Add search button too.
+- API spec into tabs + on the viewer add explanation that this supports openapi v3. Add search button too. + add to global search
 - Option to choose between autoreveal file or button to focus
-- Remove default workspace. On the app start, always ask to open or create a new workspace in a folder
 - Add git init if it's not inside a git on the source control action bar
 - Add open file feature in the Git 

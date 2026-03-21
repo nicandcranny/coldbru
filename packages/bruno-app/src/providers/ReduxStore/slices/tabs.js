@@ -19,7 +19,23 @@ export const tabsSlice = createSlice({
   initialState,
   reducers: {
     addTab: (state, action) => {
-      const { uid, collectionUid, type, requestPaneTab, preview, exampleUid, itemUid, environmentUid, tabName, filePath, changeType, from, to, gitScopePath } = action.payload;
+      const {
+        uid,
+        collectionUid,
+        type,
+        requestPaneTab,
+        preview,
+        exampleUid,
+        itemUid,
+        environmentUid,
+        tabName,
+        filePath,
+        changeType,
+        from,
+        to,
+        gitScopePath,
+        apiSpecUid
+      } = action.payload;
 
       const nonReplaceableTabTypes = [
         'variables',
@@ -77,6 +93,7 @@ export const tabsSlice = createSlice({
           ...(from ? { from } : {}),
           ...(to ? { to } : {}),
           ...(gitScopePath ? { gitScopePath } : {}),
+          ...(apiSpecUid ? { apiSpecUid } : {}),
           ...(uid ? { folderUid: uid } : {}),
           ...(exampleUid ? { exampleUid } : {}),
           ...(itemUid ? { itemUid } : {})
@@ -108,6 +125,7 @@ export const tabsSlice = createSlice({
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
         ...(gitScopePath ? { gitScopePath } : {}),
+        ...(apiSpecUid ? { apiSpecUid } : {}),
         ...(exampleUid ? { exampleUid } : {}),
         ...(itemUid ? { itemUid } : {})
       });
