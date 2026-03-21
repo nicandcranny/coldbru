@@ -229,7 +229,7 @@ Improve request search on the sidebar to allow search for collection names, fold
 - Instant action (like cmd+shift+p) - for git, etc.
 - API spec into tabs + on the viewer add explanation that this supports openapi v3. Add search button too.
 - Option to choose between autoreveal file or button to focus
-- Bugfix: when opening another collection tab group, the tab group doesn't change
+- Bugfix: when opening another collection tab group, the tab group doesn't change ⏰
 - Remove default workspace. On the app start, always ask to open or create a new workspace in a folder
 - Add git init if it's not inside a git on the source control action bar
 - Add open file feature in the Git 

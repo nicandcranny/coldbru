@@ -5,46 +5,56 @@ import { getWorkspaceCollectionUids, selectActiveWorkspace } from '../../../../s
 
 const requestTabViewMiddleware = createListenerMiddleware();
 
-const shouldSwitchHomeViewToAll = (state, tabUid) => {
-  if (state.requestTabView?.mode !== 'home' || !tabUid) {
-    return false;
+const getWorkspaceTabForSwitch = (state, tabUid) => {
+  if (!tabUid) {
+    return null;
   }
 
   const workspace = selectActiveWorkspace(state);
   const scratchCollectionUid = workspace?.scratchCollectionUid;
   if (!workspace || !scratchCollectionUid) {
-    return false;
+    return null;
   }
 
   const tab = state.tabs?.tabs?.find((item) => item.uid === tabUid);
   if (!tab?.collectionUid || tab.collectionUid === scratchCollectionUid) {
-    return false;
+    return null;
   }
 
   const workspaceCollectionUids = getWorkspaceCollectionUids(state, workspace);
-  return workspaceCollectionUids.has(tab.collectionUid);
+  return workspaceCollectionUids.has(tab.collectionUid) ? { tab } : null;
 };
 
-const maybeSwitchHomeViewToAll = (listenerApi, tabUid) => {
+const maybeSyncRequestTabViewWithActiveTab = (listenerApi, tabUid) => {
   const state = listenerApi.getState();
-  if (!shouldSwitchHomeViewToAll(state, tabUid)) {
+  const tabState = getWorkspaceTabForSwitch(state, tabUid);
+  if (!tabState) {
     return;
   }
 
-  listenerApi.dispatch(setRequestTabView({ mode: 'all', collectionUid: null }));
+  const requestTabView = state.requestTabView || { mode: 'home', collectionUid: null };
+
+  if (requestTabView.mode === 'home') {
+    listenerApi.dispatch(setRequestTabView({ mode: 'all', collectionUid: null }));
+    return;
+  }
+
+  if (requestTabView.mode === 'collection' && requestTabView.collectionUid !== tabState.tab.collectionUid) {
+    listenerApi.dispatch(setRequestTabView({ mode: 'collection', collectionUid: tabState.tab.collectionUid }));
+  }
 };
 
 requestTabViewMiddleware.startListening({
   actionCreator: addTab,
   effect: (action, listenerApi) => {
-    maybeSwitchHomeViewToAll(listenerApi, action.payload?.uid);
+    maybeSyncRequestTabViewWithActiveTab(listenerApi, action.payload?.uid);
   }
 });
 
 requestTabViewMiddleware.startListening({
   actionCreator: focusTab,
   effect: (action, listenerApi) => {
-    maybeSwitchHomeViewToAll(listenerApi, action.payload?.uid);
+    maybeSyncRequestTabViewWithActiveTab(listenerApi, action.payload?.uid);
   }
 });
 
