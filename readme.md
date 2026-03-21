@@ -195,7 +195,7 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 ### All Section
 
-Add `All` group to the active tabs list to see all active tabs in one place.
+Add `All` group to the active tabs list to see all active tabs inasefasef one place.
 
 ### Global Search Improvement
 
@@ -225,8 +225,11 @@ Improve request search on the sidebar to allow search for collection names, fold
 
 ## Future Improvements
 
-- Favorite feature for collections (stay on top) on 
+- Favorite feature for collections (stay on top) on Sort A-Z (default) and Sort Z-A (For custom sort, leave as is)
 - Instant action (like cmd+shift+p) - for git, etc.
-- API spec into tabs
+- API spec into tabs + on the viewer add explanation that this supports openapi v3. Add search button too.
 - Option to choose between autoreveal file or button to focus
-- Add revert button to Git
+- Bugfix: when opening another collection tab group, the tab group doesn't change
+- Remove default workspace. On the app start, always ask to open or create a new workspace in a folder
+- Add git init if it's not inside a git on the source control action bar
+- Add open file feature in the Git 

@@ -134,6 +134,24 @@ export const unstageGitFiles = (collectionUid, filePaths) => async (dispatch, ge
   });
 };
 
+export const revertGitFiles = (collectionUid, filePaths) => async (dispatch, getState) => {
+  if (!filePaths?.length) {
+    return;
+  }
+
+  return runGitOperation({
+    dispatch,
+    getState,
+    collectionUid,
+    operation: 'revert',
+    successMessage: filePaths.length === 1 ? 'Changes reverted' : 'All selected changes reverted',
+    action: (target) => window.ipcRenderer.invoke('renderer:revert-git-files', {
+      collectionPath: target.path,
+      filePaths
+    })
+  });
+};
+
 export const commitGitChanges = (collectionUid, message) => async (dispatch, getState) => {
   const trimmedMessage = message?.trim();
   if (!trimmedMessage) {

@@ -1,14 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { IconRefresh, IconGitCommit, IconMinus, IconPlus } from '@tabler/icons';
+import { IconRefresh, IconGitCommit, IconMinus, IconPlus, IconArrowBackUp } from '@tabler/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
 import {
   commitGitChanges,
   refreshCollectionGitStatus,
+  revertGitFiles,
   stageGitFiles,
   syncGitChanges,
   unstageGitFiles
 } from 'providers/ReduxStore/slices/git';
+import Modal from 'components/Modal';
 import { getGitTarget } from 'utils/git/target';
 import useGitStatusMonitor from 'components/Git/useGitStatusMonitor';
 import StyledWrapper from './StyledWrapper';
@@ -37,7 +39,7 @@ const getChangeStatus = (change) => {
   return primaryStatus || change.fileIndex || change.working_dir || 'M';
 };
 
-const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged, onToggleAll, loading, showToggleAll = true }) => {
+const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, onRequestRevert, staged, onToggleAll, onRequestRevertAll, loading, showToggleAll = true, showRevert = false }) => {
   if (!changes?.length) {
     return null;
   }
@@ -51,6 +53,18 @@ const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged, onTogg
         </div>
         {showToggleAll ? (
           <div className="change-group-actions">
+            {showRevert ? (
+              <button
+                type="button"
+                className="change-icon-button visible"
+                onClick={() => onRequestRevertAll(changes)}
+                disabled={loading}
+                aria-label="Revert all changes"
+                title="Revert All Changes"
+              >
+                <IconArrowBackUp size={14} strokeWidth={1.7} />
+              </button>
+            ) : null}
             <button
               type="button"
               className="change-icon-button visible"
@@ -81,6 +95,18 @@ const ChangeGroup = ({ title, changes, onToggleStage, onOpenDiff, staged, onTogg
             </button>
 
             <div className="change-actions">
+              {showRevert ? (
+                <button
+                  type="button"
+                  className="change-icon-button"
+                  onClick={() => onRequestRevert(change)}
+                  disabled={change.type === 'conflicted' || loading}
+                  aria-label={`Revert ${change.path}`}
+                  title="Revert"
+                >
+                  <IconArrowBackUp size={14} strokeWidth={1.7} />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="change-icon-button"
@@ -116,6 +142,7 @@ const SourceControlSection = () => {
   const gitTarget = useSelector((state) => getGitTarget(state, activeTab?.collectionUid));
   const gitState = useSelector((state) => gitTarget ? state.git.collectionStates[gitTarget.scopeId] : null);
   const [commitMessage, setCommitMessage] = useState('');
+  const [revertConfirmation, setRevertConfirmation] = useState(null);
 
   useGitStatusMonitor(activeTab?.collectionUid, {
     enabled: Boolean(gitTarget?.path)
@@ -192,6 +219,31 @@ const SourceControlSection = () => {
         preview: true
       })
     );
+  };
+
+  const handleRequestRevert = (changes) => {
+    if (!changes?.length) {
+      return;
+    }
+
+    const isSingleFile = changes.length === 1;
+    setRevertConfirmation({
+      filePaths: changes.map((change) => change.path),
+      title: isSingleFile ? 'Revert File' : 'Revert Changes',
+      message: isSingleFile
+        ? `Are you sure you want to revert "${getFilename(changes[0].path)}"?`
+        : `Are you sure you want to revert ${changes.length} unstaged file(s)?`
+    });
+  };
+
+  const confirmRevert = async () => {
+    if (!revertConfirmation?.filePaths?.length || !activeTab?.collectionUid) {
+      setRevertConfirmation(null);
+      return;
+    }
+
+    await dispatch(revertGitFiles(activeTab.collectionUid, revertConfirmation.filePaths));
+    setRevertConfirmation(null);
   };
 
   const handlePrimaryAction = async () => {
@@ -300,6 +352,9 @@ const SourceControlSection = () => {
               onToggleAll={(changes) => handleToggleAll(changes, false)}
               onToggleStage={handleToggleStage}
               onOpenDiff={handleOpenDiff}
+              onRequestRevert={(change) => handleRequestRevert([change])}
+              onRequestRevertAll={handleRequestRevert}
+              showRevert
             />
             <ChangeGroup
               title="Merge Changes"
@@ -318,6 +373,20 @@ const SourceControlSection = () => {
           </>
         )}
       </div>
+
+      {revertConfirmation ? (
+        <Modal
+          size="sm"
+          title={revertConfirmation.title}
+          confirmText="Yes"
+          cancelText="No"
+          handleCancel={() => setRevertConfirmation(null)}
+          handleConfirm={confirmRevert}
+          confirmButtonColor="danger"
+        >
+          <div>{revertConfirmation.message}</div>
+        </Modal>
+      ) : null}
     </StyledWrapper>
   );
 };

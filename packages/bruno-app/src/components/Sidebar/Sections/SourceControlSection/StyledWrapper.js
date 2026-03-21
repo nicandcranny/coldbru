@@ -157,7 +157,7 @@ const StyledWrapper = styled.div`
   .change-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding-left: 8px;
   }
 

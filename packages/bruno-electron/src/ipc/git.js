@@ -3,6 +3,7 @@ const path = require('path');
 const {
   cloneGitRepository,
   commitChanges,
+  discardChanges,
   fetchRemotes,
   getAheadBehindCount,
   getChangedFilesInCollectionGit,
@@ -113,6 +114,16 @@ const registerGitIpc = (mainWindow) => {
 
     const absolutePaths = filePaths.map((filePath) => path.join(gitRootPath, filePath));
     return unstageChanges(gitRootPath, absolutePaths);
+  });
+
+  ipcMain.handle('renderer:revert-git-files', async (event, { collectionPath, filePaths }) => {
+    const gitRootPath = getCollectionGitRootPath(collectionPath);
+    if (!gitRootPath) {
+      throw new Error('Not a git repository');
+    }
+
+    const absolutePaths = filePaths.map((filePath) => path.join(gitRootPath, filePath));
+    return discardChanges(gitRootPath, absolutePaths);
   });
 
   ipcMain.handle('renderer:commit-git-changes', async (event, { collectionPath, message }) => {

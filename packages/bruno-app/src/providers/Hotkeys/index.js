@@ -55,6 +55,28 @@ const BOUND_ACTIONS = [
   'renameItem'
 ];
 
+function hasActiveCopySelection() {
+  const activeElement = document.activeElement;
+  const selection = window.getSelection?.();
+
+  if (activeElement) {
+    const isTextInput = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
+    if (isTextInput) {
+      const start = activeElement.selectionStart ?? 0;
+      const end = activeElement.selectionEnd ?? 0;
+      if (end > start) {
+        return true;
+      }
+    }
+
+    if (activeElement.isContentEditable && selection && !selection.isCollapsed) {
+      return true;
+    }
+  }
+
+  return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0);
+}
+
 /**
  * Bind a single hotkey action using Mousetrap.
  * Reads from merged defaults + user preferences via getKeyBindingsForActionAllOS.
@@ -64,6 +86,10 @@ function bindHotkey(action, handler, userKeyBindings) {
   if (!combos?.length) return;
 
   Mousetrap.bind([...combos], (e) => {
+    if (action === 'copyItem' && hasActiveCopySelection()) {
+      return true;
+    }
+
     e?.preventDefault?.();
     handler(e);
     return false;
