@@ -9,8 +9,6 @@ const {
   getWorkspaceUid
 } = require('../utils/workspace-config');
 
-const DEFAULT_WORKSPACE_NAME = 'My Workspace';
-
 const normalizeWorkspaceConfig = (config) => {
   return {
     ...config,
@@ -19,17 +17,6 @@ const normalizeWorkspaceConfig = (config) => {
     collections: config.collections || [],
     apiSpecs: config.specs || []
   };
-};
-
-const prepareWorkspaceConfigForClient = (workspaceConfig, isDefault) => {
-  if (isDefault) {
-    return {
-      ...workspaceConfig,
-      name: DEFAULT_WORKSPACE_NAME,
-      type: 'default'
-    };
-  }
-  return workspaceConfig;
 };
 
 const openApiSpecDialog = async (win, watcher, options = {}) => {
@@ -77,9 +64,7 @@ const openApiSpec = async (win, watcher, apiSpecPath, options = {}) => {
           const updatedConfig = readWorkspaceConfig(options.workspacePath);
           const normalizedConfig = normalizeWorkspaceConfig(updatedConfig);
           const workspaceUid = getWorkspaceUid(options.workspacePath);
-          const isDefault = workspaceUid === 'default';
-          const configForClient = prepareWorkspaceConfigForClient(normalizedConfig, isDefault);
-          win.webContents.send('main:workspace-config-updated', options.workspacePath, workspaceUid, configForClient);
+          win.webContents.send('main:workspace-config-updated', options.workspacePath, workspaceUid, normalizedConfig);
         }
       }
     }

@@ -17,11 +17,6 @@ const CloseWorkspace = ({ workspaceUid, onClose }) => {
         onClose();
         return;
       }
-      if (workspace.type === 'default') {
-        toast.error('Cannot close the default workspace');
-        onClose();
-        return;
-      }
 
       await dispatch(closeWorkspaceAction(workspace.uid));
       toast.success('Workspace closed');

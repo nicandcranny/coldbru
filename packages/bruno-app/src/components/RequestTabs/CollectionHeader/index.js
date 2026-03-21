@@ -346,10 +346,6 @@ const CollectionHeader = ({ collection, viewMode }) => {
 
   const handleCloseWorkspaceClick = () => {
     workspaceActionsRef.current?.hide();
-    if (currentWorkspace?.type === 'default') {
-      toast.error('Cannot close the default workspace');
-      return;
-    }
     setCloseWorkspaceModalOpen(true);
   };
 
@@ -432,7 +428,6 @@ const CollectionHeader = ({ collection, viewMode }) => {
 
   const showWorkspaceActions = isHomeView
     && currentWorkspace
-    && currentWorkspace.type !== 'default'
     && !isRenamingWorkspace;
 
   return (

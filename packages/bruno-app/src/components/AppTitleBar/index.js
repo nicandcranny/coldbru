@@ -6,10 +6,9 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { savePreferences, showManageWorkspacePage, toggleSidebarCollapse } from 'providers/ReduxStore/slices/app';
 import { closeConsole, openConsole } from 'providers/ReduxStore/slices/logs';
-import { createWorkspaceWithUniqueName, openWorkspaceDialog, switchWorkspace } from 'providers/ReduxStore/slices/workspaces/actions';
+import { openWorkspaceDialog, switchWorkspace } from 'providers/ReduxStore/slices/workspaces/actions';
 import { sortWorkspaces, toggleWorkspacePin } from 'utils/workspaces';
 import { focusTab } from 'providers/ReduxStore/slices/tabs';
-import get from 'lodash/get';
 
 import Bruno from 'components/Bruno';
 import MenuDropdown from 'ui/MenuDropdown';
@@ -151,20 +150,9 @@ const AppTitleBar = () => {
     }
   };
 
-  const handleCreateWorkspace = useCallback(async () => {
-    const defaultLocation = get(preferences, 'general.defaultLocation', '');
-    if (!defaultLocation) {
-      setCreateWorkspaceModalOpen(true);
-      return;
-    }
-
-    try {
-      await dispatch(createWorkspaceWithUniqueName(defaultLocation));
-      toast.success('Workspace created!');
-    } catch (error) {
-      toast.error(error?.message || 'Failed to create workspace');
-    }
-  }, [preferences, dispatch]);
+  const handleCreateWorkspace = useCallback(() => {
+    setCreateWorkspaceModalOpen(true);
+  }, []);
 
   const handleManageWorkspaces = () => {
     dispatch(showManageWorkspacePage());
@@ -206,16 +194,14 @@ const AppTitleBar = () => {
         className: `workspace-item ${isActive ? 'active' : ''}`,
         rightSection: (
           <div className="workspace-actions">
-            {workspace.type !== 'default' && (
-              <ActionIcon
-                className={`pin-btn ${isPinned ? 'pinned' : ''}`}
-                onClick={(e) => handlePinWorkspace(workspace.uid, e)}
-                label={isPinned ? 'Unpin workspace' : 'Pin workspace'}
-                size="sm"
-              >
-                {isPinned ? <IconPinned size={14} stroke={1.5} /> : <IconPin size={14} stroke={1.5} />}
-              </ActionIcon>
-            )}
+            <ActionIcon
+              className={`pin-btn ${isPinned ? 'pinned' : ''}`}
+              onClick={(e) => handlePinWorkspace(workspace.uid, e)}
+              label={isPinned ? 'Unpin workspace' : 'Pin workspace'}
+              size="sm"
+            >
+              {isPinned ? <IconPinned size={14} stroke={1.5} /> : <IconPin size={14} stroke={1.5} />}
+            </ActionIcon>
             {isActive && <IconCheck size={16} stroke={1.5} className="check-icon" />}
           </div>
         )

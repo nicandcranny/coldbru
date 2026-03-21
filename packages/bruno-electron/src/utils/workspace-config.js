@@ -555,11 +555,6 @@ const removeApiSpecFromWorkspace = async (workspacePath, apiSpecPath) => {
 };
 
 const getWorkspaceUid = (workspacePath) => {
-  const { defaultWorkspaceManager } = require('../store/default-workspace');
-  const defaultWorkspacePath = defaultWorkspaceManager.getDefaultWorkspacePath();
-  if (defaultWorkspacePath && path.normalize(workspacePath) === path.normalize(defaultWorkspacePath)) {
-    return defaultWorkspaceManager.getDefaultWorkspaceUid();
-  }
   return generateUidBasedOnHash(workspacePath);
 };
 

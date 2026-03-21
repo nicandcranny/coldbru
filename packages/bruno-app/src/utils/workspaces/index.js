@@ -5,9 +5,8 @@ export const sortWorkspaces = (workspaces, preferences) => {
   const pinnedOrder = preferences?.workspaces?.pinnedOrder || [];
   const unpinnedOrder = preferences?.workspaces?.unpinnedOrder || [];
 
-  const defaultWs = workspaces.find((w) => w.type === 'default');
-  const pinnedWs = workspaces.filter((w) => w.type !== 'default' && pinnedUids.includes(w.uid));
-  const unpinnedWs = workspaces.filter((w) => w.type !== 'default' && !pinnedUids.includes(w.uid));
+  const pinnedWs = workspaces.filter((w) => pinnedUids.includes(w.uid));
+  const unpinnedWs = workspaces.filter((w) => !pinnedUids.includes(w.uid));
 
   const sortedPinned = [...pinnedWs].sort((a, b) => {
     const aIndex = pinnedOrder.indexOf(a.uid);
@@ -35,9 +34,7 @@ export const sortWorkspaces = (workspaces, preferences) => {
     return (a.name || '').localeCompare(b.name || '');
   });
 
-  // Combine: default -> pinned -> unpinned
   return [
-    ...(defaultWs ? [defaultWs] : []),
     ...sortedPinned,
     ...sortedUnpinned
   ];

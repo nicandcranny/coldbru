@@ -17,7 +17,6 @@ import { updateGlobalEnvironments } from '../global-environments';
 import { addTab, focusTab } from '../tabs';
 import { setRequestTabView } from '../requestTabView';
 import { normalizePath } from 'utils/common/path';
-import { sanitizeName } from 'utils/common/regex';
 import { getOverviewTabResult, getWorkspaceCollectionUids } from '../../../../selectors/requestTabView';
 import toast from 'react-hot-toast';
 
@@ -52,21 +51,6 @@ const transformCollection = async (collection, type) => {
     default:
       throw new Error(`Unsupported collection type: ${type}`);
   }
-};
-
-/**
- * Creates a workspace with a unique name under the given location
- */
-export const createWorkspaceWithUniqueName = (location) => {
-  return async (dispatch) => {
-    const name = await ipcRenderer?.invoke('renderer:find-unique-folder-name', 'Untitled Workspace', location) || 'Untitled Workspace';
-    const folderName = sanitizeName(name);
-    const result = await dispatch(createWorkspaceAction(name, folderName, location));
-    if (result?.workspaceUid) {
-      dispatch(updateWorkspace({ uid: result.workspaceUid, isNewlyCreated: true }));
-    }
-    return result;
-  };
 };
 
 export const createWorkspaceAction = (workspaceName, workspaceFolderName, workspaceLocation) => {
@@ -456,11 +440,11 @@ export const workspaceOpenedEvent = (workspacePath, workspaceUid, workspaceConfi
     } catch (error) {
     }
 
-    // If this is the default workspace or no workspace is active yet, switch to it
     const state = getState();
     const activeWorkspaceUid = state.workspaces.activeWorkspaceUid;
+    const activeWorkspace = state.workspaces.workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
 
-    if (!activeWorkspaceUid || workspaceConfig.type === 'default') {
+    if (!activeWorkspaceUid || !activeWorkspace) {
       dispatch(switchWorkspace(workspaceUid));
     }
   };
@@ -613,15 +597,25 @@ export const renameWorkspaceAction = (workspaceUid, newName) => {
 export const closeWorkspaceAction = (workspaceUid) => {
   return async (dispatch, getState) => {
     try {
-      const { workspaces } = getState().workspaces;
+      const { workspaces, activeWorkspaceUid } = getState().workspaces;
       const workspace = workspaces.find((w) => w.uid === workspaceUid);
 
       if (!workspace) {
         throw new Error('Workspace not found');
       }
 
+      const fallbackWorkspace = workspaces.find((w) => w.uid !== workspaceUid) || null;
+
       await ipcRenderer.invoke('renderer:close-workspace', workspace.pathname);
       dispatch(removeWorkspace(workspaceUid));
+
+      if (activeWorkspaceUid === workspaceUid) {
+        if (fallbackWorkspace) {
+          await dispatch(switchWorkspace(fallbackWorkspace.uid));
+        } else {
+          dispatch(showHomePage());
+        }
+      }
     } catch (error) {
       toast.error(error.message || 'Failed to close workspace');
       throw error;

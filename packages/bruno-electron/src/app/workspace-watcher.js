@@ -12,8 +12,6 @@ const dotEnvWatcher = require('./dotenv-watcher');
 
 const environmentSecretsStore = new EnvironmentSecretsStore();
 
-const DEFAULT_WORKSPACE_NAME = 'My Workspace';
-
 const envHasSecrets = (environment) => {
   const secrets = _.filter(environment.variables, (v) => v.secret === true);
   return secrets && secrets.length > 0;
@@ -47,13 +45,8 @@ const handleWorkspaceFileChange = (win, workspacePath) => {
     }
 
     const workspaceUid = getWorkspaceUid(workspacePath);
-    const isDefault = workspaceUid === 'default';
 
-    win.webContents.send('main:workspace-config-updated', workspacePath, workspaceUid, {
-      ...workspaceConfig,
-      name: isDefault ? DEFAULT_WORKSPACE_NAME : workspaceConfig.name,
-      type: isDefault ? 'default' : workspaceConfig.type
-    });
+    win.webContents.send('main:workspace-config-updated', workspacePath, workspaceUid, workspaceConfig);
   } catch (error) {
     console.error('Error handling workspace file change:', error);
   }

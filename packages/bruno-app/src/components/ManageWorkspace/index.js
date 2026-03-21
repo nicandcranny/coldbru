@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { IconArrowLeft, IconPlus, IconFolder, IconLock, IconDots, IconCategory, IconLogin } from '@tabler/icons';
+import { IconArrowLeft, IconPlus, IconFolder, IconDots, IconCategory, IconLogin } from '@tabler/icons';
 import toast from 'react-hot-toast';
 
-import get from 'lodash/get';
 import { showHomePage } from 'providers/ReduxStore/slices/app';
-import { createWorkspaceWithUniqueName, switchWorkspace } from 'providers/ReduxStore/slices/workspaces/actions';
+import { switchWorkspace } from 'providers/ReduxStore/slices/workspaces/actions';
 import { showInFolder } from 'providers/ReduxStore/slices/collections/actions';
 import { sortWorkspaces } from 'utils/workspaces';
 
@@ -19,7 +18,7 @@ import { getRevealInFolderLabel } from 'utils/common/platform';
 
 const ManageWorkspace = () => {
   const dispatch = useDispatch();
-  const { workspaces, activeWorkspaceUid } = useSelector((state) => state.workspaces);
+  const { workspaces } = useSelector((state) => state.workspaces);
   const preferences = useSelector((state) => state.app.preferences);
 
   const [createWorkspaceModalOpen, setCreateWorkspaceModalOpen] = useState(false);
@@ -53,26 +52,11 @@ const ManageWorkspace = () => {
   };
 
   const handleCloseClick = (workspace) => {
-    if (workspace.type === 'default') {
-      toast.error('Cannot remove the default workspace');
-      return;
-    }
     setDeleteWorkspaceModal({ open: true, workspace });
   };
 
-  const handleCreateWorkspace = async () => {
-    const defaultLocation = get(preferences, 'general.defaultLocation', '');
-    if (!defaultLocation) {
-      setCreateWorkspaceModalOpen(true);
-      return;
-    }
-
-    try {
-      await dispatch(createWorkspaceWithUniqueName(defaultLocation));
-      toast.success('Workspace created!');
-    } catch (error) {
-      toast.error(error?.message || 'Failed to create workspace');
-    }
+  const handleCreateWorkspace = () => {
+    setCreateWorkspaceModalOpen(true);
   };
 
   return (
@@ -114,22 +98,14 @@ const ManageWorkspace = () => {
           </div>
         ) : (
           sortedWorkspaces.map((workspace) => {
-            const isDefault = workspace.type === 'default';
-            const isActive = workspace.uid === activeWorkspaceUid;
-
             return (
               <div key={workspace.uid} className="workspace-item">
                 <div className="workspace-info">
                   <div className="workspace-name-row">
-                    <span className={`workspace-icon ${isDefault ? 'default' : 'regular'}`}>
-                      {isDefault ? (
-                        <IconLock size={14} strokeWidth={1.5} />
-                      ) : (
-                        <IconCategory size={14} strokeWidth={1.5} />
-                      )}
+                    <span className="workspace-icon regular">
+                      <IconCategory size={14} strokeWidth={1.5} />
                     </span>
                     <span className="workspace-name">{workspace.name}</span>
-                    {isDefault && <span className="default-badge">Default</span>}
                   </div>
                   {workspace.pathname && (
                     <div className="workspace-path">{workspace.pathname}</div>
@@ -144,7 +120,7 @@ const ManageWorkspace = () => {
                     <IconLogin size={14} strokeWidth={1.5} />
                     <span>Open</span>
                   </button>
-                  {workspace.pathname && workspace.type !== 'default' && (
+                  {workspace.pathname && (
                     <button
                       className="action-btn"
                       onClick={() => handleShowInFolder(workspace)}
@@ -153,19 +129,17 @@ const ManageWorkspace = () => {
                       <span>{getRevealInFolderLabel()}</span>
                     </button>
                   )}
-                  {!isDefault && (
-                    <MenuDropdown
-                      placement="bottom-end"
-                      items={[
-                        { id: 'rename', label: 'Rename', onClick: () => handleRenameClick(workspace) },
-                        { id: 'remove', label: 'Remove', onClick: () => handleCloseClick(workspace) }
-                      ]}
-                    >
-                      <button className="more-actions-btn">
-                        <IconDots size={14} strokeWidth={1.5} />
-                      </button>
-                    </MenuDropdown>
-                  )}
+                  <MenuDropdown
+                    placement="bottom-end"
+                    items={[
+                      { id: 'rename', label: 'Rename', onClick: () => handleRenameClick(workspace) },
+                      { id: 'remove', label: 'Remove', onClick: () => handleCloseClick(workspace) }
+                    ]}
+                  >
+                    <button className="more-actions-btn">
+                      <IconDots size={14} strokeWidth={1.5} />
+                    </button>
+                  </MenuDropdown>
                 </div>
               </div>
             );

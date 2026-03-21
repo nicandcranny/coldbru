@@ -1,11 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { normalizePath } from 'utils/common/path';
 
-const DEFAULT_WORKSPACE_UID = 'default';
-
 const initialState = {
   workspaces: [],
-  activeWorkspaceUid: DEFAULT_WORKSPACE_UID
+  activeWorkspaceUid: null
 };
 
 export const workspacesSlice = createSlice({
@@ -33,7 +31,7 @@ export const workspacesSlice = createSlice({
       state.workspaces = state.workspaces.filter((w) => w.uid !== workspaceUid);
 
       if (state.activeWorkspaceUid === workspaceUid) {
-        state.activeWorkspaceUid = DEFAULT_WORKSPACE_UID;
+        state.activeWorkspaceUid = state.workspaces[0]?.uid || null;
       }
     },
 

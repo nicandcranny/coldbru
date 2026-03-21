@@ -13,7 +13,7 @@ const Collections = ({ showSearch, isCreatingCollection, onCreateClick, onDismis
   const { collections } = useSelector((state) => state.collections);
   const { workspaces, activeWorkspaceUid } = useSelector((state) => state.workspaces);
 
-  const activeWorkspace = workspaces.find((w) => w.uid === activeWorkspaceUid) || workspaces.find((w) => w.type === 'default');
+  const activeWorkspace = workspaces.find((w) => w.uid === activeWorkspaceUid) || workspaces[0];
 
   const workspaceCollections = useMemo(() => {
     if (!activeWorkspace) return [];
