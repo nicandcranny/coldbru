@@ -226,6 +226,5 @@ Improve request search on the sidebar to allow search for collection names, fold
 ## Future Improvements
 
 - Instant action (like cmd+shift+p) - for git, etc.
-- Option to choose between autoreveal file or button to focus
-- Add git init if it's not inside a git on the source control action bar
 - Add open file feature in the Git 
+- Add send to top and send to bottom button in collections list

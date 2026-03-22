@@ -29,12 +29,23 @@ const getSimpleGitInstanceForPath = (gitRootPath) => {
   return git;
 };
 
+const createSimpleGitInstanceForPath = (gitRootPath) => simpleGit(gitRootPath);
+
 const handleGitOutput = ({ win, processUid, sendStdout = false }) => (command, stdout, stderr) => {
   const sendProgressUpdate = (data) => {
+    const message = data.toString();
+
     win.webContents.send('main:update-git-operation-progress', {
       uid: processUid,
-      data: data.toString()
+      data: message
     });
+
+    if ((processUid?.startsWith('push-') || processUid?.startsWith('commit-')) && message.trim()) {
+      win.webContents.send('main:console-log', {
+        type: 'log',
+        args: [`[git:${processUid}] ${message.trimEnd()}`]
+      });
+    }
   };
 
   stderr.on('data', sendProgressUpdate);
@@ -247,9 +258,10 @@ const discardChanges = async (gitRootPath, filePaths) => {
   });
 };
 
-const commitChanges = async (gitRootPath, message) => {
+const commitChanges = async (win, { gitRootPath, message, processUid }) => {
   return new Promise((resolve, reject) => {
-    const git = getSimpleGitInstanceForPath(gitRootPath);
+    const git = createSimpleGitInstanceForPath(gitRootPath);
+    git.outputHandler(handleGitOutput({ win, processUid, sendStdout: true }));
     git.commit(message, (err, res) => {
       if (err) {
         reject(err);
@@ -562,8 +574,7 @@ const canPush = async (gitRootPath) => {
 
 const pushGitChanges = async (win, { gitRootPath, processUid, remote, remoteBranch }) => {
   return new Promise(async (resolve, reject) => {
-    const git = getSimpleGitInstanceForPath(gitRootPath);
-    git.outputHandler(handleGitOutput({ win, processUid, sendStdout: true }));
+    const git = createSimpleGitInstanceForPath(gitRootPath);
 
     try {
       // Check if the local branch is tracking a remote branch
@@ -584,7 +595,9 @@ const pushGitChanges = async (win, { gitRootPath, processUid, remote, remoteBran
 
         if (!trackingBranch) {
           // Set the upstream tracking branch
-          git.push(['--set-upstream', remote, remoteBranch], (err, res) => {
+          const pushGit = createSimpleGitInstanceForPath(gitRootPath);
+          pushGit.outputHandler(handleGitOutput({ win, processUid, sendStdout: true }));
+          pushGit.push(['--set-upstream', remote, remoteBranch], (err, res) => {
             if (err) {
               reject(err);
             } else {
@@ -593,7 +606,9 @@ const pushGitChanges = async (win, { gitRootPath, processUid, remote, remoteBran
           });
         } else {
           // Push the local branch to the remote
-          git.push(remote, remoteBranch, (err, res) => {
+          const pushGit = createSimpleGitInstanceForPath(gitRootPath);
+          pushGit.outputHandler(handleGitOutput({ win, processUid, sendStdout: true }));
+          pushGit.push(remote, remoteBranch, (err, res) => {
             if (err) {
               reject(err);
             } else {
@@ -614,7 +629,7 @@ const pullGitChanges = async (win, data) => {
     throw new Error('Invalid strategy');
   }
   return new Promise((resolve, reject) => {
-    const git = getSimpleGitInstanceForPath(gitRootPath);
+    const git = createSimpleGitInstanceForPath(gitRootPath);
     git.outputHandler(handleGitOutput({ win, processUid, sendStdout: true })).pull(remote, remoteBranch, [strategy], (err, res) => {
       if (err) {
         reject(err);

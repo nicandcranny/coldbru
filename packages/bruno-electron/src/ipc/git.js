@@ -143,7 +143,11 @@ const registerGitIpc = (mainWindow) => {
       throw new Error('Not a git repository');
     }
 
-    return commitChanges(gitRootPath, message);
+    return commitChanges(mainWindow, {
+      gitRootPath,
+      message,
+      processUid: `commit-${Date.now()}`
+    });
   });
 
   ipcMain.handle('renderer:add-git-remote', async (event, { collectionPath, remoteName = 'origin', remoteUrl }) => {
