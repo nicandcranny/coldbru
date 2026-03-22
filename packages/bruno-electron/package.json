@@ -1,11 +1,11 @@
 {
   "version": "2.0.0",
-  "name": "bruno",
-  "description": "Opensource API Client for Exploring and Testing APIs",
-  "homepage": "https://www.usebruno.com",
+  "name": "coldbru",
+  "description": "Open-source API client for exploring and testing APIs",
+  "homepage": "https://github.com/nicandcranny/coldbru",
   "repository": {
     "type": "git",
-    "url": "https://github.com/usebruno/bruno.git"
+    "url": "https://github.com/nicandcranny/coldbru.git"
   },
   "private": true,
   "main": "src/index.js",

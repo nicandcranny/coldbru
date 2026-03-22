@@ -125,9 +125,9 @@ const CreateWorkspace = ({ onClose }) => {
 
           <div className="mb-4">
             <label htmlFor="workspace-location" className="font-semibold mb-2 flex items-center">
-              Folder Location
+              Parent Folder Location
               <Help>
-                <p>Choose the parent folder where Bruno should create the new workspace folder.</p>
+                <p>Choose the parent folder where ColdBru should create the new workspace folder.</p>
               </Help>
             </label>
 

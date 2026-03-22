@@ -33,7 +33,7 @@ function Main({ children }) {
         <strong class="font-bold">ERROR:</strong>
         <span className="block inline ml-1">"ipcRenderer" not found in window object.</span>
         <div>
-          You most likely opened Bruno inside your web browser. Bruno only works within Electron, you can start Electron
+          You most likely opened ColdBru inside your web browser. ColdBru only works within Electron, you can start Electron
           in an adjacent terminal using "npm run dev:electron".
         </div>
       </div>

@@ -7,11 +7,11 @@
     "bru": "./bin/bru.js"
   },
   "bugs": {
-    "url": "https://github.com/usebruno/bruno/issues"
+    "url": "https://github.com/nicandcranny/coldbru/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/usebruno/bruno.git"
+    "url": "git+https://github.com/nicandcranny/coldbru.git"
   },
   "keywords": [
     "API",

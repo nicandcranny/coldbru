@@ -33,7 +33,7 @@ const ErrorInfoTab = ({ error }) => {
 - **Timestamp**: ${formatTimestamp(error.timestamp)}
 
 ### Environment
-- **Bruno Version**: ${version}
+- **ColdBru Version**: ${version}
 - **OS**: ${platformLib.os.family} ${platformLib.os.version || ''}
 - **Browser**: ${platformLib.name} ${platformLib.version || ''}
 
@@ -67,7 +67,7 @@ ${error.args ? error.args.map((arg, index) => {
     const encodedTitle = encodeURIComponent(title);
     const encodedBody = encodeURIComponent(body);
 
-    return `https://github.com/usebruno/bruno/issues/new?template=BLANK_ISSUE&title=${encodedTitle}&body=${encodedBody}`;
+    return `https://github.com/nicandcranny/coldbru/issues/new?title=${encodedTitle}&body=${encodedBody}`;
   };
 
   const handleReportIssue = () => {
@@ -109,7 +109,7 @@ ${error.args ? error.args.map((arg, index) => {
       <div className="section">
         <h4>Report Issue</h4>
         <div className="report-section">
-          <p>Found a bug? Help us improve Bruno by reporting this error on GitHub.</p>
+          <p>Found a bug? Help us improve ColdBru by reporting this error on GitHub.</p>
           <button
             className="report-button"
             onClick={handleReportIssue}

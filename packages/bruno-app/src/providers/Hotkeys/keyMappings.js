@@ -12,7 +12,7 @@ export const DEFAULT_KEY_BINDINGS = {
   closeBruno: {
     mac: 'command+bind+q',
     windows: 'ctrl+bind+shift+bind+q',
-    name: 'Close Bruno'
+    name: 'Close ColdBru'
   },
   switchToPreviousTab: {
     mac: 'command+bind+2',

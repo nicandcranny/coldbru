@@ -1,14 +1,14 @@
-# Bruno CLI
+# ColdBru CLI
 
-With Bruno CLI, you can now run your API collections with ease using simple command line commands.
+With ColdBru CLI, you can now run your API collections with ease using simple command line commands.
 
 This makes it easier to test your APIs in different environments, automate your testing process, and integrate your API tests with your continuous integration and deployment workflows.
 
-For detailed documentation, visit [Bruno CLI Documentation](https://docs.usebruno.com/bru-cli/overview).
+For detailed documentation, visit [ColdBru CLI Documentation](https://github.com/nicandcranny/coldbru).
 
 ## Installation
 
-To install the Bruno CLI, use the node package manager of your choice, such as NPM:
+To install the ColdBru CLI, use the node package manager of your choice, such as NPM:
 
 ```bash
 npm install -g @usebruno/cli
@@ -72,7 +72,7 @@ You can also use the shorter form with aliases:
 bru import openapi -s api.yml -o ~/Desktop/my-collection -n "My API"
 ```
 
-This creates a Bruno collection directory that can be opened in Bruno.
+This creates a ColdBru collection directory that can be opened in ColdBru.
 
 You can also import directly from a URL:
 
@@ -122,7 +122,7 @@ Import Options:
 
 ## Scripting
 
-Bruno cli returns the following exit status codes:
+ColdBru CLI returns the following exit status codes:
 
 - `0` -- execution successful
 - `1` -- an assertion, test, or request in the executed collection failed
@@ -142,15 +142,15 @@ Bruno cli returns the following exit status codes:
 
 ## Support
 
-If you encounter any issues or have any feedback or suggestions, please raise them on our [GitHub repository](https://github.com/usebruno/bruno)
+If you encounter any issues or have any feedback or suggestions, please raise them on our [GitHub repository](https://github.com/nicandcranny/coldbru)
 
-Thank you for using Bruno CLI!
+Thank you for using ColdBru CLI!
 
 ## Changelog
 
 <!-- An absolute link is used here because npm treats links differently -->
 
-See [https://github.com/usebruno/bruno/releases](https://github.com/usebruno/bruno/releases)
+See [https://github.com/nicandcranny/coldbru/releases](https://github.com/nicandcranny/coldbru/releases)
 
 ## License
 

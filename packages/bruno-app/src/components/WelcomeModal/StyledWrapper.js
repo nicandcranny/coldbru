@@ -87,6 +87,77 @@ const StyledWrapper = styled.div`
     margin-bottom: 1.25rem;
   }
 
+  .workspace-form-field {
+    margin-bottom: 1rem;
+  }
+
+  .workspace-form-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: ${(props) => props.theme.text};
+    margin-bottom: 0.5rem;
+  }
+
+  .workspace-form-input {
+    width: 100%;
+    min-height: 40px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid ${(props) => props.theme.input.border};
+    border-radius: ${(props) => props.theme.border.radius.md};
+    background: ${(props) => props.theme.input.bg};
+    color: ${(props) => props.theme.text};
+
+    &:focus {
+      outline: none;
+      border-color: ${(props) => props.theme.input.focusBorder};
+      box-shadow: 0 0 0 2px ${(props) => rgba(props.theme.primary.solid, 0.18)};
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .location-input-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .location-input {
+    flex: 1;
+  }
+
+  .browse-button {
+    min-height: 40px;
+    padding: 0 0.9rem;
+    border: 1px solid ${(props) => props.theme.border.border1};
+    border-radius: ${(props) => props.theme.border.radius.md};
+    background: ${(props) => props.theme.modal.body.bg};
+    color: ${(props) => props.theme.primary.text};
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .workspace-form-error {
+    margin-top: 0.375rem;
+    font-size: 0.75rem;
+    color: ${(props) => props.theme.status.danger.text};
+  }
+
+  .location-hint {
+    color: ${(props) => props.theme.colors.text.subtext1};
+    font-size: 0.75rem;
+    line-height: 1.5;
+    margin-top: 0.5rem;
+  }
+
   .welcome-footer {
     display: flex;
     align-items: center;

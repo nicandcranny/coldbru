@@ -125,7 +125,7 @@ const focusMainWindow = () => {
 // Parse protocol URL from command line arguments (if any)
 appProtocolUrl = getAppProtocolUrlFromArgv(process.argv);
 
-// Single instance lock - ensures only one instance of Bruno runs at a time (enabled by default)
+// Single instance lock - ensures only one instance of ColdBru runs at a time (enabled by default)
 const useSingleInstance = process.env.DISABLE_SINGLE_INSTANCE !== 'true';
 const gotTheLock = useSingleInstance ? app.requestSingleInstanceLock() : true;
 
@@ -136,13 +136,13 @@ if (useSingleInstance && !gotTheLock) {
   // This is the primary instance (or single instance is disabled)
 
   // Try to remove any existing registrations
-  app.removeAsDefaultProtocolClient('bruno');
-  // Register as default handler for `bruno://` protocol URLs
-  app.setAsDefaultProtocolClient('bruno');
+  app.removeAsDefaultProtocolClient('coldbru');
+  // Register as default handler for `coldbru://` protocol URLs
+  app.setAsDefaultProtocolClient('coldbru');
 
   if (isLinux) {
     try {
-      execSync('xdg-mime default bruno.desktop x-scheme-handler/bruno');
+      execSync('xdg-mime default coldbru.desktop x-scheme-handler/coldbru');
     } catch (err) {}
   }
 
@@ -219,7 +219,7 @@ app.on('ready', async () => {
       webviewTag: true,
       zoomFactor: 1.0
     },
-    title: 'Bruno',
+    title: 'ColdBru',
     icon: path.join(__dirname, 'about/256x256.png'),
     titleBarStyle: isMac ? 'hiddenInset' : isWindows ? 'hidden' : undefined,
     frame: isLinux ? false : true,
@@ -366,7 +366,7 @@ app.on('ready', async () => {
     } else {
       console.error(
         'If you are using an official production build: the above error is most likely a bug! '
-        + ' Please report this under: https://github.com/usebruno/bruno/issues'
+        + ' Please report this under: https://github.com/nicandcranny/coldbru/issues'
       );
     }
   });

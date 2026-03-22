@@ -4,11 +4,11 @@
 
 Going forward, we will release a new version of CLI for every new release of Bruno.
 This will help us keep the CLI in sync with the Bruno App.
-For the release notes please see https://github.com/usebruno/bruno/releases
+For the release notes please see https://github.com/nicandcranny/coldbru/releases
 
 ## 1.4.1
 
-- Fixing [bug](https://github.com/usebruno/bruno/issues/1487)
+- Fixing [bug](https://github.com/nicandcranny/coldbru/issues/1487)
 
 ## 1.4.0
 

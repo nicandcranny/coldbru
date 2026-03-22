@@ -84,7 +84,7 @@ const FileTab = ({
         return;
       }
 
-      toastError(new Error('The ZIP file is not a valid Bruno collection'));
+      toastError(new Error('The ZIP file is not a valid ColdBru collection'));
     } catch (err) {
       toastError(err, 'Import ZIP file failed');
     } finally {

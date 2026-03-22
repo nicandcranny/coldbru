@@ -1,8 +1,8 @@
 require('dotenv').config({ path: process.env.DOTENV_PATH });
 
 const config = {
-  appId: 'com.usebruno.app',
-  productName: 'Bruno',
+  appId: 'com.coldbru.app',
+  productName: 'ColdBru',
   electronVersion: '37.6.1',
   directories: {
     buildResources: 'resources',
@@ -37,9 +37,9 @@ const config = {
     notarize: false,
     protocols: [
       {
-        name: 'Bruno',
+        name: 'ColdBru',
         schemes: [
-          'bruno'
+          'coldbru'
         ]
       }
     ]
@@ -63,13 +63,13 @@ const config = {
     ],
     protocols: [
       {
-        name: 'Bruno',
-        schemes: ['bruno']
+        name: 'ColdBru',
+        schemes: ['coldbru']
       }
     ],
     category: 'Development',
     desktop: {
-      MimeType: 'x-scheme-handler/bruno;'
+      MimeType: 'x-scheme-handler/coldbru;'
     }
   },
   deb: {
@@ -97,7 +97,7 @@ const config = {
       }
     ],
     sign: null,
-    publisherName: 'Bruno Software Inc'
+    publisherName: 'ColdBru Software Inc'
   },
   nsis: {
     oneClick: false,

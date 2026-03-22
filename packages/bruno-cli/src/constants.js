@@ -1,6 +1,6 @@
 const { version } = require('../package.json');
 
-const CLI_EPILOGUE = `Documentation: https://docs.usebruno.com (v${version})`;
+const CLI_EPILOGUE = `Documentation: https://github.com/nicandcranny/coldbru (v${version})`;
 const CLI_VERSION = version;
 
 // Exit codes

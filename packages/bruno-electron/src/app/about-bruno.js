@@ -6,7 +6,7 @@ module.exports = function aboutBruno({ version }) {
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
-        <title>About Bruno</title>
+        <title>About ColdBru</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -167,9 +167,9 @@ module.exports = function aboutBruno({ version }) {
             />
           </g>
         </svg>
-      <h2 class="title">Bruno ${version}</h2>
+      <h2 class="title">ColdBru ${version}</h2>
       <footer class="footer">
-          ©${currentYear} Bruno Software Inc
+          ©${currentYear} ColdBru Software Inc
       </footer>
     </body>
     </html>

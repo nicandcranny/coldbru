@@ -41,15 +41,15 @@ class ErrorBoundary extends React.Component {
 
             <h1 className="text-2xl font-medium text-red-600 mb-2">Oops! Something went wrong</h1>
             <p className="text-red-500 mb-2">
-              If you are using an official production build: the above error is most likely a bug!
+              If you are using an official production build: the above error is most likely a bug in ColdBru!
               <br />
               Please report this under:
               <a
                 className="text-link hover:underline cursor-pointer ml-2"
-                href="https://github.com/usebruno/bruno/issues"
+                href="https://github.com/nicandcranny/coldbru/issues"
                 target="_blank"
               >
-                https://github.com/usebruno/bruno/issues
+                https://github.com/nicandcranny/coldbru/issues
               </a>
             </p>
 

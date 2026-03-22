@@ -20,7 +20,7 @@ test.describe('Welcome Modal', () => {
       await expect(welcomeModal).toBeVisible();
 
       // Verify welcome content is displayed
-      await expect(welcomeModal.getByText('Welcome to Bruno')).toBeVisible();
+      await expect(welcomeModal.getByText('Welcome to ColdBru')).toBeVisible();
       await expect(welcomeModal.getByText('A fast, Git-friendly, and open-source API client.')).toBeVisible();
     } finally {
       if (app) {
@@ -72,12 +72,13 @@ test.describe('Welcome Modal', () => {
     }
   });
 
-  test('should navigate through welcome modal steps', async ({ launchElectronApp }) => {
+  test('should navigate through welcome modal steps', async ({ launchElectronApp, createTmpDir }) => {
     let app: ElectronApplication | undefined;
 
     try {
       app = await launchElectronApp({ initUserDataPath });
       const page = await app.firstWindow();
+      const parentFolder = await createTmpDir('welcome-modal-workspace');
 
       // Wait for the app to fully initialize before interacting
       await page.locator('[data-app-state="loaded"]').waitFor();
@@ -85,16 +86,18 @@ test.describe('Welcome Modal', () => {
       const welcomeModal = page.getByTestId('welcome-modal');
 
       // Step 1: Welcome
-      await expect(welcomeModal.getByText('Welcome to Bruno')).toBeVisible();
+      await expect(welcomeModal.getByText('Welcome to ColdBru')).toBeVisible();
       await welcomeModal.getByRole('button', { name: 'Get Started' }).click();
 
       // Step 2: Theme selection
       await expect(welcomeModal.getByText('Choose your theme')).toBeVisible();
       await welcomeModal.getByRole('button', { name: 'Next' }).click();
 
-      // Step 3: Collection location
-      await expect(welcomeModal.getByText('Where should we store your collections?')).toBeVisible();
-      await welcomeModal.getByRole('button', { name: 'Next' }).click();
+      // Step 3: Create first workspace
+      await expect(welcomeModal.getByText('Create your first workspace')).toBeVisible();
+      await page.locator('#welcome-workspace-name').fill('My First Workspace');
+      await page.locator('#welcome-workspace-location').fill(parentFolder);
+      await welcomeModal.getByRole('button', { name: 'Create Workspace' }).click();
 
       // Step 4: Actions
       await expect(welcomeModal.getByText('Ready to go!')).toBeVisible();
@@ -105,12 +108,13 @@ test.describe('Welcome Modal', () => {
     }
   });
 
-  test('should open create collection modal from welcome modal', async ({ launchElectronApp }) => {
+  test('should open create collection modal from welcome modal', async ({ launchElectronApp, createTmpDir }) => {
     let app: ElectronApplication | undefined;
 
     try {
       app = await launchElectronApp({ initUserDataPath });
       const page = await app.firstWindow();
+      const parentFolder = await createTmpDir('welcome-modal-create-collection');
 
       // Wait for the app to fully initialize before interacting
       await page.locator('[data-app-state="loaded"]').waitFor();
@@ -120,7 +124,9 @@ test.describe('Welcome Modal', () => {
       // Navigate to last step
       await welcomeModal.getByRole('button', { name: 'Get Started' }).click();
       await welcomeModal.getByRole('button', { name: 'Next' }).click();
-      await welcomeModal.getByRole('button', { name: 'Next' }).click();
+      await page.locator('#welcome-workspace-name').fill('Workspace One');
+      await page.locator('#welcome-workspace-location').fill(parentFolder);
+      await welcomeModal.getByRole('button', { name: 'Create Workspace' }).click();
 
       // Click Create Collection
       await welcomeModal.locator('.primary-action-card').filter({ hasText: 'Create Collection' }).click();

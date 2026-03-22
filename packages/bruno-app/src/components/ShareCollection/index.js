@@ -97,7 +97,7 @@ const ShareCollection = ({ onClose, collectionUid }) => {
     <Modal size="lg" title="Share Collection" handleCancel={onClose} hideFooter>
       <StyledWrapper className="flex flex-col">
         <p className="text-sm mb-4">
-          Bruno uses{' '}
+          ColdBru uses{' '}
           <a
             href="https://opencollection.com"
             target="_blank"
@@ -109,8 +109,8 @@ const ShareCollection = ({ onClose, collectionUid }) => {
           {' '}- An open format for API collections
         </p>
 
-        {/* Bruno Format Section */}
-        <div className="section-title">Bruno Format</div>
+        {/* ColdBru Format Section */}
+        <div className="section-title">ColdBru Format</div>
         <div className="bruno-format-grid mb-6">
           {/* ZIP Option */}
           <div
@@ -118,7 +118,7 @@ const ShareCollection = ({ onClose, collectionUid }) => {
             onClick={() => !isDisabled && setSelectedFormat(EXPORT_FORMATS.ZIP)}
           >
             <div className="card-header">
-              <span className="card-title">Bruno Collection (ZIP)</span>
+              <span className="card-title">ColdBru Collection (ZIP)</span>
               <span className="recommended-badge">Recommended</span>
             </div>
             <p className="card-description">OpenCollection format organized as folders and files</p>
@@ -133,7 +133,7 @@ const ShareCollection = ({ onClose, collectionUid }) => {
               </div>
               <div className="feature-item">
                 <IconCheck size={14} className="checkmark" />
-                <span>Extract and open directly in Bruno</span>
+                <span>Extract and open directly in ColdBru</span>
               </div>
             </div>
             <p className="best-for">Best for: Team collaboration, version control, publishing</p>

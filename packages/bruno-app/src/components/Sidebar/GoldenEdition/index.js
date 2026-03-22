@@ -126,7 +126,7 @@ const GoldenEdition = ({ onClose }) => {
             <a
               onClick={() => {
                 goldenEditionBuyClick();
-                window.open('https://www.usebruno.com/pricing', '_blank');
+                window.open('https://github.com/nicandcranny/coldbru', '_blank');
               }}
               target="_blank"
               className="flex text-white bg-yellow-600 hover:bg-yellow-700 font-medium rounded-lg px-4 py-2 text-center cursor-pointer"
@@ -176,7 +176,7 @@ const GoldenEdition = ({ onClose }) => {
           <ul role="list" className="space-y-3 text-left">
             <li className="flex items-center space-x-3">
               <HeartIcon />
-              <span>Support Bruno's Development</span>
+              <span>Support ColdBru's Development</span>
             </li>
             {pricingOption === 'individuals' ? (
               <>
