@@ -8,7 +8,6 @@ import {
   commitGitChanges,
   initializeGitRepository,
   pushGitChanges,
-  refreshCollectionGitStatus,
   revertGitFiles,
   stageGitFiles,
   syncGitChanges,
@@ -356,13 +355,6 @@ const SourceControlSection = () => {
           <div className="source-control-title">Source Control</div>
           {summaryText ? <div className="source-control-summary">{summaryText}</div> : null}
         </div>
-        <button
-          type="button"
-          className="source-control-button"
-          onClick={() => dispatch(refreshCollectionGitStatus(activeTab.collectionUid, { preserveOperation: true }))}
-        >
-          <IconRefresh size={14} strokeWidth={1.5} className={isBusy ? 'is-spinning' : ''} />
-        </button>
       </div>
 
       <div className="source-control-composer">
