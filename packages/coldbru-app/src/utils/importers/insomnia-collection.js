@@ -1,5 +1,5 @@
 import { BrunoError } from 'utils/common/error';
-import { insomniaToBruno } from '@coldbru/converters';
+import { insomniaToBruno } from '@usebruno/converters';
 
 export const convertInsomniaToBruno = (data) => {
   try {

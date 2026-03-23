@@ -5,7 +5,7 @@ const { uuid } = require('./common');
 const os = require('os');
 const { preferencesUtil } = require('../store/preferences');
 const path = require('path');
-const { DEFAULT_COLLECTION_FORMAT } = require('@coldbru/filestore');
+const { DEFAULT_COLLECTION_FORMAT } = require('@usebruno/filestore');
 
 const mergeHeaders = (collection, request, requestTreePath) => {
   let headers = new Map();

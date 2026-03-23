@@ -45,7 +45,7 @@ const transformCollection = async (collection, type) => {
       return processOpenCollection(collection);
     }
     case 'wsdl': {
-      const { wsdlToBruno } = await import('@coldbru/converters');
+      const { wsdlToBruno } = await import('@usebruno/converters');
       return wsdlToBruno(collection);
     }
     default:

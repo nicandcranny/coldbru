@@ -3,46 +3,10 @@ description: 'Setup dependencies and run unit tests for all packages'
 runs:
   using: 'composite'
   steps:
-    - name: Test Package bruno-js
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-js
-
-    - name: Test Package bruno-cli
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-cli
-
-    - name: Test Package bruno-query
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-query
-
-    - name: Test Package bruno-lang
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-lang
-
-    - name: Test Package bruno-schema
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-schema
-
-    - name: Test Package bruno-app
+    - name: Test Package coldbru-app
       shell: bash
       run: npm run test --workspace=packages/coldbru-app
 
-    - name: Test Package bruno-common
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-common
-
-    - name: Test Package bruno-converters
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-converters
-
-    - name: Test Package bruno-electron
+    - name: Test Package coldbru-electron
       shell: bash
       run: npm run test --workspace=packages/coldbru-electron
-
-    - name: Test Package coldbru-requests
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-requests
-
-    - name: Test Package bruno-filestore
-      shell: bash
-      run: npm run test --workspace=packages/coldbru-filestore

@@ -3,16 +3,8 @@ const path = require('path');
 const { execSync } = require('node:child_process');
 const isDev = require('electron-is-dev');
 const os = require('os');
-const { initializeShellEnv } = require('@coldbru/requests');
-const { percentageToZoomLevel } = require('@coldbru/common');
-
-if (isDev) {
-  if (!fs.existsSync(path.join(__dirname, '../../coldbru-js/src/sandbox/bundle-browser-rollup.js'))) {
-    console.log('JS Sandbox libraries have not been bundled yet');
-    console.log('Please run the below command \nnpm run sandbox:bundle-libraries --workspace=packages/coldbru-js');
-    throw new Error('JS Sandbox libraries have not been bundled yet');
-  }
-}
+const { initializeShellEnv } = require('@usebruno/requests');
+const { percentageToZoomLevel } = require('@usebruno/common');
 
 const { format } = require('url');
 const { BrowserWindow, app, session, Menu, globalShortcut, ipcMain, nativeTheme } = require('electron');

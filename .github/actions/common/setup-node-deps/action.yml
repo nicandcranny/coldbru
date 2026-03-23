@@ -18,16 +18,3 @@ runs:
     - name: Install node dependencies
       shell: bash
       run: npm ci --legacy-peer-deps
-
-    - name: Build libraries
-      if: inputs.skip-build != 'true'
-      shell: bash
-      run: |
-        npm run build:graphql-docs
-        npm run build:coldbru-query
-        npm run build:coldbru-common
-        npm run sandbox:bundle-libraries --workspace=packages/coldbru-js
-        npm run build:coldbru-converters
-        npm run build:coldbru-requests
-        npm run build:schema-types
-        npm run build:coldbru-filestore

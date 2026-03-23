@@ -3,7 +3,7 @@ import { uuid } from 'utils/common';
 import { buildPersistedEnvVariables } from 'utils/environments';
 import { sortByNameThenSequence } from 'utils/common/index';
 import path from 'utils/common/path';
-import { isRequestTagsIncluded } from '@coldbru/common';
+import { isRequestTagsIncluded } from '@usebruno/common';
 
 const replaceTabsWithSpaces = (str, numSpaces = 2) => {
   if (!str || !str.length || !isString(str)) {

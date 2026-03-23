@@ -19,9 +19,9 @@ const {
   stringifyEnvironment,
   parseEnvironment,
   DEFAULT_COLLECTION_FORMAT
-} = require('@coldbru/filestore');
-const { dotenvToJson } = require('@coldbru/lang');
-const brunoConverters = require('@coldbru/converters');
+} = require('@usebruno/filestore');
+const { dotenvToJson } = require('@usebruno/lang');
+const brunoConverters = require('@usebruno/converters');
 const { postmanToBruno } = brunoConverters;
 const { cookiesStore } = require('../store/cookies');
 const { parseLargeRequestWithRedaction } = require('../utils/parse');
@@ -452,7 +452,7 @@ const registerRendererEventHandlers = (mainWindow, watcher) => {
 
       let finalContent;
       if (needsConversion) {
-        const { parseRequest, stringifyRequest } = require('@coldbru/filestore');
+        const { parseRequest, stringifyRequest } = require('@usebruno/filestore');
         const sourceContent = await fs.promises.readFile(sourcePathname, 'utf8');
         const parsedRequest = parseRequest(sourceContent, { format: actualSourceFormat });
         const mergedRequest = { ...parsedRequest, ...request };

@@ -10,8 +10,8 @@ const {
   parseCollection,
   stringifyCollection,
   stringifyFolder
-} = require('@coldbru/filestore');
-const { openApiToBruno } = require('@coldbru/converters');
+} = require('@usebruno/filestore');
+const { openApiToBruno } = require('@usebruno/converters');
 const { writeFile, sanitizeName, getCollectionFormat, getCollectionConfigPath } = require('../utils/filesystem');
 const { getEnvVars } = require('../utils/collection');
 const { getProcessEnvVars } = require('../store/process-env');

@@ -1,5 +1,5 @@
 const { forOwn, cloneDeep } = require('lodash');
-const { interpolate, interpolateObject: interpolateObjectCommon } = require('@coldbru/common');
+const { interpolate, interpolateObject: interpolateObjectCommon } = require('@usebruno/common');
 
 const buildCombinedVars = ({
   globalEnvironmentVariables,

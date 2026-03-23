@@ -2,7 +2,7 @@ const simpleGit = require('simple-git');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-const { parseRequest } = require('@coldbru/filestore');
+const { parseRequest } = require('@usebruno/filestore');
 
 let collectionPathToGitRootPathMap = new Map();
 

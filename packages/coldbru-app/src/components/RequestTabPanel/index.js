@@ -16,7 +16,7 @@ import NetworkError from 'components/ResponsePane/NetworkError';
 import RunnerResults from 'components/RunnerResults';
 import VariablesEditor from 'components/VariablesEditor';
 import CollectionSettings from 'components/CollectionSettings';
-import { DocExplorer } from '@coldbru/graphql-docs';
+import { DocExplorer } from '@usebruno/graphql-docs';
 
 import StyledWrapper from './StyledWrapper';
 import FolderSettings from 'components/FolderSettings';

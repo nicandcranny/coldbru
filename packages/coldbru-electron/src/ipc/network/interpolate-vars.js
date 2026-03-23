@@ -1,6 +1,6 @@
-const { interpolate } = require('@coldbru/common');
+const { interpolate } = require('@usebruno/common');
 const { each, forOwn, cloneDeep } = require('lodash');
-const { isFormData } = require('@coldbru/common').utils;
+const { isFormData } = require('@usebruno/common').utils;
 
 const getContentType = (headers = {}) => {
   let contentType = '';

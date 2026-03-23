@@ -2,8 +2,8 @@ import each from 'lodash/each';
 import { uuid } from 'utils/common';
 import { BrunoError } from 'utils/common/error';
 import { validateSchema, updateUidsInCollection, hydrateSeqInCollection } from './common';
-import { transformExampleStatusInCollection } from '@coldbru/common';
-import { openCollectionToBruno } from '@coldbru/converters';
+import { transformExampleStatusInCollection } from '@usebruno/common';
+import { openCollectionToBruno } from '@usebruno/converters';
 
 const addUidsToRoot = (collection) => {
   if (collection.root?.request?.headers) {

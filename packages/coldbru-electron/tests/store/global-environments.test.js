@@ -1,3 +1,29 @@
+jest.mock('electron-store', () => {
+  return class MockStore {
+    constructor() {
+      this.data = {};
+    }
+
+    get(key, fallbackValue) {
+      return Object.prototype.hasOwnProperty.call(this.data, key) ? this.data[key] : fallbackValue;
+    }
+
+    set(key, value) {
+      this.data[key] = value;
+      return value;
+    }
+
+    clear() {
+      this.data = {};
+    }
+  };
+});
+
+jest.mock('../../src/utils/encryption', () => ({
+  encryptStringSafe: jest.fn((value) => ({ success: true, value })),
+  decryptStringSafe: jest.fn((value) => ({ success: true, value }))
+}));
+
 const { globalEnvironmentsStore } = require('../../src/store/global-environments');
 const { GlobalEnvironmentsManager } = require('../../src/store/workspace-environments');
 const fs = require('fs');

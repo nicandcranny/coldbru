@@ -1,5 +1,5 @@
 import * as FileSaver from 'file-saver';
-import { brunoToPostman } from '@coldbru/converters';
+import { brunoToPostman } from '@usebruno/converters';
 import { filterTransientItems } from 'utils/collections';
 
 export const exportCollection = (collection) => {

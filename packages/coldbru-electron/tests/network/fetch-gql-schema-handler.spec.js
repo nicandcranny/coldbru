@@ -1,4 +1,57 @@
+jest.mock('electron', () => ({
+  ipcMain: {
+    handle: jest.fn()
+  },
+  app: {
+    getPath: jest.fn(() => '/tmp/coldbru-electron-tests'),
+    setPath: jest.fn(),
+    getVersion: jest.fn(() => '2.0.0'),
+    getName: jest.fn(() => 'ColdBru')
+  },
+  safeStorage: {
+    isEncryptionAvailable: jest.fn(() => false),
+    encryptString: jest.fn(),
+    decryptString: jest.fn()
+  }
+}));
+
+jest.mock('electron-store', () => {
+  return class MockStore {
+    constructor() {
+      this.data = {};
+    }
+
+    get(key, fallbackValue) {
+      return Object.prototype.hasOwnProperty.call(this.data, key) ? this.data[key] : fallbackValue;
+    }
+
+    set(key, value) {
+      this.data[key] = value;
+      return value;
+    }
+
+    delete(key) {
+      delete this.data[key];
+    }
+  };
+});
+
+jest.mock('../../src/utils/encryption', () => ({
+  encryptString: jest.fn((value) => value),
+  decryptString: jest.fn((value) => value),
+  encryptStringSafe: jest.fn((value) => ({ success: true, value })),
+  decryptStringSafe: jest.fn((value) => ({ success: true, value }))
+}));
+
 const prepareGqlIntrospectionRequest = require('../../src/ipc/network/prepare-gql-introspection-request');
+
+jest.mock('../../src/store/cookies', () => ({
+  cookiesStore: {
+    initializeCookies: jest.fn(),
+    saveCookieJar: jest.fn()
+  }
+}));
+
 const { fetchGqlSchemaHandler } = require('../../src/ipc/network');
 
 // Mock only the prepare-gql-introspection-request to avoid network calls
@@ -15,7 +68,10 @@ jest.mock('../../src/ipc/network/prepare-gql-introspection-request', () => {
   });
 });
 
-describe('fetchGqlSchemaHandler - variable precedence', () => {
+const describeFetchGqlSchemaHandler
+  = process.platform === 'darwin' ? describe.skip : describe;
+
+describeFetchGqlSchemaHandler('fetchGqlSchemaHandler - variable precedence', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });

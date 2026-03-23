@@ -1,6 +1,6 @@
 import find from 'lodash/find';
 
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 
 const hasLength = (str) => {
   if (!str || !str.length) {

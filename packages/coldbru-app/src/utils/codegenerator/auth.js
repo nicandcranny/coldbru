@@ -1,6 +1,6 @@
 import get from 'lodash/get';
 import { find } from 'lodash';
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 import { getAllVariables } from 'utils/collections/index';
 
 export const getAuthHeaders = (requestAuth, collection = null, item = null) => {

@@ -41,26 +41,6 @@ npm i --legacy-peer-deps
 
 ### Local Development
 
-#### Build packages
-
-##### Option 1
-
-```bash
-# build packages
-npm run build:graphql-docs
-npm run build:coldbru-query
-npm run build:coldbru-common
-npm run build:coldbru-converters
-npm run build:coldbru-requests
-npm run build:schema-types
-npm run build:coldbru-filestore
-
-# bundle js sandbox libraries
-npm run sandbox:bundle-libraries --workspace=packages/coldbru-js
-```
-
-##### Option 2
-
 ```bash
 # install dependencies and setup
 npm run setup
@@ -114,29 +94,11 @@ find . -type f -name "package-lock.json" -delete
 ### Testing
 
 ```bash
-# run bruno-schema tests
-npm run test --workspace=packages/coldbru-schema
-
-# run bruno-query tests
-npm run test --workspace=packages/coldbru-query
-
-# run bruno-common tests
-npm run test --workspace=packages/coldbru-common
-
-# run bruno-converters tests
-npm run test --workspace=packages/coldbru-converters
-
-# run bruno-app tests
+# run coldbru-app tests
 npm run test --workspace=packages/coldbru-app
 
-# run bruno-electron tests
+# run coldbru-electron tests
 npm run test --workspace=packages/coldbru-electron
-
-# run bruno-lang tests
-npm run test --workspace=packages/coldbru-lang
-
-# run bruno-toml tests
-npm run test --workspace=packages/coldbru-toml
 
 # run tests over all workspaces
 npm test --workspaces --if-present

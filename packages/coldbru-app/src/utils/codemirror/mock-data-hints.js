@@ -1,4 +1,4 @@
-import { mockDataFunctions } from '@coldbru/common';
+import { mockDataFunctions } from '@usebruno/common';
 
 const MOCK_FUNCTION_SUGGESTIONS = Object.keys(mockDataFunctions).map((key) => `$${key}`);
 

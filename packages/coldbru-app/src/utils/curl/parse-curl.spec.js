@@ -549,15 +549,15 @@ describe('parseCurlCommand', () => {
   });
 
   describe('handling URLs without protocols', () => {
-    it('should parse URL without protocol and default to https', () => {
+    it('should parse localhost URLs without protocol and default to https', () => {
       const result = parseCurlCommand(`
         curl localhost:8081
       `);
 
       expect(result).toEqual({
         method: 'get',
-        url: 'http://localhost:8081',
-        urlWithoutQuery: 'http://localhost:8081'
+        url: 'https://localhost:8081',
+        urlWithoutQuery: 'https://localhost:8081'
       });
     });
 

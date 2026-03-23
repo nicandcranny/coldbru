@@ -17,7 +17,6 @@ module.exports = runESMImports().then(() => defineConfig([
       '**/node_modules/**/*',
       '**/dist/**/*',
       '**/*.bru',
-      'packages/coldbru-js/src/sandbox/bundle-browser-rollup.js',
       'packages/coldbru-app/public/static/**/*',
       'packages/coldbru-app/.next/**/*',
       'packages/coldbru-electron/web/**/*'
@@ -37,21 +36,9 @@ module.exports = runESMImports().then(() => defineConfig([
     },
     files: [
       './eslint.config.js',
-      'tests/**/*.{ts,js}',
-      'playwright/**/*.{js,ts}',
       'packages/coldbru-app/**/*.{js,jsx,ts}',
       'packages/coldbru-app/src/test-utils/mocks/codemirror.js',
-      'packages/coldbru-cli/**/*.js',
-      'packages/coldbru-common/**/*.ts',
-      'packages/coldbru-converters/**/*.js',
-      'packages/coldbru-electron/**/*.js',
-      'packages/coldbru-filestore/**/*.ts',
-      'packages/coldbru-schema-types/**/*.ts',
-      'packages/coldbru-js/**/*.js',
-      'packages/coldbru-lang/**/*.js',
-      'packages/coldbru-requests/**/*.ts',
-      'packages/coldbru-requests/**/*.js',
-      'packages/coldbru-tests/**/*.{js,ts}'
+      'packages/coldbru-electron/**/*.js'
     ],
     rules: {
       ...stylistic.configs.customize({
@@ -130,157 +117,12 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/coldbru-cli/**/*.js'],
-    ignores: ['**/*.config.js'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parserOptions: {
-        ecmaVersion: 'latest'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-common/**/*.ts'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parser: require('@typescript-eslint/parser'),
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        project: './packages/coldbru-common/tsconfig.json'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-converters/**/*.js'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
     files: ['packages/coldbru-electron/**/*.js'],
     ignores: ['**/*.config.js', '**/web/**/*'],
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-filestore/**/*.ts'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parser: require('@typescript-eslint/parser'),
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        project: './packages/coldbru-filestore/tsconfig.json'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-js/**/*.js'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-        window: false,
-        self: false,
-        HTMLElement: false,
-        typeDetectGlobalObject: false
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-lang/**/*.js'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-requests/**/*.ts'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parser: require('@typescript-eslint/parser'),
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module',
-        project: './packages/coldbru-requests/tsconfig.json'
-      }
-    },
-    rules: {
-      'no-undef': 'error'
-    }
-  },
-  {
-    files: ['packages/coldbru-requests/**/*.js'],
-    ignores: ['**/*.config.js', '**/dist/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module'
       }
     },
     rules: {

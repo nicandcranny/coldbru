@@ -1,6 +1,6 @@
 import get from 'lodash/get';
-import { mockDataFunctions } from '@coldbru/common';
-import { PROMPT_VARIABLE_TEXT_PATTERN } from '@coldbru/common/utils';
+import { mockDataFunctions } from '@usebruno/common';
+import { PROMPT_VARIABLE_TEXT_PATTERN } from '@usebruno/common/utils';
 
 const CodeMirror = require('codemirror');
 

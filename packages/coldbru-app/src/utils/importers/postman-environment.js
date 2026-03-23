@@ -1,5 +1,5 @@
 import { BrunoError } from 'utils/common/error';
-import { postmanToBrunoEnvironment } from '@coldbru/converters';
+import { postmanToBrunoEnvironment } from '@usebruno/converters';
 
 const importEnvironment = async (parsedFiles) => {
   try {

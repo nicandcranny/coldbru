@@ -7,7 +7,7 @@ const { getCachedSystemProxy, fetchSystemProxy } = require('../store/system-prox
 const { resolveDefaultLocation } = require('../utils/default-location');
 const onboardUser = require('../app/onboarding');
 const LastOpenedCollections = require('../store/last-opened-collections');
-const { clearAgentCache } = require('@coldbru/requests');
+const { clearAgentCache } = require('@usebruno/requests');
 
 const registerPreferencesIpc = (mainWindow) => {
   const lastOpenedCollections = new LastOpenedCollections();

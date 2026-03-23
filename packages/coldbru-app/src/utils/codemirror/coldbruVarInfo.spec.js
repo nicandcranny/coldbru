@@ -1,8 +1,8 @@
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 import { COPY_SUCCESS_TIMEOUT, extractVariableInfo, renderVarInfo } from './coldbruVarInfo';
 
 // Mock the dependencies
-jest.mock('@coldbru/common', () => ({
+jest.mock('@usebruno/common', () => ({
   interpolate: jest.fn(),
   mockDataFunctions: {
     randomFirstName: jest.fn(() => 'John'),

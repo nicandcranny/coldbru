@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { cloneDeep, find, get } from 'lodash';
 import { IconLoader2, IconX } from '@tabler/icons';
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 import { fetchOauth2Credentials, clearOauth2Cache, refreshOauth2Credentials, cancelOauth2AuthorizationRequest, isOauth2AuthorizationRequestInProgress } from 'providers/ReduxStore/slices/collections/actions';
 import { getAllVariables } from 'utils/collections/index';
 import Button from 'ui/Button';

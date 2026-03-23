@@ -1,6 +1,6 @@
 const path = require('path');
 const { isFile, isDirectory } = require('./filesystem');
-const { transformProxyConfig } = require('@coldbru/requests');
+const { transformProxyConfig } = require('@usebruno/requests');
 
 function transformColdBruConfigBeforeSave(brunoConfig) {
   // remove exists from importPaths and protoFiles

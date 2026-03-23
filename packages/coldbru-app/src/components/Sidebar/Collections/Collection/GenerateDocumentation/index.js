@@ -12,7 +12,7 @@ import StyledWrapper from './StyledWrapper';
 import demoImage from './demo.png';
 import { useApp } from 'providers/App';
 import { transformCollectionToSaveToExportAsFile, findCollectionByUid, areItemsLoading } from 'utils/collections/index';
-import { brunoToOpenCollection } from '@coldbru/converters';
+import { brunoToOpenCollection } from '@usebruno/converters';
 import { sanitizeName } from 'utils/common/regex';
 import { escapeHtml } from 'utils/response';
 

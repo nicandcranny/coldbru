@@ -11,7 +11,7 @@ import { convertInsomniaToBruno } from 'utils/importers/insomnia-collection';
 import { convertOpenapiToBruno } from 'utils/importers/openapi-collection';
 import { processBrunoCollection } from 'utils/importers/coldbru-collection';
 import { processOpenCollection } from 'utils/importers/opencollection';
-import { wsdlToBruno } from '@coldbru/converters';
+import { wsdlToBruno } from '@usebruno/converters';
 import { toastError } from 'utils/common/error';
 import Modal from 'components/Modal';
 import Help from 'components/Help';

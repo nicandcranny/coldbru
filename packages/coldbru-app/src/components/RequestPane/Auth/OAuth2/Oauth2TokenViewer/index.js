@@ -3,7 +3,7 @@ import { find } from 'lodash';
 import StyledWrapper from './StyledWrapper';
 import { IconChevronDown, IconChevronRight, IconCopy, IconCheck } from '@tabler/icons';
 import { getAllVariables } from 'utils/collections/index';
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 
 const TokenSection = ({ title, token }) => {
   if (!token) return null;

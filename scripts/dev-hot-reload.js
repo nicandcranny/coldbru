@@ -24,11 +24,7 @@ const CONFIG = {
   NODE_VERSION,
   ELECTRON_WATCH_PATHS: [
     'packages/**/dist/',
-    'packages/coldbru-electron/src/',
-    'packages/coldbru-lang/src/',
-    'packages/coldbru-lang/v2/src/',
-    'packages/coldbru-js/src/',
-    'packages/coldbru-schema/src/'
+    'packages/coldbru-electron/src/'
   ],
   ELECTRON_START_DELAY: 10, // seconds
   NODEMON_WATCH_DELAY: 1000 // milliseconds
@@ -145,36 +141,6 @@ function startDevelopment() {
 
   // concurrently command objects: { command, name, prefixColor, env, cwd, ipc }
   const commandObjects = [
-    {
-      command: 'npm run watch --workspace=packages/coldbru-common',
-      name: 'common',
-      prefixColor: 'magenta'
-    },
-    {
-      command: 'npm run watch --workspace=packages/coldbru-converters',
-      name: 'converters',
-      prefixColor: 'green'
-    },
-    {
-      command: 'npm run watch --workspace=packages/coldbru-query',
-      name: 'query',
-      prefixColor: 'blue'
-    },
-    {
-      command: 'npm run watch --workspace=packages/coldbru-graphql-docs',
-      name: 'graphql',
-      prefixColor: 'white'
-    },
-    {
-      command: 'npm run watch --workspace=packages/coldbru-requests',
-      name: 'requests',
-      prefixColor: 'gray'
-    },
-    {
-      command: 'npm run watch --workspace=packages/coldbru-filestore',
-      name: 'filestore',
-      prefixColor: '#FA8072'
-    },
     {
       command: 'npm run dev:web',
       name: 'react',

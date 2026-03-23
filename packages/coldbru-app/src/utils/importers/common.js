@@ -6,7 +6,7 @@ import filter from 'lodash/filter';
 import cloneDeep from 'lodash/cloneDeep';
 import { uuid } from 'utils/common';
 import { isItemARequest } from 'utils/collections';
-import { collectionSchema } from '@coldbru/schema';
+import { collectionSchema } from '@usebruno/schema';
 import { BrunoError } from 'utils/common/error';
 import { isOpenApiSpec } from './openapi-collection';
 import { isPostmanCollection } from './postman-collection';

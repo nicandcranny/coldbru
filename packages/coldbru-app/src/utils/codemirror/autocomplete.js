@@ -1,4 +1,4 @@
-import { mockDataFunctions } from '@coldbru/common';
+import { mockDataFunctions } from '@usebruno/common';
 
 const CodeMirror = require('codemirror');
 

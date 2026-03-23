@@ -1,6 +1,6 @@
 import * as FileSaver from 'file-saver';
 import jsyaml from 'js-yaml';
-import { brunoToOpenCollection } from '@coldbru/converters';
+import { brunoToOpenCollection } from '@usebruno/converters';
 import { sanitizeName } from 'utils/common/regex';
 import { filterTransientItems } from 'utils/collections';
 

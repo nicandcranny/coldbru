@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const Store = require('electron-store');
 const { encryptStringSafe, decryptStringSafe } = require('../utils/encryption');
-const { environmentSchema } = require('@coldbru/schema');
+const { environmentSchema } = require('@usebruno/schema');
 
 class GlobalEnvironmentsStore {
   constructor() {

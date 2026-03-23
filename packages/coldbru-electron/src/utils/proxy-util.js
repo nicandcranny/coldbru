@@ -6,7 +6,7 @@ const { interpolateString } = require('../ipc/network/interpolate-string');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const { HttpProxyAgent } = require('http-proxy-agent');
 const { isEmpty, get, isUndefined, isNull } = require('lodash');
-const { getOrCreateHttpsAgent, getOrCreateHttpAgent } = require('@coldbru/requests');
+const { getOrCreateHttpsAgent, getOrCreateHttpAgent } = require('@usebruno/requests');
 const { preferencesUtil } = require('../store/preferences');
 
 const DEFAULT_PORTS = {

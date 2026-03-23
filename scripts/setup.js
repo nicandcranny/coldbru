@@ -90,18 +90,6 @@ async function setup() {
     execCommand('npm i --legacy-peer-deps', 'Installing dependencies');
     forceInstallPlatformDeps();
 
-    // Build packages
-    execCommand('npm run build:graphql-docs', 'Building graphql-docs');
-    execCommand('npm run build:coldbru-query', 'Building coldbru-query');
-    execCommand('npm run build:coldbru-common', 'Building coldbru-common');
-    execCommand('npm run build:coldbru-converters', 'Building coldbru-converters');
-    execCommand('npm run build:coldbru-requests', 'Building coldbru-requests');
-    execCommand('npm run build:schema-types', 'Building schema-types');
-    execCommand('npm run build:coldbru-filestore', 'Building coldbru-filestore');
-
-    // Bundle JS sandbox libraries
-    execCommand('npm run sandbox:bundle-libraries --workspace=packages/coldbru-js', 'Bundling JS sandbox libraries');
-
     console.log(`\n${icons.success} Setup completed successfully!\n`);
   } catch (error) {
     console.error(`\n${icons.error} Setup failed:`);

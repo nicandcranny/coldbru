@@ -1,5 +1,5 @@
 import { BrunoError } from 'utils/common/error';
-import { openApiToBruno } from '@coldbru/converters';
+import { openApiToBruno } from '@usebruno/converters';
 
 export const convertOpenapiToBruno = (data, options = {}) => {
   try {

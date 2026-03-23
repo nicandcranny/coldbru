@@ -1,7 +1,7 @@
 import { exportApiSpec } from './openapi-spec';
 
-// Mock @coldbru/common to provide a working interpolate function
-jest.mock('@coldbru/common', () => ({
+// Mock @usebruno/common to provide a working interpolate function
+jest.mock('@usebruno/common', () => ({
   interpolate: (str, vars) => {
     if (!str || typeof str !== 'string') return str;
     let result = str;

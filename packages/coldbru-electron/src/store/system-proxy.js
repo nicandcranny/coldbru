@@ -1,4 +1,4 @@
-const { getSystemProxy } = require('@coldbru/requests');
+const { getSystemProxy } = require('@usebruno/requests');
 
 let cachedSystemProxy;
 let systemProxyPromise;

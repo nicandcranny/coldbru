@@ -1,4 +1,4 @@
-import { parseQueryParams, buildQueryString as stringifyQueryParams } from '@coldbru/common/utils';
+import { parseQueryParams, buildQueryString as stringifyQueryParams } from '@usebruno/common/utils';
 import { uuid } from 'utils/common';
 import { find, map, forOwn, concat, filter, each, cloneDeep, get, set, findIndex } from 'lodash';
 import { createSlice } from '@reduxjs/toolkit';

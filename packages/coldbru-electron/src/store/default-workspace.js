@@ -343,7 +343,7 @@ class DefaultWorkspaceManager {
       const activeGlobalEnvironmentUid = globalEnvironmentsStore.getActiveGlobalEnvironmentUid();
 
       if (globalEnvironments && globalEnvironments.length > 0) {
-        const { stringifyEnvironment } = require('@coldbru/filestore');
+        const { stringifyEnvironment } = require('@usebruno/filestore');
         const environmentsDir = path.join(workspacePath, 'environments');
 
         // Get existing environment names to avoid overwriting recovered ones

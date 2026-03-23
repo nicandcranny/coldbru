@@ -4,7 +4,7 @@ import { getAllVariables, getTreePathFromCollectionToItem, mergeHeaders } from '
 import { resolveInheritedAuth } from 'utils/auth';
 import { get } from 'lodash';
 import { interpolateAuth, interpolateHeaders, interpolateBody, interpolateParams } from './interpolation';
-import { encodeUrl as encodeUrlCommon, stripOrigin } from '@coldbru/common/utils';
+import { encodeUrl as encodeUrlCommon, stripOrigin } from '@usebruno/common/utils';
 import { parse } from 'url';
 import { stringify } from 'query-string';
 

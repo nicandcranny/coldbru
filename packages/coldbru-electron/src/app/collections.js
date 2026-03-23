@@ -5,7 +5,7 @@ const Yup = require('yup');
 const { isDirectory, getCollectionStats, normalizeAndResolvePath, getCollectionConfigPath } = require('../utils/filesystem');
 const { generateUidBasedOnHash } = require('../utils/common');
 const { transformColdBruConfigAfterRead } = require('../utils/transformColdBruConfig');
-const { parseCollection } = require('@coldbru/filestore');
+const { parseCollection } = require('@usebruno/filestore');
 
 // Track scratch collection paths (temp directories for workspace scratch requests)
 const scratchCollectionPaths = new Set();

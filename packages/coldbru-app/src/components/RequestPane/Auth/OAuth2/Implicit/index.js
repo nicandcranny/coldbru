@@ -11,7 +11,7 @@ import Oauth2TokenViewer from '../Oauth2TokenViewer/index';
 import Oauth2ActionButtons from '../Oauth2ActionButtons/index';
 import AdditionalParams from '../AdditionalParams/index';
 import { getAllVariables } from 'utils/collections/index';
-import { interpolate } from '@coldbru/common';
+import { interpolate } from '@usebruno/common';
 import { savePreferences } from 'providers/ReduxStore/slices/app';
 import toast from 'react-hot-toast';
 

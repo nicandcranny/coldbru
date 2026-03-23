@@ -1,8 +1,0 @@
-{
-  "name": "GlobalEnv",
-  "variables": [
-    { "name": "baseUrl", "value": "http://localhost:8081/api/echo/json", "enabled": true },
-    { "name": "overrideVar", "value": "global-value", "enabled": true },
-    { "name": "globalOnly", "value": "from-global", "enabled": true }
-  ]
-}

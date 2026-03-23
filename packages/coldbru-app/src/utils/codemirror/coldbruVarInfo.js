@@ -6,7 +6,7 @@
  *  LICENSE file at https://github.com/graphql/codemirror-graphql/tree/v0.8.3
  */
 
-import { interpolate, mockDataFunctions, timeBasedDynamicVars } from '@coldbru/common';
+import { interpolate, mockDataFunctions, timeBasedDynamicVars } from '@usebruno/common';
 import { getVariableScope, isVariableSecret, getAllVariables, findCollectionByUid, findItemInCollectionByItemUid } from 'utils/collections';
 import { updateVariableInScope } from 'providers/ReduxStore/slices/collections/actions';
 import store from 'providers/ReduxStore';

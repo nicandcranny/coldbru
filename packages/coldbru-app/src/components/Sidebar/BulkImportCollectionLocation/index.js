@@ -15,7 +15,7 @@ import { postmanToBruno } from 'utils/importers/postman-collection';
 import { convertInsomniaToBruno } from 'utils/importers/insomnia-collection';
 import { convertOpenapiToBruno } from 'utils/importers/openapi-collection';
 import { processBrunoCollection } from 'utils/importers/coldbru-collection';
-import { wsdlToBruno } from '@coldbru/converters';
+import { wsdlToBruno } from '@usebruno/converters';
 import StyledWrapper from './StyledWrapper';
 import toast from 'react-hot-toast';
 import get from 'lodash/get';

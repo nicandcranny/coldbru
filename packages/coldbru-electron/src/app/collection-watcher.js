@@ -15,7 +15,7 @@ const {
   parseRequestViaWorker,
   parseCollection,
   parseFolder
-} = require('@coldbru/filestore');
+} = require('@usebruno/filestore');
 
 const { uuid } = require('../utils/common');
 const { getRequestUid } = require('../cache/requestUids');

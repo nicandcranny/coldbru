@@ -1,4 +1,4 @@
-import { interpolate, interpolateObject } from '@coldbru/common';
+import { interpolate, interpolateObject } from '@usebruno/common';
 import { cloneDeep } from 'lodash';
 
 export const interpolateAuth = (auth, variables = {}) => {
