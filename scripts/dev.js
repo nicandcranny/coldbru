@@ -32,7 +32,7 @@ let detectedPort = null;
 // Regex to match rsbuild's local URL output (e.g., "➜ Local:    http://localhost:3000/")
 const portRegex = /Local:\s+http:\/\/localhost:(\d+)/;
 
-console.log(`\n${colors.bright}${colors.yellow}🚀 Starting Bruno development environment...${colors.reset}\n`);
+console.log(`\n${colors.bright}${colors.yellow}🚀 Starting ColdBru development environment...${colors.reset}\n`);
 
 // Start the rsbuild dev server
 const webProcess = spawn('npm', ['run', 'dev'], {

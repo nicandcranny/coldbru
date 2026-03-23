@@ -1,4 +1,6 @@
-# Bruno Coding Standards
+# ColdBru Coding Standards
+
+Taken from Bruno's [CODING_STANDARDS.md](https://github.com/usebruno/bruno/blob/main/CODING_STANDARDS.md)
 
 - No diffs unless an actual change is made, the code changes need to be as minimal as possible, avoid making un-necessary whitespace diffs. This is already handled by eslint but make sure you check your code changes before commiting and raising a PR.
 

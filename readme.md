@@ -69,7 +69,7 @@ You can explore our [paid versions](https://github.com/nicandcranny/coldbru) to 
 - [Contribute 👩‍💻🧑‍💻](#contribute-)
 - [Authors](#authors)
 - [License 📄](#license-)
-- [Differences from Original ColdBru Fork](#differences-from-original-coldbru-fork)
+- [Differences from the Original Bruno](#differences-from-the-original-bruno)
   - [All Section](#all-section)
   - [Global Search Improvement](#global-search-improvement)
   - [Global Environment as a Global Settings](#global-environment-as-a-global-settings)
@@ -184,7 +184,7 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 [MIT](license.md)
 
-## Differences from Original ColdBru Fork
+## Differences from the Original Bruno
 
 ### All Section
 
