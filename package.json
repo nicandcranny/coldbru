@@ -49,6 +49,7 @@
     "dev:electron:debug": "npm run debug --workspace=packages/coldbru-electron",
     "storybook": "npm run storybook --workspace=packages/coldbru-app",
     "build:electron": "node ./scripts/build-electron.js",
+    "generate:icons": "node ./scripts/generate-icons.js",
     "build:electron:mac": "./scripts/build-electron.sh mac",
     "build:electron:win": "./scripts/build-electron.sh win",
     "build:electron:linux": "./scripts/build-electron.sh linux",

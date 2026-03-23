@@ -29,7 +29,7 @@ const config = {
         arch: ['x64', 'arm64']
       }
     ],
-    icon: 'resources/icons/mac/icon.icns',
+    icon: 'resources/icons/png',
     hardenedRuntime: true,
     identity: 'Anoop MD (W7LPPWA48L)',
     entitlements: 'resources/entitlements.mac.plist',

@@ -1,10 +1,10 @@
 import React from 'react';
-import logoTransparent from '../../../../../assets/images/logo-transparent.png';
+import logo from '../../../../../assets/images/logo.svg';
 
 const Bruno = ({ width }) => {
   return (
     <img
-      src={logoTransparent}
+      src={logo}
       alt="ColdBru logo"
       width={width}
       style={{ height: 'auto', display: 'block' }}
