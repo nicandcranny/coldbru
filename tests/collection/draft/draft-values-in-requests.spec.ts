@@ -126,7 +126,7 @@ test.describe('Draft values are used in requests', () => {
     await page.locator('.dropdown-item').filter({ hasText: 'New Request' }).click();
     await page.getByTestId('request-name').fill('Test Request');
     await page.getByTestId('new-request-url').locator('.CodeMirror').click();
-    await page.keyboard.type('https://testbench-sanity.usebruno.com/ping');
+    await page.keyboard.type('http://localhost:8081/ping');
     await page.getByRole('button', { name: 'Create', exact: true }).click();
 
     // Verify the request is created

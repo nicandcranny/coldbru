@@ -17,10 +17,10 @@ module.exports = runESMImports().then(() => defineConfig([
       '**/node_modules/**/*',
       '**/dist/**/*',
       '**/*.bru',
-      'packages/bruno-js/src/sandbox/bundle-browser-rollup.js',
-      'packages/bruno-app/public/static/**/*',
-      'packages/bruno-app/.next/**/*',
-      'packages/bruno-electron/web/**/*'
+      'packages/coldbru-js/src/sandbox/bundle-browser-rollup.js',
+      'packages/coldbru-app/public/static/**/*',
+      'packages/coldbru-app/.next/**/*',
+      'packages/coldbru-electron/web/**/*'
     ]
   },
   {
@@ -39,19 +39,19 @@ module.exports = runESMImports().then(() => defineConfig([
       './eslint.config.js',
       'tests/**/*.{ts,js}',
       'playwright/**/*.{js,ts}',
-      'packages/bruno-app/**/*.{js,jsx,ts}',
-      'packages/bruno-app/src/test-utils/mocks/codemirror.js',
-      'packages/bruno-cli/**/*.js',
-      'packages/bruno-common/**/*.ts',
-      'packages/bruno-converters/**/*.js',
-      'packages/bruno-electron/**/*.js',
-      'packages/bruno-filestore/**/*.ts',
-      'packages/bruno-schema-types/**/*.ts',
-      'packages/bruno-js/**/*.js',
-      'packages/bruno-lang/**/*.js',
-      'packages/bruno-requests/**/*.ts',
-      'packages/bruno-requests/**/*.js',
-      'packages/bruno-tests/**/*.{js,ts}'
+      'packages/coldbru-app/**/*.{js,jsx,ts}',
+      'packages/coldbru-app/src/test-utils/mocks/codemirror.js',
+      'packages/coldbru-cli/**/*.js',
+      'packages/coldbru-common/**/*.ts',
+      'packages/coldbru-converters/**/*.js',
+      'packages/coldbru-electron/**/*.js',
+      'packages/coldbru-filestore/**/*.ts',
+      'packages/coldbru-schema-types/**/*.ts',
+      'packages/coldbru-js/**/*.js',
+      'packages/coldbru-lang/**/*.js',
+      'packages/coldbru-requests/**/*.ts',
+      'packages/coldbru-requests/**/*.js',
+      'packages/coldbru-tests/**/*.{js,ts}'
     ],
     rules: {
       ...stylistic.configs.customize({
@@ -82,7 +82,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-app/**/*.{js,jsx,ts}'],
+    files: ['packages/coldbru-app/**/*.{js,jsx,ts}'],
     ignores: ['**/*.config.js', '**/public/**/*'],
     languageOptions: {
       globals: {
@@ -106,7 +106,7 @@ module.exports = runESMImports().then(() => defineConfig([
   },
   {
     // It prevents lint errors when using CommonJS exports (module.exports) in Jest mocks.
-    files: ['packages/bruno-app/src/test-utils/mocks/codemirror.js'],
+    files: ['packages/coldbru-app/src/test-utils/mocks/codemirror.js'],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -119,7 +119,7 @@ module.exports = runESMImports().then(() => defineConfig([
   },
   {
     // Storybook config files use CommonJS with __dirname and module.exports
-    files: ['packages/bruno-app/storybook/**/*.js'],
+    files: ['packages/coldbru-app/storybook/**/*.js'],
     languageOptions: {
       globals: {
         ...globals.node
@@ -130,7 +130,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-cli/**/*.js'],
+    files: ['packages/coldbru-cli/**/*.js'],
     ignores: ['**/*.config.js'],
     languageOptions: {
       globals: {
@@ -146,7 +146,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-common/**/*.ts'],
+    files: ['packages/coldbru-common/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -157,7 +157,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-common/tsconfig.json'
+        project: './packages/coldbru-common/tsconfig.json'
       }
     },
     rules: {
@@ -165,7 +165,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-converters/**/*.js'],
+    files: ['packages/coldbru-converters/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -182,7 +182,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-electron/**/*.js'],
+    files: ['packages/coldbru-electron/**/*.js'],
     ignores: ['**/*.config.js', '**/web/**/*'],
     languageOptions: {
       globals: {
@@ -195,7 +195,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-filestore/**/*.ts'],
+    files: ['packages/coldbru-filestore/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -206,7 +206,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-filestore/tsconfig.json'
+        project: './packages/coldbru-filestore/tsconfig.json'
       }
     },
     rules: {
@@ -214,7 +214,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-js/**/*.js'],
+    files: ['packages/coldbru-js/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -235,7 +235,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-lang/**/*.js'],
+    files: ['packages/coldbru-lang/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -252,7 +252,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-requests/**/*.ts'],
+    files: ['packages/coldbru-requests/**/*.ts'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {
@@ -263,7 +263,7 @@ module.exports = runESMImports().then(() => defineConfig([
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './packages/bruno-requests/tsconfig.json'
+        project: './packages/coldbru-requests/tsconfig.json'
       }
     },
     rules: {
@@ -271,7 +271,7 @@ module.exports = runESMImports().then(() => defineConfig([
     }
   },
   {
-    files: ['packages/bruno-requests/**/*.js'],
+    files: ['packages/coldbru-requests/**/*.js'],
     ignores: ['**/*.config.js', '**/dist/**/*'],
     languageOptions: {
       globals: {

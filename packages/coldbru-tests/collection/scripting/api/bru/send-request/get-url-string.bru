@@ -1,0 +1,18 @@
+meta {
+  name: get-url-string
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8081
+  body: none
+  auth: inherit
+}
+
+tests {
+  await test("send request with a get url string", async () => {
+    const res = await bru.sendRequest("http://localhost:8081/ping");
+    expect(res.data).to.eql('pong');
+  });
+}

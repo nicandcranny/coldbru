@@ -52,7 +52,7 @@ test.describe('Global Environment Variable Update via Script', () => {
     await test.step('Verify that the value of "baseUrl" is unchanged.', async () => {
       const row = page.locator('tbody tr').filter({ has: page.locator('input[value="baseUrl"]') });
       const value = await row.locator('.CodeMirror-line').first().textContent();
-      await expect(value).toContain('https://echo.usebruno.com');
+      await expect(value).toContain('http://localhost:8081');
     });
 
     await test.step('Close the global environment config tab.', async () => {

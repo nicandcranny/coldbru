@@ -61,7 +61,7 @@ AGENTS.md
 *.plan.md
 
 # packages dist
-packages/bruno-filestore/dist
-packages/bruno-requests/dist
-packages/bruno-schema-types/dist
-packages/bruno-converters/dist
+packages/coldbru-filestore/dist
+packages/coldbru-requests/dist
+packages/coldbru-schema-types/dist
+packages/coldbru-converters/dist

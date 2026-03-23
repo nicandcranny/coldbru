@@ -9,7 +9,7 @@ runs:
   steps:
     - name: Install Test Collection Dependencies
       shell: bash
-      run: npm ci --prefix packages/bruno-tests/collection
+      run: npm ci --prefix packages/coldbru-tests/collection
 
     - name: Run Playwright Tests (Ubuntu)
       if: inputs.os == 'ubuntu'

@@ -24,10 +24,10 @@ runs:
       shell: bash
       run: |
         npm run build:graphql-docs
-        npm run build:bruno-query
-        npm run build:bruno-common
-        npm run sandbox:bundle-libraries --workspace=packages/bruno-js
-        npm run build:bruno-converters
-        npm run build:bruno-requests
+        npm run build:coldbru-query
+        npm run build:coldbru-common
+        npm run sandbox:bundle-libraries --workspace=packages/coldbru-js
+        npm run build:coldbru-converters
+        npm run build:coldbru-requests
         npm run build:schema-types
-        npm run build:bruno-filestore
+        npm run build:coldbru-filestore

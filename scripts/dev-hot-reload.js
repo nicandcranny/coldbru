@@ -24,11 +24,11 @@ const CONFIG = {
   NODE_VERSION,
   ELECTRON_WATCH_PATHS: [
     'packages/**/dist/',
-    'packages/bruno-electron/src/',
-    'packages/bruno-lang/src/',
-    'packages/bruno-lang/v2/src/',
-    'packages/bruno-js/src/',
-    'packages/bruno-schema/src/'
+    'packages/coldbru-electron/src/',
+    'packages/coldbru-lang/src/',
+    'packages/coldbru-lang/v2/src/',
+    'packages/coldbru-js/src/',
+    'packages/coldbru-schema/src/'
   ],
   ELECTRON_START_DELAY: 10, // seconds
   NODEMON_WATCH_DELAY: 1000 // milliseconds
@@ -146,32 +146,32 @@ function startDevelopment() {
   // concurrently command objects: { command, name, prefixColor, env, cwd, ipc }
   const commandObjects = [
     {
-      command: 'npm run watch --workspace=packages/bruno-common',
+      command: 'npm run watch --workspace=packages/coldbru-common',
       name: 'common',
       prefixColor: 'magenta'
     },
     {
-      command: 'npm run watch --workspace=packages/bruno-converters',
+      command: 'npm run watch --workspace=packages/coldbru-converters',
       name: 'converters',
       prefixColor: 'green'
     },
     {
-      command: 'npm run watch --workspace=packages/bruno-query',
+      command: 'npm run watch --workspace=packages/coldbru-query',
       name: 'query',
       prefixColor: 'blue'
     },
     {
-      command: 'npm run watch --workspace=packages/bruno-graphql-docs',
+      command: 'npm run watch --workspace=packages/coldbru-graphql-docs',
       name: 'graphql',
       prefixColor: 'white'
     },
     {
-      command: 'npm run watch --workspace=packages/bruno-requests',
+      command: 'npm run watch --workspace=packages/coldbru-requests',
       name: 'requests',
       prefixColor: 'gray'
     },
     {
-      command: 'npm run watch --workspace=packages/bruno-filestore',
+      command: 'npm run watch --workspace=packages/coldbru-filestore',
       name: 'filestore',
       prefixColor: '#FA8072'
     },
@@ -181,7 +181,7 @@ function startDevelopment() {
       prefixColor: 'cyan'
     },
     {
-      command: `sleep ${CONFIG.ELECTRON_START_DELAY} && nodemon ${watchPaths} --ext js,jsx,ts,tsx --delay ${CONFIG.NODEMON_WATCH_DELAY}ms --exec "npm run dev --workspace=packages/bruno-electron"`,
+      command: `sleep ${CONFIG.ELECTRON_START_DELAY} && nodemon ${watchPaths} --ext js,jsx,ts,tsx --delay ${CONFIG.NODEMON_WATCH_DELAY}ms --exec "npm run dev --workspace=packages/coldbru-electron"`,
       name: 'electron',
       prefixColor: 'yellow',
       delay: CONFIG.ELECTRON_START_DELAY

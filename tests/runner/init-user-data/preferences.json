@@ -1,6 +1,6 @@
 {
   "maximized": false,
-  "lastOpenedCollections": ["{{projectRoot}}/packages/bruno-tests/collection"],
+  "lastOpenedCollections": ["{{projectRoot}}/packages/coldbru-tests/collection"],
   "preferences": {
     "onboarding": {
       "hasLaunchedBefore": true,

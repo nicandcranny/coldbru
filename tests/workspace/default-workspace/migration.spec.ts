@@ -15,7 +15,7 @@ test.describe('Default Workspace Migration', () => {
         const testCollectionPath = path.join(userDataPath, 'my-old-collection');
         fs.mkdirSync(testCollectionPath, { recursive: true });
         fs.writeFileSync(
-          path.join(testCollectionPath, 'bruno.json'),
+          path.join(testCollectionPath, 'coldbru.json'),
           JSON.stringify({
             version: '1',
             name: 'My Old Collection',
@@ -64,7 +64,7 @@ test.describe('Default Workspace Migration', () => {
       for (const collPath of [collection1Path, collection2Path]) {
         fs.mkdirSync(collPath, { recursive: true });
         fs.writeFileSync(
-          path.join(collPath, 'bruno.json'),
+          path.join(collPath, 'coldbru.json'),
           JSON.stringify({
             version: '1',
             name: path.basename(collPath),
@@ -108,7 +108,7 @@ test.describe('Default Workspace Migration', () => {
       const oldCollectionPath = path.join(userDataPath, 'old-user-collection');
       fs.mkdirSync(oldCollectionPath, { recursive: true });
       fs.writeFileSync(
-        path.join(oldCollectionPath, 'bruno.json'),
+        path.join(oldCollectionPath, 'coldbru.json'),
         JSON.stringify({
           version: '1',
           name: 'Old User Collection',

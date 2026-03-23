@@ -69,7 +69,7 @@ test.describe('Import WSDL Collection', () => {
   });
 
   test('Import WSDL JSON file as Bruno collection', async ({ page, createTmpDir }) => {
-    const wsdlFile = path.join(testDataDir, 'wsdl-bruno.json');
+    const wsdlFile = path.join(testDataDir, 'wsdl-coldbru.json');
 
     await test.step('Open import collection modal', async () => {
       await page.getByTestId('collections-header-add-menu').click();

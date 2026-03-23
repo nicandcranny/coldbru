@@ -1,6 +1,6 @@
-# Playwright Testing Guide for Bruno
+# Playwright Testing Guide for ColdBru
 
-This guide explains how to create and run Playwright test cases for the Bruno application using the UI.
+This guide explains how to create and run Playwright test cases for the ColdBru application using the UI.
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@ This guide explains how to create and run Playwright test cases for the Bruno ap
 
 ## Overview
 
-Bruno uses Playwright for end-to-end testing of its Electron application. The testing setup includes custom fixtures for Electron app testing and utilities for managing test data.
+ColdBru uses Playwright for end-to-end testing of its Electron application. The testing setup includes custom fixtures for Electron app testing and utilities for managing test data.
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ npm run test:codegen
 
 1. The Electron app launches automatically
 2. Playwright Inspector opens in a separate window
-3. You interact with the Bruno UI
+3. You interact with the ColdBru UI
 4. Actions are recorded and converted to test code
 5. The generated test file is saved in `e2e-tests/`
 
@@ -132,7 +132,7 @@ test.describe('Feature Name', () => {
 
 ## Available Test Fixtures
 
-The Bruno Playwright setup provides several custom fixtures:
+The ColdBru Playwright setup provides several custom fixtures:
 
 ### Core Fixtures
 
@@ -183,7 +183,7 @@ npx playwright test --ui
 npx playwright test --headed
 
 # Run with specific browser
-npx playwright test --project="Bruno Electron App"
+npx playwright test --project="ColdBru Electron App"
 
 # Run with debugging
 npx playwright test --debug
@@ -439,7 +439,7 @@ export default defineConfig({
 
   projects: [
     {
-      name: 'Bruno Electron App'
+      name: 'ColdBru Electron App'
     }
   ],
 
@@ -450,7 +450,7 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI
     },
     {
-      command: 'npm start --workspace=packages/bruno-tests',
+      command: 'npm start --workspace=packages/coldbru-tests',
       url: 'http://localhost:8081/ping',
       reuseExistingServer: !process.env.CI
     }
@@ -463,7 +463,7 @@ export default defineConfig({
 - [Playwright Documentation](https://playwright.dev/)
 - [Playwright Test API](https://playwright.dev/docs/api/class-test)
 - [Electron Testing with Playwright](https://playwright.dev/docs/api/class-electronapplication)
-- [Bruno Project Structure](../readme.md)
+- [ColdBru Project Structure](../readme.md)
 
 ---
 

@@ -9,7 +9,7 @@ test.describe('OpenAPI Import GroupBy Tests', () => {
     const jsonOutputPath = path.join(outputDir, 'petstore-tags.json');
 
     // Run OpenAPI import with tags grouping using JSON output
-    const cliPath = path.resolve(__dirname, '../../../../packages/bruno-cli/bin/bru.js');
+    const cliPath = path.resolve(__dirname, '../../../../packages/coldbru-cli/bin/bru.js');
     const specPath = path.resolve(__dirname, './fixtures/openapi.json');
     const command = `node "${cliPath}" import openapi --source "${specPath}" --output-file "${jsonOutputPath}" --collection-name "Simple API (Tags)" --group-by tags`;
 
@@ -45,7 +45,7 @@ test.describe('OpenAPI Import GroupBy Tests', () => {
     const jsonOutputPath = path.join(outputDir, 'petstore-path.json');
 
     // Run OpenAPI import with path grouping using JSON output
-    const cliPath = path.resolve(__dirname, '../../../../packages/bruno-cli/bin/bru.js');
+    const cliPath = path.resolve(__dirname, '../../../../packages/coldbru-cli/bin/bru.js');
     const specPath = path.resolve(__dirname, './fixtures/openapi.json');
     const command = `node "${cliPath}" import openapi --source "${specPath}" --output-file "${jsonOutputPath}" --collection-name "Simple API (Path)" --group-by path`;
 

@@ -11,7 +11,7 @@ import { buildCommonLocators } from '../utils/page/locators';
 
 const runShortcut = process.platform === 'darwin' ? 'Meta+Enter' : 'Control+Enter';
 const selectAllShortcut = process.platform === 'darwin' ? 'Meta+a' : 'Control+a';
-const echoUrl = 'https://echo.usebruno.com';
+const echoUrl = 'http://localhost:8081';
 
 test.describe.serial('Response pane updates when focused and request is re-sent', () => {
   const collectionName = 'response-pane-update-test';

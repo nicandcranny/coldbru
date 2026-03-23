@@ -12,9 +12,9 @@ body:
     attributes:
       label: 'This feature'
       options:
-        - label: blocks me from using Bruno 
+        - label: blocks me from using ColdBru
           required: false
-        - label: would improve my quality of life in Bruno 
+        - label: would improve my quality of life in ColdBru
           required: false
         - label: is something I've never seen an API client do before
           required: false
@@ -24,7 +24,7 @@ body:
         Suggest an idea for this project.
   - type: textarea
     attributes:
-      label: Describe the feature you want to add, and how it would change your usage of Bruno 
+      label: Describe the feature you want to add, and how it would change your usage of ColdBru
       description: A clear and concise description of the feature you want to be added.
     validations:
       required: true

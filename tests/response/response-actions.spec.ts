@@ -19,7 +19,7 @@ test.describe('Response Pane Actions', () => {
 
     await test.step('Create collection and request', async () => {
       await createCollection(page, collectionName, await createTmpDir(collectionName));
-      await createRequest(page, 'copy-test', collectionName, { url: 'https://testbench-sanity.usebruno.com/ping' });
+      await createRequest(page, 'copy-test', collectionName, { url: 'http://localhost:8081/ping' });
     });
 
     await test.step('Send request and wait for response', async () => {
@@ -38,7 +38,7 @@ test.describe('Response Pane Actions', () => {
     await test.step('Create collection and request', async () => {
       await createCollection(page, collectionName, await createTmpDir(collectionName));
       await createRequest(page, 'base64-copy-test', collectionName, {
-        url: 'https://testbench-sanity.usebruno.com/ping'
+        url: 'http://localhost:8081/ping'
       });
     });
 

@@ -43,7 +43,7 @@ jobs:
         if: always()
         with:
           check_name: CLI Test Results
-          files: packages/bruno-tests/collection/junit.xml
+          files: packages/coldbru-tests/collection/junit.xml
           comment_mode: always
 
   e2e-test:

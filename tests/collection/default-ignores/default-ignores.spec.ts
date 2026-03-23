@@ -17,14 +17,14 @@ test.describe('Default ignores for node_modules and .git', () => {
     const locators = buildCommonLocators(page);
     const collectionDir = await createTmpDir('node-modules-ignore-test');
 
-    // Create bruno.json with custom ignore that doesn't include node_modules
+    // Create coldbru.json with custom ignore that doesn't include node_modules
     const brunoConfig = {
       version: '1',
       name: 'Node Modules Ignore Test',
       type: 'collection',
       ignore: ['custom-folder', 'another-folder'] // Explicitly NOT including node_modules
     };
-    fs.writeFileSync(path.join(collectionDir, 'bruno.json'), JSON.stringify(brunoConfig, null, 2));
+    fs.writeFileSync(path.join(collectionDir, 'coldbru.json'), JSON.stringify(brunoConfig, null, 2));
 
     // Create node_modules directory with .bru files inside
     const nodeModulesDir = path.join(collectionDir, 'node_modules');
@@ -104,14 +104,14 @@ get {
     const locators = buildCommonLocators(page);
     const collectionDir = await createTmpDir('git-ignore-test');
 
-    // Create bruno.json with custom ignore that doesn't include .git
+    // Create coldbru.json with custom ignore that doesn't include .git
     const brunoConfig = {
       version: '1',
       name: 'Git Ignore Test',
       type: 'collection',
       ignore: ['custom-folder'] // Explicitly NOT including .git
     };
-    fs.writeFileSync(path.join(collectionDir, 'bruno.json'), JSON.stringify(brunoConfig, null, 2));
+    fs.writeFileSync(path.join(collectionDir, 'coldbru.json'), JSON.stringify(brunoConfig, null, 2));
 
     // Create .git directory with .bru files inside
     const gitDir = path.join(collectionDir, '.git');

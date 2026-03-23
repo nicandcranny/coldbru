@@ -12,7 +12,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "https://testbench-sanity.usebruno.com/ping",
+          "raw": "http://localhost:8081/ping",
           "protocol": "https",
           "host": [
             "testbench-sanity",
@@ -31,7 +31,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "https://testbench-sanity.usebruno.com/ping",
+              "raw": "http://localhost:8081/ping",
               "protocol": "https",
               "host": [
                 "testbench-sanity",
@@ -83,7 +83,7 @@
               }
             },
             "url": {
-              "raw": "https://testbench-sanity.usebruno.com/ping",
+              "raw": "http://localhost:8081/ping",
               "protocol": "https",
               "host": [
                 "testbench-sanity",

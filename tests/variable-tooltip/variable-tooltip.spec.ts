@@ -53,7 +53,7 @@ test.describe('Variable Tooltip', () => {
 
       await apiKeyVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-name')).toContainText('apiKey');
       await expect(tooltip.locator('.var-scope-badge')).toContainText('Environment');
@@ -82,7 +82,7 @@ test.describe('Variable Tooltip', () => {
       const secretVar = headerValueEditor.locator('.cm-variable-valid').filter({ hasText: 'secretToken' }).first();
       await secretVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
 
       // Verify masked
@@ -141,7 +141,7 @@ test.describe('Variable Tooltip', () => {
 
       await endpointVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-name')).toContainText('endpoint');
 
@@ -162,7 +162,7 @@ test.describe('Variable Tooltip', () => {
 
       await endpointVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
 
       // Click on value to edit
@@ -191,7 +191,7 @@ test.describe('Variable Tooltip', () => {
       // Hover again to verify the change
       await endpointVar.hover();
 
-      const newTooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const newTooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(newTooltip).toBeVisible();
 
       // Should show updated resolved value
@@ -207,7 +207,7 @@ test.describe('Variable Tooltip', () => {
 
       await endpointVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
 
       const copyButton = tooltip.locator('.copy-button');
@@ -261,7 +261,7 @@ test.describe('Variable Tooltip', () => {
       const processEnvVar = urlEditor.locator('.cm-variable-valid, .cm-variable-invalid').filter({ hasText: 'process.env.HOME' }).first();
       await processEnvVar.hover();
 
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-name')).toContainText('process.env.HOME');
       await expect(tooltip.locator('.var-scope-badge')).toContainText('Process Env');
@@ -311,7 +311,7 @@ test.describe('Variable Tooltip', () => {
       await undefinedVar.hover();
 
       // Tooltip should appear
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-name')).toContainText('myApiKey');
       await expect(tooltip.locator('.var-scope-badge')).toContainText('Request');
@@ -340,7 +340,7 @@ test.describe('Variable Tooltip', () => {
 
       // Hover to verify value was saved
       await validVar.first().hover();
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-value-editable-display')).toContainText('secret-key-123');
 
@@ -422,7 +422,7 @@ test.describe('Variable Tooltip', () => {
       await invalidVar.hover();
 
       // Verify tooltip shows warning and hides input
-      const tooltip = page.locator('.CodeMirror-brunoVarInfo').first();
+      const tooltip = page.locator('.CodeMirror-coldbruVarInfo').first();
       await expect(tooltip).toBeVisible();
       await expect(tooltip.locator('.var-name')).toContainText('user id');
       await expect(tooltip.locator('.var-warning-note')).toBeVisible();

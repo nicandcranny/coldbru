@@ -6,15 +6,15 @@ runs:
     - name: Run Local Testbench
       shell: bash
       run: |
-        npm start --workspace=packages/bruno-tests &
+        npm start --workspace=packages/coldbru-tests &
         sleep 5
 
     - name: Install Test Collection Dependencies
       shell: bash
-      run: npm ci --prefix packages/bruno-tests/collection
+      run: npm ci --prefix packages/coldbru-tests/collection
 
     - name: Run CLI Tests
       shell: bash
       run: |
-        cd packages/bruno-tests/collection
+        cd packages/coldbru-tests/collection
         node ../../bruno-cli/bin/bru.js run --env Prod --output junit.xml --format junit --sandbox developer

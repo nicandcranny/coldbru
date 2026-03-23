@@ -69,30 +69,30 @@ async function execCommandWithOutput(command) {
 async function main() {
   try {
     // Remove out directory
-    await deleteFileIfExists('packages/bruno-electron/out');
+    await deleteFileIfExists('packages/coldbru-electron/out');
 
     // Remove web directory
-    await deleteFileIfExists('packages/bruno-electron/web');
+    await deleteFileIfExists('packages/coldbru-electron/web');
 
     // Create a new web directory
-    await fs.ensureDir('packages/bruno-electron/web');
+    await fs.ensureDir('packages/coldbru-electron/web');
     console.log('The directory has been created successfully!');
 
     // Copy build
-    await copyFolderIfExists('packages/bruno-app/dist', 'packages/bruno-electron/web');
+    await copyFolderIfExists('packages/coldbru-app/dist', 'packages/coldbru-electron/web');
 
     // Update static paths
-    const files = await fs.readdir('packages/bruno-electron/web');
+    const files = await fs.readdir('packages/coldbru-electron/web');
     for (const file of files) {
       if (file.endsWith('.html')) {
-        let content = await fs.readFile(`packages/bruno-electron/web/${file}`, 'utf8');
+        let content = await fs.readFile(`packages/coldbru-electron/web/${file}`, 'utf8');
         content = content.replace(/\/static/g, './static');
-        await fs.writeFile(`packages/bruno-electron/web/${file}`, content);
+        await fs.writeFile(`packages/coldbru-electron/web/${file}`, content);
       }
     }
 
     // update font load paths
-    const cssDir = path.join('packages/bruno-electron/web/static/css');
+    const cssDir = path.join('packages/coldbru-electron/web/static/css');
     try {
       const cssFiles = await fs.readdir(cssDir);
       for (const file of cssFiles) {
@@ -108,7 +108,7 @@ async function main() {
     }
 
     // Remove sourcemaps
-    await removeSourceMapFiles('packages/bruno-electron/web');
+    await removeSourceMapFiles('packages/coldbru-electron/web');
 
     // Run npm dist command
     console.log('Building the Electron distribution');
@@ -123,7 +123,7 @@ async function main() {
       osArg = 'linux';
     }
 
-    await execCommandWithOutput(`npm run dist:${osArg} --workspace=packages/bruno-electron`);
+    await execCommandWithOutput(`npm run dist:${osArg} --workspace=packages/coldbru-electron`);
   } catch (error) {
     console.error('An error occurred:', error);
   }

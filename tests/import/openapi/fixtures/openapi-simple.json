@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://echo.usebruno.com",
+      "url": "http://localhost:8081",
       "description": "Echo test server"
     }
   ],

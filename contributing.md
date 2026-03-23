@@ -66,15 +66,15 @@ npm i --legacy-peer-deps
 ```bash
 # build packages
 npm run build:graphql-docs
-npm run build:bruno-query
-npm run build:bruno-common
-npm run build:bruno-converters
-npm run build:bruno-requests
+npm run build:coldbru-query
+npm run build:coldbru-common
+npm run build:coldbru-converters
+npm run build:coldbru-requests
 npm run build:schema-types
-npm run build:bruno-filestore
+npm run build:coldbru-filestore
 
 # bundle js sandbox libraries
-npm run sandbox:bundle-libraries --workspace=packages/bruno-js
+npm run sandbox:bundle-libraries --workspace=packages/coldbru-js
 ```
 
 ##### Option 2
@@ -133,28 +133,28 @@ find . -type f -name "package-lock.json" -delete
 
 ```bash
 # run bruno-schema tests
-npm run test --workspace=packages/bruno-schema
+npm run test --workspace=packages/coldbru-schema
 
 # run bruno-query tests
-npm run test --workspace=packages/bruno-query
+npm run test --workspace=packages/coldbru-query
 
 # run bruno-common tests
-npm run test --workspace=packages/bruno-common
+npm run test --workspace=packages/coldbru-common
 
 # run bruno-converters tests
-npm run test --workspace=packages/bruno-converters
+npm run test --workspace=packages/coldbru-converters
 
 # run bruno-app tests
-npm run test --workspace=packages/bruno-app
+npm run test --workspace=packages/coldbru-app
 
 # run bruno-electron tests
-npm run test --workspace=packages/bruno-electron
+npm run test --workspace=packages/coldbru-electron
 
 # run bruno-lang tests
-npm run test --workspace=packages/bruno-lang
+npm run test --workspace=packages/coldbru-lang
 
 # run bruno-toml tests
-npm run test --workspace=packages/bruno-toml
+npm run test --workspace=packages/coldbru-toml
 
 # run tests over all workspaces
 npm test --workspaces --if-present

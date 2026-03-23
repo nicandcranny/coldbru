@@ -1,7 +1,7 @@
 const path = require('path');
 const { _electron: electron } = require('playwright');
 
-const electronAppPath = path.join(__dirname, '../packages/bruno-electron');
+const electronAppPath = path.join(__dirname, '../packages/coldbru-electron');
 
 exports.startApp = async () => {
   const app = await electron.launch({

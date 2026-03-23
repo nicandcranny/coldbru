@@ -7,7 +7,7 @@
 				{
 					"uid": "VXKOZdkYw0DyI4mlhn6Wr",
 					"name": "baseUrl",
-					"value": "https://echo.usebruno.com",
+					"value": "http://localhost:8081",
 					"type": "text",
 					"secret": false,
 					"enabled": true

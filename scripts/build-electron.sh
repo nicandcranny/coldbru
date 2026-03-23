@@ -1,43 +1,43 @@
 #!/bin/bash
 
 # Remove out directory
-rm -rf packages/bruno-electron/out
+rm -rf packages/coldbru-electron/out
 
 # Remove web directory
-rm -rf packages/bruno-electron/web
+rm -rf packages/coldbru-electron/web
 
 # Create a new web directory
-mkdir packages/bruno-electron/web
+mkdir packages/coldbru-electron/web
 
 # Copy build
-cp -r packages/bruno-app/dist/* packages/bruno-electron/web
+cp -r packages/coldbru-app/dist/* packages/coldbru-electron/web
 
 
 # Update static paths
-sed -i'' -e 's@/static/@static/@g' packages/bruno-electron/web/**.html
-sed -i'' -e 's@/static/font@../../static/font@g' packages/bruno-electron/web/static/css/**.**.css
+sed -i'' -e 's@/static/@static/@g' packages/coldbru-electron/web/**.html
+sed -i'' -e 's@/static/font@../../static/font@g' packages/coldbru-electron/web/static/css/**.**.css
 
 # Remove sourcemaps
-find packages/bruno-electron/web -name '*.map' -type f -delete
+find packages/coldbru-electron/web -name '*.map' -type f -delete
 
 if [ "$1" == "snap" ]; then
   echo "Building snap distribution"
-  npm run dist:snap --workspace=packages/bruno-electron 
+  npm run dist:snap --workspace=packages/coldbru-electron 
 elif [ "$1" == "mac" ]; then
   echo "Building mac distribution"
-  npm run dist:mac --workspace=packages/bruno-electron
+  npm run dist:mac --workspace=packages/coldbru-electron
 elif [ "$1" == "win" ]; then
   echo "Building windows distribution"
-  npm run dist:win --workspace=packages/bruno-electron
+  npm run dist:win --workspace=packages/coldbru-electron
 elif [ "$1" == "deb" ]; then
   echo "Building debian distribution"
-  npm run dist:deb --workspace=packages/bruno-electron
+  npm run dist:deb --workspace=packages/coldbru-electron
 elif [ "$1" == "rpm" ]; then
   echo "Building rpm distribution"
-  npm run dist:rpm --workspace=packages/bruno-electron
+  npm run dist:rpm --workspace=packages/coldbru-electron
 elif [ "$1" == "linux" ]; then
   echo "Building linux distribution"
-  npm run dist:linux --workspace=packages/bruno-electron
+  npm run dist:linux --workspace=packages/coldbru-electron
 else
   echo "Please pass a build distribution type"
 fi

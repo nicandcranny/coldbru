@@ -13,7 +13,7 @@ test.describe('All Collection Types Bulk Import', () => {
   test('All 4 collection types appear in bulk import', async ({ page, createTmpDir }) => {
     const postmanFile = path.join(testDataDir, 'sample-postman.json');
     const insomniaFile = path.join(testDataDir, 'sample-insomnia.json');
-    const brunoFile = path.join(testDataDir, 'sample-bruno.json');
+    const brunoFile = path.join(testDataDir, 'sample-coldbru.json');
     const openapiFile = path.join(testDataDir, 'sample-openapi.yaml');
 
     await page.getByTestId('collections-header-add-menu').click();

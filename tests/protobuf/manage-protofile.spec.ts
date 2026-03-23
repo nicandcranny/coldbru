@@ -6,7 +6,7 @@ test.describe('manage protofile', () => {
     await closeAllCollections(page);
   });
 
-  test('protofiles, import paths from bruno.json are visible in the protobuf settings', async ({ pageWithUserData: page }) => {
+  test('protofiles, import paths from coldbru.json are visible in the protobuf settings', async ({ pageWithUserData: page }) => {
     await page.locator('#sidebar-collection-name').filter({ hasText: 'Grpcbin' }).click();
 
     await page.getByRole('tab', { name: 'Protobuf' }).click();
@@ -65,7 +65,7 @@ test.describe('manage protofile', () => {
     await expect(page.getByRole('cell', { name: './protos/invalid-import-path', exact: true })).not.toBeVisible();
     await expect(invalidImportPathsMessage).not.toBeVisible();
 
-    // Save the changes to persist them to bruno.json
+    // Save the changes to persist them to coldbru.json
     await page.getByRole('button', { name: 'Save' }).click();
   });
 
@@ -139,7 +139,7 @@ test.describe('manage protofile', () => {
     const checkbox = page.getByRole('row', { name: 'Enable this import path types' }).getByTestId('protobuf-import-path-checkbox');
     await checkbox.click();
 
-    // Save the changes to persist them to bruno.json
+    // Save the changes to persist them to coldbru.json
     await page.getByRole('button', { name: 'Save' }).click();
 
     // Now test that product.proto can load methods successfully

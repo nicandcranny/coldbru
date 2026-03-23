@@ -1,0 +1,250 @@
+const { BrowserWindow } = require('electron');
+const { preferencesUtil } = require('../../store/preferences');
+
+const matchesCallbackUrl = (url, callbackUrl) => {
+  if (!url) return false;
+  // Match the callback URL and require an OAuth2 response indicator
+  // (code query params for authorization code flow, or hash fragment for implicit flow).
+  // This prevents false matches on intermediate pages (e.g. /auth/login) when the
+  // callback URL is a root path like https://hostname/.
+  return url.href.startsWith(callbackUrl.href)
+    && (url.searchParams.has('code') || url.hash.length > 1);
+};
+
+const authorizeUserInWindow = ({ authorizeUrl, callbackUrl, session, additionalHeaders = {}, grantType = 'authorization_code' }) => {
+  return new Promise(async (resolve, reject) => {
+    let finalUrl = null;
+    let debugInfo = {
+      data: []
+    };
+    let currentMainRequest = null;
+
+    let allOpenWindows = BrowserWindow.getAllWindows();
+
+    // Close all windows except the main window (assumed to have id 1)
+    let windowsExcludingMain = allOpenWindows.filter((w) => w.id !== 1);
+    windowsExcludingMain.forEach((w) => {
+      w.close();
+    });
+
+    const window = new BrowserWindow({
+      webPreferences: {
+        nodeIntegration: false,
+        partition: session
+      },
+      show: false
+    });
+    window.on('ready-to-show', window.show.bind(window));
+
+    // Ensure the browser window complies with "SSL/TLS Certificate Verification" preference
+    window.webContents.on('certificate-error', (event, url, error, certificate, callback) => {
+      event.preventDefault();
+      const shouldAllow = !preferencesUtil.shouldVerifyTls();
+      if (!shouldAllow) {
+        console.error(`ColdBru OAuth: SSL Certificate verification failed for ${url}. Error: ${error}`);
+        console.error('ColdBru OAuth: Disable "SSL/TLS Certificate Verification" in settings to proceed with OAuth flows that use self-signed certificates.');
+      }
+      callback(shouldAllow);
+    });
+
+    const { session: webSession } = window.webContents;
+
+    // Intercept request events and gather data
+    webSession.webRequest.onBeforeRequest((details, callback) => {
+      const { id: requestId, url, method, resourceType, frameId } = details;
+      if (resourceType === 'mainFrame') {
+        // This is a main frame request
+        currentMainRequest = {
+          requestId,
+          resourceType,
+          frameId,
+          request: {
+            url,
+            method,
+            headers: {},
+            error: null
+          },
+          response: {
+            headers: {},
+            status: null,
+            statusText: null,
+            error: null
+          },
+          fromCache: false,
+          completed: true,
+          requests: [] // No sub-requests in this context
+        };
+        // Add to mainRequests
+
+        // pushing the currentMainRequest to debugInfo
+        // the currentMainRequest will be further updated by object reference
+        debugInfo.data.push(currentMainRequest);
+      }
+
+      callback({ cancel: false });
+    });
+
+    webSession.webRequest.onBeforeSendHeaders((details, callback) => {
+      const { id: requestId, requestHeaders, method, url } = details;
+
+      if (details.resourceType === 'mainFrame' && Object.keys(additionalHeaders).length > 0) {
+        // Add our custom headers
+        for (const [name, value] of Object.entries(additionalHeaders)) {
+          requestHeaders[name] = value;
+        }
+      }
+
+      if (currentMainRequest?.requestId === requestId) {
+        currentMainRequest.request = {
+          url,
+          headers: requestHeaders,
+          method
+        };
+      }
+      callback({ cancel: false, requestHeaders });
+    });
+
+    webSession.webRequest.onHeadersReceived((details, callback) => {
+      const { id: requestId, url, statusCode, responseHeaders, method } = details;
+      if (currentMainRequest?.requestId === requestId) {
+        currentMainRequest.response = {
+          url,
+          method,
+          status: statusCode,
+          headers: responseHeaders
+        };
+      }
+      callback({ cancel: false, responseHeaders });
+    });
+
+    webSession.webRequest.onCompleted((details) => {
+      const { id: requestId, fromCache } = details;
+      if (currentMainRequest?.requestId === requestId) {
+        currentMainRequest.completed = true;
+        currentMainRequest.fromCache = fromCache;
+      }
+    });
+
+    webSession.webRequest.onErrorOccurred((details) => {
+      const { id: requestId, error } = details;
+      if (currentMainRequest?.requestId === requestId) {
+        currentMainRequest.response.error = error;
+      }
+    });
+
+    function onWindowRedirect(url) {
+      // Handle redirects as needed
+      let urlObj;
+      let callbackUrlObj;
+
+      try {
+        urlObj = new URL(url);
+      } catch (e) {
+        // Invalid redirect URL, skip processing
+        return;
+      }
+
+      try {
+        callbackUrlObj = new URL(callbackUrl);
+      } catch (e) {
+        // Invalid callback URL, skip matching but still check for errors below
+        callbackUrlObj = null;
+      }
+
+      // Handle OAuth error responses first, so we reject with
+      // a descriptive error instead of resolving with a null authorization code
+      if (urlObj.searchParams.has('error')) {
+        const error = urlObj.searchParams.get('error');
+        const errorDescription = urlObj.searchParams.get('error_description');
+        const errorUri = urlObj.searchParams.get('error_uri');
+        let errorData = {
+          message: 'Authorization Failed!',
+          error,
+          errorDescription,
+          errorUri
+        };
+        reject(new Error(JSON.stringify(errorData)));
+        window.close();
+        return;
+      }
+
+      if (callbackUrlObj && matchesCallbackUrl(urlObj, callbackUrlObj)) {
+        finalUrl = url;
+        window.close();
+        return;
+      }
+    }
+
+    // Update currentMainRequest when navigation occurs
+    window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
+      if (isMainFrame) {
+        // Reset currentMainRequest since a new navigation is starting
+        currentMainRequest = null;
+      }
+    });
+
+    window.webContents.on('did-navigate', (event, url) => {
+      onWindowRedirect(url);
+    });
+
+    window.webContents.on('will-redirect', (event, url) => {
+      onWindowRedirect(url);
+    });
+
+    window.on('close', () => {
+      // Clean up listeners to prevent memory leaks
+      window.webContents.removeAllListeners();
+      webSession.webRequest.onBeforeRequest(null);
+      webSession.webRequest.onBeforeSendHeaders(null);
+      webSession.webRequest.onHeadersReceived(null);
+      webSession.webRequest.onCompleted(null);
+      webSession.webRequest.onErrorOccurred(null);
+
+      if (finalUrl) {
+        try {
+          // Handle different grant types differently
+          if (grantType === 'implicit') {
+            // For implicit flow, tokens are in the URL hash fragment
+            const urlWithHash = new URL(finalUrl);
+            const hash = urlWithHash.hash.substring(1); // Remove the leading #
+            const hashParams = new URLSearchParams(hash);
+
+            // Extract tokens from hash fragment
+            const implicitTokens = {
+              access_token: hashParams.get('access_token'),
+              token_type: hashParams.get('token_type'),
+              expires_in: hashParams.get('expires_in'),
+              state: hashParams.get('state'),
+              scope: hashParams.get('scope')
+            };
+
+            return resolve({ implicitTokens, debugInfo });
+          } else {
+            // Default case - authorization code flow
+            const callbackUrlWithCode = new URL(finalUrl);
+            const authorizationCode = callbackUrlWithCode.searchParams.get('code');
+            return resolve({ authorizationCode, debugInfo });
+          }
+        } catch (error) {
+          return reject(error);
+        }
+      } else {
+        return reject(new Error('Authorization window closed'));
+      }
+    });
+
+    try {
+      await window.loadURL(authorizeUrl);
+    } catch (error) {
+      // Ignore ERR_ABORTED errors that occur during redirects
+      if (error.code === 'ERR_ABORTED') {
+        console.debug('Ignoring ERR_ABORTED during authorizeUserInWindow');
+        return;
+      }
+      reject(error);
+      window.close();
+    }
+  });
+};
+
+module.exports = { authorizeUserInWindow, matchesCallbackUrl };

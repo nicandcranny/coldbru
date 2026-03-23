@@ -84,7 +84,7 @@ test.describe('Request Body Scroll Position Restoration', () => {
     await test.step('Create collection and request with JSON body', async () => {
       await createCollection(page, collectionName, await createTmpDir(collectionName));
       await createRequest(page, 'scroll-test', collectionName, {
-        url: 'https://testbench-sanity.usebruno.com/api/echo/json'
+        url: 'http://localhost:8081/api/echo/json'
       });
     });
 
@@ -128,10 +128,10 @@ test.describe('Request Body Scroll Position Restoration', () => {
     await test.step('Create collection with two requests', async () => {
       await createCollection(page, collectionName, await createTmpDir(collectionName));
       await createRequest(page, 'request-1', collectionName, {
-        url: 'https://testbench-sanity.usebruno.com/api/echo/json'
+        url: 'http://localhost:8081/api/echo/json'
       });
       await createRequest(page, 'request-2', collectionName, {
-        url: 'https://testbench-sanity.usebruno.com/ping'
+        url: 'http://localhost:8081/ping'
       });
     });
 
@@ -187,7 +187,7 @@ ${Array.from({ length: 50 }, (_, i) => `  <item id="${i + 1}">
     await test.step('Create collection and request', async () => {
       await createCollection(page, collectionName, await createTmpDir(collectionName));
       await createRequest(page, 'xml-scroll-test', collectionName, {
-        url: 'https://testbench-sanity.usebruno.com/api/echo/xml'
+        url: 'http://localhost:8081/api/echo/xml'
       });
     });
 

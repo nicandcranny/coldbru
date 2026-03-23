@@ -29,7 +29,7 @@ test.describe('Collection Environment Create Tests', () => {
       await createEnvironment(page, 'Test Environment', 'collection');
 
       await addEnvironmentVariables(page, [
-        { name: 'host', value: 'https://echo.usebruno.com' },
+        { name: 'host', value: 'http://localhost:8081' },
         { name: 'userId', value: '1' },
         { name: 'postTitle', value: 'Test Post from Environment' },
         { name: 'postBody', value: 'This is a test post body with environment variables' },

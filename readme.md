@@ -69,7 +69,7 @@ You can explore our [paid versions](https://github.com/nicandcranny/coldbru) to 
 - [Contribute 👩‍💻🧑‍💻](#contribute-)
 - [Authors](#authors)
 - [License 📄](#license-)
-- [Differences from Original Bruno](#differences-from-original-bruno)
+- [Differences from Original ColdBru Fork](#differences-from-original-coldbru-fork)
   - [All Section](#all-section)
   - [Global Search Improvement](#global-search-improvement)
   - [Global Environment as a Global Settings](#global-environment-as-a-global-settings)
@@ -108,15 +108,9 @@ flatpak install com.usebruno.Bruno
 yay -S bruno
 
 # On Linux via Apt
-sudo mkdir -p /etc/apt/keyrings
-sudo apt update && sudo apt install gpg curl
-curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9FA6017ECABE0266" \
-  | gpg --dearmor \
-  | sudo tee /etc/apt/keyrings/bruno.gpg > /dev/null
-sudo chmod 644 /etc/apt/keyrings/bruno.gpg
-echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/bruno.gpg] http://debian.usebruno.com/ bruno stable" \
-  | sudo tee /etc/apt/sources.list.d/bruno.list
-sudo apt update && sudo apt install bruno
+# Apt repository instructions are not available for this fork yet.
+# Use a release download from GitHub instead:
+# https://github.com/nicandcranny/coldbru/releases
 ```
 
 ## Features
@@ -174,7 +168,7 @@ The logo is sourced from [OpenMoji](https://openmoji.org/library/emoji-1F436/). 
 
 ## Contribute 👩‍💻🧑‍💻
 
-I am happy that you are looking to improve bruno. Please check out the [contributing guide](contributing.md)
+I am happy that you are looking to improve ColdBru. Please check out the [contributing guide](contributing.md)
 
 Even if you are not able to make contributions via code, please don't hesitate to file bugs and feature requests that needs to be implemented to solve your use case.
 
@@ -190,7 +184,7 @@ Even if you are not able to make contributions via code, please don't hesitate t
 
 [MIT](license.md)
 
-## Differences from Original Bruno
+## Differences from Original ColdBru Fork
 
 ### All Section
 

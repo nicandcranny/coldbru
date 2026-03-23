@@ -31,14 +31,14 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Install Bru CLI from NPM
-        run: npm install -g @usebruno/cli
+        run: npm install -g @coldbru/cli
 
       - name: Display Bru CLI Version
         run: bru --version
 
       - name: Run tests
         run: |
-          cd packages/bruno-tests/collection
+          cd packages/coldbru-tests/collection
           npm install
           bru run --env Prod --output junit.xml --format junit --sandbox developer
 
@@ -47,5 +47,5 @@ jobs:
         if: success() || failure()
         with:
           name: Test Report
-          path: packages/bruno-tests/collection/junit.xml
+          path: packages/coldbru-tests/collection/junit.xml
           reporter: java-junit

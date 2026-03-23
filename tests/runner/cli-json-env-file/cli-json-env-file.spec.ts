@@ -2,11 +2,11 @@ import { test, expect } from '../../../playwright';
 import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import constants from '../../../packages/bruno-cli/src/constants.js';
+import constants from '../../../packages/coldbru-cli/src/constants.js';
 
 test.describe('CLI JSON Environment File Support', () => {
   const collectionPath = path.resolve(__dirname, 'collection');
-  const BRU = 'node ../../../../packages/bruno-cli/bin/bru.js';
+  const BRU = 'node ../../../../packages/coldbru-cli/bin/bru.js';
 
   // Helper: emulate `bru run` from a given working directory and
   // return the process exit code (0 on success). We use execSync so
@@ -51,7 +51,7 @@ test.describe('CLI JSON Environment File Support', () => {
     expect(fs.existsSync(outputPath)).toBe(true);
     const report = JSON.parse(fs.readFileSync(outputPath, 'utf8'));
     const result = report.results[0];
-    expect(result.request.url).toBe('https://echo.usebruno.com');
+    expect(result.request.url).toBe('http://localhost:8081/api/echo/json');
     expect(result.response.status).toEqual(200);
 
     try {

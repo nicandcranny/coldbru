@@ -23,8 +23,8 @@ const log = {
 };
 
 const rootDir = path.join(__dirname, '..');
-const webDir = path.join(rootDir, 'packages/bruno-app');
-const electronDir = path.join(rootDir, 'packages/bruno-electron');
+const webDir = path.join(rootDir, 'packages/coldbru-app');
+const electronDir = path.join(rootDir, 'packages/coldbru-electron');
 
 let electronProcess = null;
 let detectedPort = null;
@@ -66,7 +66,7 @@ webProcess.on('close', (code) => {
 });
 
 function startElectron(port) {
-  log.info(`Starting Electron with ${colors.cyan}BRUNO_DEV_PORT=${port}${colors.reset}`);
+  log.info(`Starting Electron with ${colors.cyan}COLDBRU_DEV_PORT=${port}${colors.reset}`);
 
   electronProcess = spawn('npm', ['run', 'dev'], {
     cwd: electronDir,
@@ -74,7 +74,7 @@ function startElectron(port) {
     shell: true,
     env: {
       ...process.env,
-      BRUNO_DEV_PORT: port
+      COLDBRU_DEV_PORT: port
     }
   });
 

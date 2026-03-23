@@ -39,7 +39,7 @@ export default defineConfig({
       timeout: 10 * 60 * 1000
     },
     {
-      command: 'npm start --workspace=packages/bruno-tests',
+      command: 'npm start --workspace=packages/coldbru-tests',
       url: 'http://localhost:8081/ping',
       reuseExistingServer: !process.env.CI,
       timeout: 10 * 60 * 1000

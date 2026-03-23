@@ -40,22 +40,22 @@ jobs:
       - name: Install npm dependencies
         run: |
           npm ci --legacy-peer-deps
-          sudo chown root /home/runner/work/bruno/bruno/node_modules/electron/dist/chrome-sandbox
-          sudo chmod 4755 /home/runner/work/bruno/bruno/node_modules/electron/dist/chrome-sandbox
+          sudo chown root /home/runner/work/coldbru/coldbru/node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 /home/runner/work/coldbru/coldbru/node_modules/electron/dist/chrome-sandbox
 
       - name: Install test collection dependencies
-        run: npm ci --prefix packages/bruno-tests/collection
+        run: npm ci --prefix packages/coldbru-tests/collection
 
       - name: Build libraries
         run: |
           npm run build:graphql-docs
-          npm run build:bruno-query
-          npm run build:bruno-common
-          npm run sandbox:bundle-libraries --workspace=packages/bruno-js
-          npm run build:bruno-converters
-          npm run build:bruno-requests
+          npm run build:coldbru-query
+          npm run build:coldbru-common
+          npm run sandbox:bundle-libraries --workspace=packages/coldbru-js
+          npm run build:coldbru-converters
+          npm run build:coldbru-requests
           npm run build:schema-types
-          npm run build:bruno-filestore
+          npm run build:coldbru-filestore
 
       - name: Run Playwright tests
         run: xvfb-run npm run test:e2e

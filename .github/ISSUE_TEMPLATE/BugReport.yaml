@@ -21,7 +21,7 @@ body:
     attributes:
       label: 'This bug is:'
       options:
-        - label: making Bruno unusable for me
+        - label: making ColdBru unusable for me
           required: false
         - label: slowing me down but I'm able to continue working
           required: false
@@ -32,8 +32,8 @@ body:
 
   - type: input
     attributes:
-      label: Bruno version
-      description: Please specify the version of Bruno you are using in which the issue occurs.
+      label: ColdBru version
+      description: Please specify the version of ColdBru you are using in which the issue occurs.
       placeholder: 1.38.1
     validations:
       required: true

@@ -25,25 +25,25 @@ test.describe('Open Multiple Collections', () => {
     electronApp,
     createTmpDir
   }) => {
-    // Create two test collections with proper bruno.json files
+    // Create two test collections with proper coldbru.json files
     const collection1Dir = await createTmpDir('collection-1');
     const collection2Dir = await createTmpDir('collection-2');
 
-    // Create bruno.json for first collection
+    // Create coldbru.json for first collection
     const collection1Config = {
       version: '1',
       name: 'Test Collection 1',
       type: 'collection'
     };
-    // Create bruno.json for second collection
+    // Create coldbru.json for second collection
     const collection2Config = {
       version: '1',
       name: 'Test Collection 2',
       type: 'collection'
     };
 
-    fs.writeFileSync(path.join(collection1Dir, 'bruno.json'), JSON.stringify(collection1Config, null, 2));
-    fs.writeFileSync(path.join(collection2Dir, 'bruno.json'), JSON.stringify(collection2Config, null, 2));
+    fs.writeFileSync(path.join(collection1Dir, 'coldbru.json'), JSON.stringify(collection1Config, null, 2));
+    fs.writeFileSync(path.join(collection2Dir, 'coldbru.json'), JSON.stringify(collection2Config, null, 2));
 
     // Mock the electron dialog to return multiple folder selections
     await electronApp.evaluate(({ dialog }, { collection1Dir, collection2Dir }) => {
@@ -76,7 +76,7 @@ test.describe('Open Multiple Collections', () => {
     electronApp,
     createTmpDir
   }) => {
-    // Directory without bruno.json file
+    // Directory without coldbru.json file
     const collection1Dir = await createTmpDir('collection-1');
     const collection2Dir = 'invalid-collection-path';
 

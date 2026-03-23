@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: https://echo.usebruno.com/api/users/:userId?name=john&age=30
+  url: http://localhost:8081/api/users/:userId?name=john&age=30
   body: none
   auth: none
 }
@@ -47,8 +47,8 @@ tests {
     const preReqHost = bru.getVar('preReqHost');
     const postResHost = bru.getVar('postResHost');
   
-    expect(preReqHost).to.equal('echo.usebruno.com');
-    expect(postResHost).to.equal('echo.usebruno.com');
+    expect(preReqHost).to.equal('localhost:8081');
+    expect(postResHost).to.equal('localhost:8081');
   });
   
   test("getPath() returns correct path", function() {

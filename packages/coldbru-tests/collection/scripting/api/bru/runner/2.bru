@@ -1,0 +1,19 @@
+meta {
+  name: 2
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8081
+  body: none
+  auth: none
+}
+
+script:pre-request {
+  bru.runner.skipRequest();
+}
+
+script:post-response {
+  bru.setVar('bru.runner.skipRequest', false);
+}

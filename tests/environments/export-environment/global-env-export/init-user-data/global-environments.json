@@ -29,7 +29,7 @@
         {
           "uid": "tdqX6Yln9DYQYNievEJR1",
           "name": "host",
-          "value": "https://echo.usebruno.com",
+          "value": "http://localhost:8081",
           "type": "text",
           "enabled": true,
           "secret": false

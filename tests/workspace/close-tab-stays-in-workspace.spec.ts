@@ -38,7 +38,7 @@ test.describe('Close tab stays in workspace', () => {
 
       await test.step('Create ColA/ReqA in default workspace and open ReqA', async () => {
         await createCollection(page, 'ColA', colAPath);
-        await createRequest(page, 'ReqA', 'ColA', { url: 'https://echo.usebruno.com', method: 'GET' });
+        await createRequest(page, 'ReqA', 'ColA', { url: 'http://localhost:8081', method: 'GET' });
         await openRequest(page, 'ColA', 'ReqA');
         const locators = buildCommonLocators(page);
         await expect(locators.tabs.activeRequestTab()).toContainText('ReqA');
@@ -61,7 +61,7 @@ test.describe('Close tab stays in workspace', () => {
 
       await test.step('Create ColB/ReqB in WorkspaceB and open ReqB', async () => {
         await createCollection(page, 'ColB', colBPath);
-        await createRequest(page, 'ReqB', 'ColB', { url: 'https://echo.usebruno.com', method: 'GET' });
+        await createRequest(page, 'ReqB', 'ColB', { url: 'http://localhost:8081', method: 'GET' });
         await openRequest(page, 'ColB', 'ReqB');
         const locators = buildCommonLocators(page);
         await expect(locators.tabs.activeRequestTab()).toContainText('ReqB');

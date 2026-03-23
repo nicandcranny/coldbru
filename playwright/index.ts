@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
-const electronAppPath = path.join(__dirname, '../packages/bruno-electron');
+const electronAppPath = path.join(__dirname, '../packages/coldbru-electron');
 
 const existsAsync = (filepath: string) => fs.promises.access(filepath).then(() => true).catch(() => false);
 
@@ -128,8 +128,8 @@ export const test = baseTest.extend<
   collectionFixturePath: async ({ createTmpDir }, use, testInfo) => {
     const testDir = path.dirname(testInfo.file);
     const fixturesDir = path.join(testDir, 'fixtures');
-    // fixtures/collections — multiple named collections (subdirs with bruno.json/opencollection.yml)
-    // fixtures/collection — single collection (single dir with bruno.json/opencollection.yml)
+    // fixtures/collections — multiple named collections (subdirs with coldbru.json/opencollection.yml)
+    // fixtures/collection — single collection (single dir with coldbru.json/opencollection.yml)
     const srcPath = [path.join(fixturesDir, 'collections'), path.join(fixturesDir, 'collection')]
       .find((p) => fs.existsSync(p));
 

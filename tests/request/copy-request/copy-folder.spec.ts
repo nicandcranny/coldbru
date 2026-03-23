@@ -26,7 +26,7 @@ test.describe('Copy and Paste Folders', () => {
     await page.locator('.dropdown-item').filter({ hasText: 'New Request' }).click();
     await page.getByPlaceholder('Request Name').fill('request-in-folder');
     await page.locator('#new-request-url .CodeMirror').click();
-    await page.locator('textarea').fill('https://echo.usebruno.com/test');
+    await page.locator('textarea').fill('http://localhost:8081/test');
     await page.getByRole('button', { name: 'Create' }).click();
 
     await folder.click();
