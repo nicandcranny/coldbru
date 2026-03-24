@@ -6,7 +6,7 @@
 
 > ColdBru is a Bruno-based API client with enhanced navigation, Git tooling, and workspace UX.
 
-[![CI](https://github.com/nicandcranny/coldbru/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nicandcranny/coldbru/actions/workflows/tests.yml)
+<!-- TODO: [![CI](https://github.com/nicandcranny/coldbru/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/nicandcranny/coldbru/actions/workflows/tests.yml) -->
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 [![Downloads](https://img.shields.io/badge/download-latest-brightgreen)](https://github.com/nicandcranny/coldbru/releases)
 
@@ -15,34 +15,9 @@ It keeps Bruno's local-first foundation, plain-text collections, and offline-fri
 
 ## See It in Action
 
-Add your main demo GIF here. A good first GIF would show:
+<video src="assets/videos/demo.mp4" controls width="960"></video>
 
-- the activity bar
-- switching between collections, specs, and environments
-- the Git menu
-- tab-based API spec browsing
-
-Example placement:
-
-```md
-![ColdBru demo](assets/demo/coldbru-demo.gif)
-```
-
-## Screenshots
-
-Add 2 to 4 screenshots here once you have them. Good candidates:
-
-- workspace overview or main request editing screen
-- activity bar and sidebar navigation
-- Git menu panel
-- API spec tab view
-
-Example placement:
-
-```md
-![Main workspace](assets/screenshots/main-workspace.png)
-![Git panel](assets/screenshots/git-panel.png)
-```
+If the embedded player does not render in your viewer, [watch the demo video here](assets/videos/demo.mp4).
 
 ## Why ColdBru?
 
@@ -115,7 +90,7 @@ Useful commands:
 - `npm test --workspace=packages/coldbru-electron`
 - `npm run lint:fix`
 
-More setup details live in [contributing.md](contributing.md).
+More setup details live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Attribution
 
@@ -143,7 +118,7 @@ Issues, ideas, and pull requests are welcome.
 
 If you want to improve ColdBru, start with:
 
-- [contributing.md](contributing.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
 - [CODING_STANDARDS.md](CODING_STANDARDS.md)
 
 ## License
@@ -152,6 +127,7 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 ## Future Improvements
 
-- Instant action (like cmd+shift+p) - for git, etc.
-- Add open file feature in the Git 
+- Instant action (like Cmd+Shift+P) - for git, etc.
+- Add go to file feature in the Git menu
 - Add send to top and send to bottom button in collections list
+- Improve rename request/collection flow

@@ -8,7 +8,7 @@
 - [ ] **The pull request only addresses one issue or adds one feature.**
 - [ ] **The pull request does not introduce any breaking changes**
 - [ ] **I have added screenshots or gifs to help explain the change if applicable.**
-- [ ] **I have read the [contribution guidelines](https://github.com/nicandcranny/coldbru/blob/main/contributing.md).**
+- [ ] **I have read the [contribution guidelines](https://github.com/nicandcranny/coldbru/blob/main/CONTRIBUTING.md).**
 - [ ] **Create an issue and link to the pull request.**
 
 Note: Keeping the PR small and focused helps make it easier to review and merge. If you have multiple changes you want to make, please consider submitting them as separate pull requests.
