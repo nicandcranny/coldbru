@@ -1,6 +1,6 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
   - name: Discussions
     url: https://github.com/nicandcranny/coldbru/discussions
-    about: You can ask general questions or give feedback here.
+    about: Ask questions, share feedback, or start a broader discussion here.
   

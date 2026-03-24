@@ -1,68 +1,82 @@
 name: Bug Report
-description: File a bug report
+description: Report something broken in ColdBru.
 labels: ['bug']
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for helping improve ColdBru.
 
-        Before submitting, please make sure you've searched existing issues:
-        👉 [Search existing issues](https://github.com/nicandcranny/coldbru/issues?q=is%3Aissue)
+        ColdBru is an independent fork of Bruno, so details that make the issue reproducible are especially helpful.
+        Before submitting, please check existing issues:
+        [Search existing issues](https://github.com/nicandcranny/coldbru/issues?q=is%3Aissue)
 
   - type: checkboxes
     attributes:
-      label: 'I have checked the following:'
+      label: Before submitting
       options:
-        - label: "I have searched existing issues and found nothing related to my issue."
+        - label: I searched existing issues and did not find the same problem.
           required: true
-
-  - type: checkboxes
-    attributes:
-      label: 'This bug is:'
-      options:
-        - label: making ColdBru unusable for me
-          required: false
-        - label: slowing me down but I'm able to continue working
-          required: false
-        - label: annoying
-          required: false
-        - label: this feature was working in a previous version but is broken in the current release.
-          required: false
 
   - type: input
     attributes:
       label: ColdBru version
-      description: Please specify the version of ColdBru you are using in which the issue occurs.
-      placeholder: 1.38.1
+      description: The version where you saw the problem.
+      placeholder: 1.0.0
     validations:
       required: true
 
   - type: input
     attributes:
       label: Operating System
-      description: Information about the operating system the issue occurs on.
-      placeholder: Windows 11 26100.3037 / macOS 15.1 (24B83) / Linux 6.13.1
+      description: Your OS and version.
+      placeholder: macOS 15.3 / Windows 11 / Ubuntu 24.04
+    validations:
+      required: true
+
+  - type: dropdown
+    attributes:
+      label: Severity
+      description: How much is this affecting you?
+      options:
+        - Blocks me completely
+        - Major slowdown
+        - Annoying but workable
+        - Minor issue
     validations:
       required: true
 
   - type: textarea
     attributes:
-      label: Describe the bug
-      description: A clear and concise description of the bug and how it's effecting your work along with steps to reproduce. 
+      label: What happened?
+      description: Tell us what you expected, what actually happened, and how it affects your workflow.
+      placeholder: |
+        I expected...
+        Instead, ColdBru...
     validations:
       required: true
 
   - type: textarea
     attributes:
-      label: .bru file to reproduce the bug
-      description: Attach your .bru file here that can reproduce the problem.
+      label: Steps to reproduce
+      description: A short step-by-step list is perfect.
+      placeholder: |
+        1. Open...
+        2. Click...
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Reproduction files or sample requests
+      description: Paste a `.bru` file, config snippet, request payload, or anything else that helps reproduce the issue.
     validations:
       required: false
 
   - type: textarea
     attributes:
-      label: Screenshots/Live demo link
-      description: Add some screenshots to help explain the problem.
+      label: Screenshots, logs, or screen recording
+      description: Add screenshots, console output, error text, or a short recording if helpful.
     validations:
-      required: true
+      required: false

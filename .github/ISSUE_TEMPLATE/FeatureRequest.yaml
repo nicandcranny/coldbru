@@ -1,36 +1,57 @@
 name: Feature Request
-description: Suggest an idea for this project.
+description: Suggest an improvement or new idea for ColdBru.
 labels: ['enhancement']
 body:
-  - type: checkboxes
-    attributes:
-      label: 'I have checked the following:'
-      options:
-        - label: I've searched existing issues and found nothing related to my issue.
-          required: true
-  - type: checkboxes
-    attributes:
-      label: 'This feature'
-      options:
-        - label: blocks me from using ColdBru
-          required: false
-        - label: would improve my quality of life in ColdBru
-          required: false
-        - label: is something I've never seen an API client do before
-          required: false
   - type: markdown
     attributes:
       value: |
-        Suggest an idea for this project.
-  - type: textarea
+        Thanks for sharing an idea for ColdBru.
+
+        The most helpful requests are concrete, workflow-driven, and explain why the change matters.
+
+  - type: checkboxes
     attributes:
-      label: Describe the feature you want to add, and how it would change your usage of ColdBru
-      description: A clear and concise description of the feature you want to be added.
+      label: Before submitting
+      options:
+        - label: I searched existing issues and did not find the same request.
+          required: true
+
+  - type: dropdown
+    attributes:
+      label: What kind of request is this?
+      options:
+        - Workflow improvement
+        - UI or UX improvement
+        - Git or collaboration feature
+        - API request authoring feature
+        - Search or navigation feature
+        - Other
     validations:
       required: true
+
   - type: textarea
     attributes:
-      label: Mockups or Images of the feature
-      description: Add some images to support your feature.
+      label: What do you want to see?
+      description: Describe the idea clearly and explain how it would improve your ColdBru workflow.
+      placeholder: |
+        I want...
+        This would help because...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: What problem does this solve?
+      description: Tell us what feels slow, awkward, or missing today.
+      placeholder: |
+        Right now...
+        The pain point is...
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Mockups, examples, or references
+      description: Screenshots, sketches, links, or examples from other tools are welcome.
     validations:
       required: false

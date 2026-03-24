@@ -323,7 +323,11 @@ const SourceControlSection = () => {
     return (
       <StyledWrapper>
         <div className="source-control-empty">
-          <div>This collection is not inside a git repository.</div>
+          <div>
+            {gitTarget?.kind === 'workspace'
+              ? 'This workspace is not inside a git repository.'
+              : 'This collection is not inside a git repository.'}
+          </div>
           <button
             type="button"
             className="source-control-button source-control-empty-action"
