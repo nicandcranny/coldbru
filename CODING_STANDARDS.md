@@ -75,7 +75,7 @@ Remember, these rules are here to make our codebase harmonious. If something doe
 - MUST: Do not use namespace access for hooks in app code (e.g., `React.useCallback`, `React.useMemo`, `React.useState`). Import hooks directly.
   - Correct: `import { useCallback, useMemo, useState } from "react";`
   - Avoid: `import * as React from "react";` then `React.useCallback(...)`
-- Add `data-testid` to testable elements for Playwright
+- Add `data-testid` to testable elements when stable test selectors are needed
 - Co-locate utilities that are truly component-specific next to the component, otherwise place shared items under a common folder
 
 
