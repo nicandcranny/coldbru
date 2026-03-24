@@ -15,9 +15,9 @@ It keeps Bruno's local-first foundation, plain-text collections, and offline-fri
 
 ## See It in Action
 
-<video src="assets/videos/demo.mp4" controls width="960"></video>
+[![Watch the ColdBru demo](assets/videos/demo.gif)](assets/videos/demo.mp4)
 
-If the embedded player does not render in your viewer, [watch the demo video here](assets/videos/demo.mp4).
+[Watch the full demo video](assets/videos/demo.mp4)
 
 ## Why ColdBru?
 
