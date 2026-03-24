@@ -63,6 +63,14 @@ Today, ColdBru combines:
 
 That means the project is best understood as an independent fork with a lighter maintenance layer, not as a plugin and not as a completely unrelated rewrite.
 
+## Importing from Other Clients
+
+ColdBru can import collections and definitions from several other tools and formats, including Bruno, Postman, Insomnia, OpenAPI, and WSDL.
+
+Start with the import guide here:
+
+- [IMPORTING.md](IMPORTING.md)
+
 ## Installation
 
 ColdBru is currently distributed through GitHub releases:
