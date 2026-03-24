@@ -17,7 +17,7 @@ It keeps Bruno's local-first foundation, plain-text collections, and offline-fri
 
 [![Watch the ColdBru demo](assets/videos/demo.gif)](assets/videos/demo.mp4)
 
-[Watch the full demo video](assets/videos/demo.mp4)
+[Open the MP4 version](assets/videos/demo.mp4)
 
 ## Why ColdBru?
 
@@ -26,15 +26,7 @@ It keeps Bruno's local-first foundation, plain-text collections, and offline-fri
 - It treats Git as part of the workflow instead of an afterthought.
 - It is still close enough to upstream Bruno that improvements can continue flowing in over time.
 
-## Support the Project
-
-If this project saves you time, consider buying us a coffee ☕
-
-<a href="https://ko-fi.com/nicandcranny">
-  <img src="https://cdn.prod.website-files.com/5c14e387dab576fe667689cf/670f5a01cf2da94a032117b9_support_me_on_kofi_red.png" alt="Support me on Ko-fi" width="260" />
-</a>
-
-## What Makes It Different?
+### What Makes It Different?
 
 ColdBru is not a brand-new client built from scratch, and it is not just a thin reskin either.
 It is a Bruno fork with product-level changes on top.
@@ -52,6 +44,14 @@ It is a Bruno fork with product-level changes on top.
 - A handful of bug fixes and UX polish.
 
 For more details, see [DIFFERENCES.md](DIFFERENCES.md).
+
+## Support the Project
+
+If this project saves you time, consider buying us a coffee ☕
+
+<a href="https://ko-fi.com/nicandcranny">
+  <img src="https://cdn.prod.website-files.com/5c14e387dab576fe667689cf/670f5a01cf2da94a032117b9_support_me_on_kofi_red.png" alt="Support me on Ko-fi" width="260" />
+</a>
 
 ## Relationship to Bruno
 

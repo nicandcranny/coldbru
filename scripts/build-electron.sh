@@ -1,5 +1,10 @@
 #!/bin/bash
 
+set -e
+
+# Build the web app that gets packaged into the desktop app.
+npm run build:web
+
 # Remove out directory
 rm -rf packages/coldbru-electron/out
 
