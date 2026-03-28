@@ -1,3 +1,4 @@
+import React from 'react';
 import { IconCopy, IconTrash, IconX, IconSearch } from '@tabler/icons';
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
