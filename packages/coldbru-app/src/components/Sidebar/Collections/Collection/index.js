@@ -69,6 +69,7 @@ const Collection = ({ collection, searchText }) => {
   const [showEmptyState, setShowEmptyState] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const dispatch = useDispatch();
+  const suppressAutoExpandRef = useRef(false);
   const isLoading = collection.isLoading;
   const collectionRef = useRef(null);
   const tabs = useSelector((state) => state.tabs?.tabs || []);
@@ -171,6 +172,7 @@ const Collection = ({ collection, searchText }) => {
       return;
     }
 
+    suppressAutoExpandRef.current = !collection.collapsed && activeTab?.collectionUid === collection.uid;
     ensureCollectionIsMounted();
     dispatch(toggleCollection(collection.uid));
   };
@@ -297,7 +299,19 @@ const Collection = ({ collection, searchText }) => {
   }, [isCollectionFocused]);
 
   useEffect(() => {
+    if (!collection.collapsed) {
+      suppressAutoExpandRef.current = false;
+    }
+
     const activeTabBelongsToCollection = activeTab?.collectionUid === collection.uid;
+    if (!activeTabBelongsToCollection) {
+      suppressAutoExpandRef.current = false;
+    }
+
+    if (suppressAutoExpandRef.current) {
+      return;
+    }
+
     if (!activeTabBelongsToCollection || !collection.collapsed) {
       return;
     }

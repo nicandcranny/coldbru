@@ -135,6 +135,7 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 ## Future Improvements
 
+- Import environment feature
 - Instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to file feature in the Git menu
 - Add send to top and send to bottom button in collections list

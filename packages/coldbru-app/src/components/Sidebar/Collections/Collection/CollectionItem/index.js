@@ -75,6 +75,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   const hasCustomPasteBinding = !!userKeyBindings?.pasteItem;
   const hasCustomRenameBinding = !!userKeyBindings?.renameItem;
   const dispatch = useDispatch();
+  const suppressAutoExpandRef = useRef(false);
 
   // We use a single ref for drag and drop.
   const ref = useRef(null);
@@ -144,12 +145,21 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
   }, [isTabForItemActive]);
 
   useEffect(() => {
+    if (!item.collapsed) {
+      suppressAutoExpandRef.current = false;
+    }
+
     if (!isFolder || !item.collapsed || !activeSidebarItemUid) {
+      return;
+    }
+
+    if (suppressAutoExpandRef.current) {
       return;
     }
 
     const itemContainsActiveDescendant = flattenItems(item.items || []).some((childItem) => childItem.uid === activeSidebarItemUid);
     if (!itemContainsActiveDescendant) {
+      suppressAutoExpandRef.current = false;
       return;
     }
 
@@ -355,6 +365,8 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
       return;
     }
 
+    const itemContainsActiveDescendant = flattenItems(item.items || []).some((childItem) => childItem.uid === activeSidebarItemUid);
+    suppressAutoExpandRef.current = !item.collapsed && itemContainsActiveDescendant;
     dispatch(
       toggleCollectionItem({
         itemUid: item.uid,
