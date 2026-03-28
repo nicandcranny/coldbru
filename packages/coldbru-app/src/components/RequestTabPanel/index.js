@@ -8,7 +8,7 @@ import GrpcRequestPane from 'components/RequestPane/GrpcRequestPane/index';
 import ResponsePane from 'components/ResponsePane';
 import GrpcResponsePane from 'components/ResponsePane/GrpcResponsePane';
 import { findItemInCollection } from 'utils/collections';
-import { cancelRequest, sendRequest } from 'providers/ReduxStore/slices/collections/actions';
+import { cancelRequest, sendRequest, renameItem, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import RequestNotFound from './RequestNotFound';
 import QueryUrl from 'components/RequestPane/QueryUrl/index';
 import GrpcQueryUrl from 'components/RequestPane/GrpcQueryUrl/index';
@@ -40,6 +40,7 @@ import OpenAPISyncTab from 'components/OpenAPISyncTab';
 import OpenAPISpecTab from 'components/OpenAPISpecTab';
 import GitDiffTab from 'components/Git/GitDiffTab';
 import ApiSpecPanel from 'components/ApiSpecPanel';
+import InlineEditableTitle from 'components/InlineEditableTitle';
 
 const MIN_LEFT_PANE_WIDTH = 300;
 const MIN_RIGHT_PANE_WIDTH = 490;
@@ -308,6 +309,21 @@ const RequestTabPanel = () => {
     }
   };
 
+  const handleRenameRequest = async (newName) => {
+    if (item.draft) {
+      await dispatch(saveRequest(item.uid, collection.uid, true));
+    }
+
+    return dispatch(renameItem({
+      itemUid: item.uid,
+      collectionUid: collection.uid,
+      newName
+    }))
+      .catch((err) => {
+        throw new Error(err?.message || 'An error occurred while renaming the request');
+      });
+  };
+
   const renderQueryUrl = () => {
     if (isGrpcRequest) {
       return <GrpcQueryUrl item={item} collection={collection} handleRun={handleRun} />;
@@ -368,7 +384,15 @@ const RequestTabPanel = () => {
         isVerticalLayout ? 'vertical-layout' : ''
       }`}
     >
-      <div className="pt-3 pb-3 px-4">
+      <div className="panel-header px-4 pt-4">
+        <InlineEditableTitle
+          value={item.name}
+          onSave={handleRenameRequest}
+          validate={(name) => (!name || !name.trim() ? 'Name is required' : null)}
+          inputAriaLabel="Edit request name"
+        />
+      </div>
+      <div className="query-bar px-4 pt-2 pb-3">
         {renderQueryUrl()}
       </div>
       <section ref={mainSectionRef} className={`main flex ${isVerticalLayout ? 'flex-col' : ''} flex-grow pb-4 relative overflow-auto`}>

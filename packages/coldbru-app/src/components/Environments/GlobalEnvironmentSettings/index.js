@@ -17,11 +17,13 @@ const GlobalEnvironmentSettings = ({ environmentUid = null }) => {
 
   const environment = useMemo(() => {
     if (environmentUid) {
-      return globalEnvironments.find((item) => item.uid === environmentUid) || null;
+      return globalEnvironments.find((item) => item.uid === environmentUid)
+        || globalEnvironments.find((item) => item.uid === activeGlobalEnvironmentUid)
+        || null;
     }
 
     return null;
-  }, [environmentUid, globalEnvironments]);
+  }, [environmentUid, globalEnvironments, activeGlobalEnvironmentUid]);
 
   if (!environment) {
     return (

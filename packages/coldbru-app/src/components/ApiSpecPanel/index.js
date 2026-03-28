@@ -1,14 +1,15 @@
-import React, { forwardRef, useRef } from 'react';
+import React, { forwardRef, useRef, useState } from 'react';
 import find from 'lodash/find';
 import { useSelector, useDispatch } from 'react-redux';
-import { IconFileCode, IconDots } from '@tabler/icons';
+import { IconDots } from '@tabler/icons';
 import StyledWrapper from './StyledWrapper';
 import SpecViewer from './SpecViewer';
 import Dropdown from 'components/Dropdown';
-import { openApiSpec, saveApiSpecToFile, setActiveApiSpecUid } from 'providers/ReduxStore/slices/apiSpec';
-import { useState } from 'react';
+import { openApiSpec, saveApiSpecToFile, setActiveApiSpecUid, updateApiSpecTitle } from 'providers/ReduxStore/slices/apiSpec';
 import CreateApiSpec from 'components/Sidebar/ApiSpecs/CreateApiSpec';
 import toast from 'react-hot-toast';
+import InlineEditableTitle from 'components/InlineEditableTitle';
+import { updateTab } from 'providers/ReduxStore/slices/tabs';
 
 const ApiSpecPanel = ({ apiSpecUid }) => {
   const dispatch = useDispatch();
@@ -23,11 +24,18 @@ const ApiSpecPanel = ({ apiSpecUid }) => {
   const resolvedApiSpecUid = apiSpecUid || activeApiSpecUid;
   const apiSpec = find(apiSpecs, (c) => c.uid === resolvedApiSpecUid);
   const { filename, pathname, raw, uid } = apiSpec || {};
+
   React.useEffect(() => {
     if (resolvedApiSpecUid && resolvedApiSpecUid !== activeApiSpecUid) {
       dispatch(setActiveApiSpecUid({ uid: resolvedApiSpecUid }));
     }
   }, [dispatch, resolvedApiSpecUid, activeApiSpecUid]);
+
+  React.useEffect(() => {
+    if (uid && apiSpec?.name) {
+      dispatch(updateTab({ uid: `api-spec:${uid}`, tabName: apiSpec.name }));
+    }
+  }, [dispatch, uid, apiSpec?.name]);
 
   if (!uid) {
     return <div className="p-4 opacity-50">API Spec not found!</div>;
@@ -50,17 +58,19 @@ const ApiSpecPanel = ({ apiSpecUid }) => {
   return (
     <StyledWrapper className="flex flex-col flex-grow relative">
       {createApiSpecModalOpen ? <CreateApiSpec onClose={() => setCreateApiSpecModalOpen(false)} /> : null}
-      <div className="p-3 mb-2 w-full flex flex-row justify-between grid grid-cols-3">
-        <div className="flex flex-row justify-start gap-x-4 col-span-1">
-          <div className="flex w-fit items-center cursor-pointer">
-            <IconFileCode size={18} strokeWidth={1.5} />
-            <span className="ml-2 mr-4 font-semibold">API Designer</span>
+      <div className="panel-header">
+        <div className="panel-title">
+          <InlineEditableTitle
+            value={apiSpec.name || filename}
+            onSave={(title) => dispatch(updateApiSpecTitle({ uid, title }))}
+            validate={(title) => (!title || !title.trim() ? 'Title is required' : null)}
+            inputAriaLabel="Edit API spec title"
+          />
+          <div className="panel-path" title={pathname}>
+            {filename}
           </div>
         </div>
-        <div className="w-full col-span-1 flex justify-center" title={pathname}>
-          {filename}
-        </div>
-        <div className="menu-icon pr-2 col-span-1 flex justify-end">
+        <div className="menu-icon">
           <Dropdown onCreate={onDropdownCreate} icon={<MenuIcon />} placement="bottom-start">
             <div
               className="dropdown-item"

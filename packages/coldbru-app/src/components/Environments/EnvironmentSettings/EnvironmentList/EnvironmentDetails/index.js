@@ -1,25 +1,24 @@
-import { IconCopy, IconEdit, IconTrash, IconCheck, IconX, IconSearch } from '@tabler/icons';
-import { useState, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+import { IconCopy, IconTrash, IconX, IconSearch } from '@tabler/icons';
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { renameEnvironment, updateEnvironmentColor } from 'providers/ReduxStore/slices/collections/actions';
+import { updateTab } from 'providers/ReduxStore/slices/tabs';
 import { validateName, validateNameError } from 'utils/common/regex';
 import toast from 'react-hot-toast';
 import CopyEnvironment from 'components/Environments/EnvironmentSettings/CopyEnvironment';
 import DeleteEnvironment from 'components/Environments/EnvironmentSettings/DeleteEnvironment';
 import EnvironmentVariables from './EnvironmentVariables';
 import ColorPicker from 'components/ColorPicker';
+import InlineEditableTitle from 'components/InlineEditableTitle';
 import StyledWrapper from './StyledWrapper';
 
 const EnvironmentDetails = ({ environment, setIsModified, collection, searchQuery, setSearchQuery, isSearchExpanded, setIsSearchExpanded, debouncedSearchQuery, searchInputRef }) => {
   const dispatch = useDispatch();
+  const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const environments = collection?.environments || [];
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openCopyModal, setOpenCopyModal] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [nameError, setNameError] = useState('');
-  const inputRef = useRef(null);
 
   const validateEnvironmentName = (name) => {
     if (!name || name.trim() === '') {
@@ -49,67 +48,18 @@ const EnvironmentDetails = ({ environment, setIsModified, collection, searchQuer
     return null;
   };
 
-  const handleRenameClick = () => {
-    setIsRenaming(true);
-    setNewName(environment.name);
-    setNameError('');
-    setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }, 50);
-  };
-
-  const handleSaveRename = () => {
-    const error = validateEnvironmentName(newName);
-    if (error) {
-      setNameError(error);
-      return;
-    }
-
-    dispatch(renameEnvironment(newName, environment.uid, collection.uid))
+  const handleSaveRename = async (newName) => {
+    return dispatch(renameEnvironment(newName, environment.uid, collection.uid))
       .then(() => {
+        if (activeTabUid) {
+          dispatch(updateTab({ uid: activeTabUid, tabName: newName }));
+        }
         toast.success('Environment renamed!');
-        setIsRenaming(false);
-        setNewName('');
-        setNameError('');
       })
       .catch(() => {
         toast.error('An error occurred while renaming the environment');
+        throw new Error('An error occurred while renaming the environment');
       });
-  };
-
-  const handleCancelRename = () => {
-    setIsRenaming(false);
-    setNewName('');
-    setNameError('');
-  };
-
-  const handleNameChange = (e) => {
-    setNewName(e.target.value);
-    if (nameError) {
-      setNameError('');
-    }
-  };
-
-  const handleNameBlur = () => {
-    if (newName.trim() === '') {
-      handleCancelRename();
-    } else {
-      const error = validateEnvironmentName(newName);
-      if (error) {
-        setNameError(error);
-      }
-    }
-  };
-
-  const handleNameKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSaveRename();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleCancelRename();
-    }
   };
 
   const handleSearchIconClick = () => {
@@ -143,49 +93,15 @@ const EnvironmentDetails = ({ environment, setIsModified, collection, searchQuer
       )}
 
       <div className="header">
-        <div className={`title-container ${isRenaming ? 'renaming' : ''}`}>
-          {isRenaming ? (
-            <>
-              <input
-                ref={inputRef}
-                type="text"
-                className="title-input"
-                value={newName}
-                onChange={handleNameChange}
-                onBlur={handleNameBlur}
-                onKeyDown={handleNameKeyDown}
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck="false"
-              />
-              <div className="inline-actions">
-                <button
-                  className="inline-action-btn save"
-                  onClick={handleSaveRename}
-                  onMouseDown={(e) => e.preventDefault()}
-                  title="Save"
-                >
-                  <IconCheck size={14} strokeWidth={2} />
-                </button>
-                <button
-                  className="inline-action-btn cancel"
-                  onClick={handleCancelRename}
-                  onMouseDown={(e) => e.preventDefault()}
-                  title="Cancel"
-                >
-                  <IconX size={14} strokeWidth={2} />
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <h2 className="title">{environment.name}</h2>
-              <ColorPicker color={environment.color} onChange={handleColorChange} />
-            </div>
-          )}
+        <div className="title-region">
+          <InlineEditableTitle
+            value={environment.name}
+            validate={validateEnvironmentName}
+            onSave={handleSaveRename}
+            inputAriaLabel="Edit environment name"
+            afterDisplay={<ColorPicker color={environment.color} onChange={handleColorChange} />}
+          />
         </div>
-        {nameError && isRenaming && <div className="title-error">{nameError}</div>}
         <div className="actions">
           {isSearchExpanded ? (
             <div className="search-input-wrapper">
@@ -219,9 +135,6 @@ const EnvironmentDetails = ({ environment, setIsModified, collection, searchQuer
               <IconSearch size={15} strokeWidth={1.5} />
             </button>
           )}
-          <button onClick={handleRenameClick} title="Rename">
-            <IconEdit size={15} strokeWidth={1.5} />
-          </button>
           <button onClick={() => setOpenCopyModal(true)} title="Copy">
             <IconCopy size={15} strokeWidth={1.5} />
           </button>

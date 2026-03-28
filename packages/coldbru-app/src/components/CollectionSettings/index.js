@@ -2,6 +2,7 @@ import React from 'react';
 import classnames from 'classnames';
 import get from 'lodash/get';
 import { updateSettingsSelectedTab } from 'providers/ReduxStore/slices/collections';
+import { renameCollection } from 'providers/ReduxStore/slices/collections/actions';
 import { useDispatch } from 'react-redux';
 import ProxySettings from './ProxySettings';
 import ClientCertSettings from './ClientCertSettings';
@@ -15,6 +16,8 @@ import StyledWrapper from './StyledWrapper';
 import Vars from './Vars/index';
 import StatusDot from 'components/StatusDot';
 import Overview from './Overview/index';
+import InlineEditableTitle from 'components/InlineEditableTitle';
+import toast from 'react-hot-toast';
 
 const CollectionSettings = ({ collection }) => {
   const dispatch = useDispatch();
@@ -103,8 +106,27 @@ const CollectionSettings = ({ collection }) => {
     });
   };
 
+  const handleRenameCollection = async (newName) => {
+    return dispatch(renameCollection(newName, collection.uid))
+      .then(() => {
+        toast.success('Collection renamed!');
+      })
+      .catch((err) => {
+        toast.error(err ? err.message : 'An error occurred while renaming the collection');
+        throw new Error(err?.message || 'An error occurred while renaming the collection');
+      });
+  };
+
   return (
     <StyledWrapper className="flex flex-col h-full relative px-4 py-4 overflow-hidden">
+      <div className="panel-header">
+        <InlineEditableTitle
+          value={collection.name}
+          onSave={handleRenameCollection}
+          validate={(name) => (!name || !name.trim() ? 'Name is required' : null)}
+          inputAriaLabel="Edit collection name"
+        />
+      </div>
       <div className="flex flex-wrap items-center tabs" role="tablist">
         <div className={getTabClassname('overview')} role="tab" onClick={() => setTab('overview')}>
           Overview
@@ -146,7 +168,7 @@ const CollectionSettings = ({ collection }) => {
           {protobufConfig.protoFiles && protobufConfig.protoFiles.length > 0 && <StatusDot />}
         </div>
       </div>
-      <section className="mt-4 h-full overflow-auto">{getTabPanel(tab)}</section>
+      <section className="panel-content">{getTabPanel(tab)}</section>
     </StyledWrapper>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
 import { updatedFolderSettingsSelectedTab } from 'providers/ReduxStore/slices/collections';
+import { renameItem } from 'providers/ReduxStore/slices/collections/actions';
 import { useDispatch } from 'react-redux';
 import Headers from './Headers';
 import Script from './Script';
@@ -11,6 +12,7 @@ import Documentation from './Documentation';
 import Auth from './Auth';
 import StatusDot from 'components/StatusDot';
 import get from 'lodash/get';
+import InlineEditableTitle from 'components/InlineEditableTitle';
 
 const FolderSettings = ({ collection, folder }) => {
   const dispatch = useDispatch();
@@ -73,9 +75,28 @@ const FolderSettings = ({ collection, folder }) => {
     });
   };
 
+  const handleRenameFolder = async (newName) => {
+    return dispatch(renameItem({
+      itemUid: folder.uid,
+      collectionUid: collection.uid,
+      newName
+    }))
+      .catch((err) => {
+        throw new Error(err?.message || 'An error occurred while renaming the folder');
+      });
+  };
+
   return (
     <StyledWrapper className="flex flex-col h-full overflow-auto">
       <div className="flex flex-col h-full relative px-4 py-4">
+        <div className="panel-header">
+          <InlineEditableTitle
+            value={folder.name}
+            onSave={handleRenameFolder}
+            validate={(name) => (!name || !name.trim() ? 'Name is required' : null)}
+            inputAriaLabel="Edit folder name"
+          />
+        </div>
         <div className="flex flex-wrap items-center tabs" role="tablist">
           <div className={getTabClassname('headers')} role="tab" onClick={() => setTab('headers')}>
             Headers
@@ -101,7 +122,7 @@ const FolderSettings = ({ collection, folder }) => {
             Docs
           </div>
         </div>
-        <section className="flex mt-4 h-full overflow-auto">{getTabPanel(tab)}</section>
+        <section className="panel-content">{getTabPanel(tab)}</section>
       </div>
     </StyledWrapper>
   );

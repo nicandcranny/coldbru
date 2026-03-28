@@ -1,6 +1,18 @@
 import styled from 'styled-components';
 
 const StyledWrapper = styled.div`
+  .panel-header {
+    margin-bottom: 8px;
+    min-width: 0;
+  }
+
+  .panel-content {
+    flex: 1;
+    min-height: 0;
+    margin-top: 16px;
+    overflow: auto;
+  }
+
   div.tabs {
     div.tab {
       padding: 6px 0px;

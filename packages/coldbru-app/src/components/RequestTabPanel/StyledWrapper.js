@@ -13,6 +13,14 @@ const StyledWrapper = styled.div`
     flex-shrink: 0;
   }
 
+  .panel-header {
+    min-width: 0;
+  }
+
+  .query-bar {
+    flex-shrink: 0;
+  }
+
   .response-pane {
     min-width: 0;
   }

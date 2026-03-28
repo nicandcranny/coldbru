@@ -1,7 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { find } from 'lodash';
+import cloneDeep from 'lodash/cloneDeep';
+import path from 'utils/common/path';
+import yaml from 'js-yaml';
 import toast from 'react-hot-toast';
-import { addTab, focusTab } from './tabs';
+import { addTab, focusTab, updateTab } from './tabs';
 import { setRequestTabView } from './requestTabView';
 
 const initialState = {
@@ -52,10 +55,16 @@ export const apiSpecSlice = createSlice({
       }
     },
     saveApiSpec: (state, action) => {
-      const { content, uid } = action.payload;
+      const { content, uid, name, json } = action.payload;
       const apiSpec = findApiSpecByUid(state.apiSpecs, uid);
       if (apiSpec) {
         apiSpec.raw = content;
+        if (name) {
+          apiSpec.name = name;
+        }
+        if (json) {
+          apiSpec.json = json;
+        }
       }
     },
     setActiveApiSpecUid: (state, action) => {
@@ -146,6 +155,43 @@ export const saveApiSpecToFile
             resolve();
           });
       });
+    };
+
+export const updateApiSpecTitle
+  = ({ uid, title }) =>
+    async (dispatch, getState) => {
+      const state = getState();
+      const apiSpec = findApiSpecByUid(state.apiSpec.apiSpecs, uid);
+
+      if (!apiSpec) {
+        throw new Error('API Spec not found');
+      }
+
+      const nextTitle = title?.trim();
+      if (!nextTitle) {
+        throw new Error('Title is required');
+      }
+
+      const extension = path.extname(apiSpec.pathname).toLowerCase();
+      let parsedSpec = apiSpec.json;
+
+      if (!parsedSpec) {
+        parsedSpec = extension === '.json' ? JSON.parse(apiSpec.raw || '{}') : yaml.load(apiSpec.raw || '') || {};
+      }
+
+      const nextSpec = cloneDeep(parsedSpec || {});
+      nextSpec.info = {
+        ...(nextSpec.info || {}),
+        title: nextTitle
+      };
+
+      const content = extension === '.json'
+        ? JSON.stringify(nextSpec, null, 2)
+        : yaml.dump(nextSpec, { noRefs: true, lineWidth: -1 });
+
+      await dispatch(saveApiSpecToFile({ uid, content }));
+      dispatch(saveApiSpec({ uid, content, name: nextTitle, json: nextSpec }));
+      dispatch(updateTab({ uid: getApiSpecTabUid(uid), tabName: nextTitle }));
     };
 
 export const createApiSpecFile = (apiSpecName, apiSpecLocation, content, workspacePath = null) => (dispatch, getState) => {
