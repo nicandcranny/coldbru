@@ -171,6 +171,21 @@ const CollectionsSection = ({ collapsible = true, searchTrigger = 0 }) => {
         break;
     }
     dispatch(sortCollections({ order }));
+
+    // Save to preferences
+    const updatedPreferences = {
+      ...preferences,
+      collections: {
+        ...preferences.collections,
+        sortOrders: {
+          ...(preferences.collections?.sortOrders || {}),
+          [activeWorkspaceUid]: order
+        }
+      }
+    };
+    dispatch(savePreferences(updatedPreferences)).catch(() => {
+      toast.error('Failed to save sort preference');
+    });
   };
 
   const getSortIcon = () => {

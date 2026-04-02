@@ -185,13 +185,27 @@ export const collectionsSlice = createSlice({
       // this is used in scenarios where we want to know the last action performed on the collection
       // and take some extra action based on that
       // for example, when a env is created, we want to auto select it the env modal
-      collection.importedAt = new Date().getTime();
+      collection.importedAt = performance.now();
       collection.lastAction = null;
 
       collapseAllItemsInCollection(collection);
       addDepth(collection.items);
       if (!hasExistingCollection) {
         state.collections.push(collection);
+
+        // Ensure collections remain sorted based on current preference
+        const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+        switch (state.collectionSortOrder) {
+          case 'default':
+            state.collections = state.collections.sort((a, b) => a.importedAt - b.importedAt);
+            break;
+          case 'alphabetical':
+            state.collections = state.collections.sort((a, b) => collator.compare(a.name, b.name));
+            break;
+          case 'reverseAlphabetical':
+            state.collections = state.collections.sort((a, b) => -collator.compare(a.name, b.name));
+            break;
+        }
       }
     },
     collapseFullCollection: (state, action) => {

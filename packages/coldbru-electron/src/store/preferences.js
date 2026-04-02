@@ -137,18 +137,18 @@ const preferencesSchema = Yup.object().shape({
   }),
   proxy: Yup.object({
     disabled: Yup.boolean().optional(),
-    inherit: Yup.boolean().required(),
+    inherit: Yup.boolean().optional(),
     config: Yup.object({
-      protocol: Yup.string().oneOf(['http', 'https', 'socks4', 'socks5']),
-      hostname: Yup.string().max(1024),
-      port: Yup.number().min(1).max(65535).nullable(),
+      protocol: Yup.string().oneOf(['http', 'https', 'socks4', 'socks5']).optional(),
+      hostname: Yup.string().max(1024).optional(),
+      port: Yup.number().min(1).max(65535).nullable().optional(),
       auth: Yup.object({
         disabled: Yup.boolean().optional(),
         username: Yup.string().max(1024),
         password: Yup.string().max(1024)
       }).optional(),
       bypassProxy: Yup.string().optional().max(1024)
-    }).required()
+    }).optional()
   }),
   layout: Yup.object({
     responsePaneOrientation: Yup.string().oneOf(['horizontal', 'vertical'])
