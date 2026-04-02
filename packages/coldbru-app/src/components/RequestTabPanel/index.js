@@ -41,6 +41,7 @@ import OpenAPISpecTab from 'components/OpenAPISpecTab';
 import GitDiffTab from 'components/Git/GitDiffTab';
 import ApiSpecPanel from 'components/ApiSpecPanel';
 import InlineEditableTitle from 'components/InlineEditableTitle';
+import WelcomeState from './WelcomeState';
 
 const MIN_LEFT_PANE_WIDTH = 300;
 const MIN_RIGHT_PANE_WIDTH = 490;
@@ -180,7 +181,7 @@ const RequestTabPanel = () => {
   }
 
   if (!activeTabUid || !focusedTab) {
-    return <div className="pb-4 px-4">An error occurred!</div>;
+    return <WelcomeState />;
   }
 
   if (focusedTab.type === 'global-environment-settings') {
@@ -192,7 +193,7 @@ const RequestTabPanel = () => {
   }
 
   if (focusedTab.type === 'workspaceOverview') {
-    return activeWorkspace ? <WorkspaceOverview workspace={activeWorkspace} /> : null;
+    return activeWorkspace ? <WorkspaceOverview workspace={activeWorkspace} /> : <WelcomeState />;
   }
 
   if (focusedTab.type === 'workspaceEnvironments') {
@@ -200,7 +201,7 @@ const RequestTabPanel = () => {
   }
 
   if (!focusedTab.uid || !focusedTab.collectionUid) {
-    return <div className="pb-4 px-4">An error occurred!</div>;
+    return <WelcomeState />;
   }
 
   if (!collection || !collection.uid) {
