@@ -1,18 +1,11 @@
-import { useDispatch } from 'react-redux';
 import React, { useState } from 'react';
 import get from 'lodash/get';
-import { useTheme } from 'providers/Theme';
 import { IconPlus, IconTrash, IconAdjustmentsHorizontal } from '@tabler/icons';
 import { cloneDeep } from 'lodash';
-import SingleLineEditor from 'components/SingleLineEditor/index';
-import MultiLineEditor from 'components/MultiLineEditor/index';
 import StyledWrapper from './StyledWrapper';
 import Table from 'components/Table/index';
 
-const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSave }) => {
-  const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
-
+const AdditionalParams = ({ request, updateLocalField, handleInputKeyDown, flushLocalAuth }) => {
   const oAuth = get(request, 'auth.oauth2', {});
   const {
     grantType,
@@ -50,17 +43,7 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
       }
     });
 
-    dispatch(
-      updateAuth({
-        mode: 'oauth2',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          ...oAuth,
-          additionalParameters: Object.keys(filteredParams).length > 0 ? filteredParams : undefined
-        }
-      })
-    );
+    updateLocalField('additionalParameters', Object.keys(filteredParams).length > 0 ? filteredParams : undefined);
   };
 
   const handleUpdateAdditionalParam = ({ paramType, key, paramIndex, value }) => {
@@ -125,17 +108,7 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
 
     // Don't filter here to allow the empty row to display in UI
     // But don't permanently store it in state until it has values
-    dispatch(
-      updateAuth({
-        mode: 'oauth2',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          ...oAuth,
-          additionalParameters: localAdditionalParameters
-        }
-      })
-    );
+    updateLocalField('additionalParameters', localAdditionalParameters);
   };
 
   // Add a class to the Add Parameter button if it's disabled
@@ -192,32 +165,39 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
           {(additionalParameters?.[activeTab] || []).map((param, index) => (
             <tr key={index}>
               <td className="flex relative">
-                <SingleLineEditor
+                <input
+                  className="mousetrap w-full bg-transparent"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                   value={param?.name || ''}
-                  theme={storedTheme}
-                  onChange={(value) => handleUpdateAdditionalParam({
+                  onChange={(e) => handleUpdateAdditionalParam({
                     paramType: activeTab,
                     key: 'name',
                     paramIndex: index,
-                    value
+                    value: e.target.value.replace(/[\r\n]/g, '')
                   })}
-                  collection={collection}
-                  onSave={handleSave}
-                  isCompact
+                  onBlur={flushLocalAuth}
+                  onKeyDown={handleInputKeyDown}
                 />
               </td>
               <td>
-                <MultiLineEditor
+                <input
+                  className="mousetrap w-full bg-transparent"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
                   value={param?.value || ''}
-                  theme={storedTheme}
-                  onChange={(value) => handleUpdateAdditionalParam({
+                  onChange={(e) => handleUpdateAdditionalParam({
                     paramType: activeTab,
                     key: 'value',
                     paramIndex: index,
-                    value
+                    value: e.target.value.replace(/[\r\n]/g, '')
                   })}
-                  collection={collection}
-                  onSave={handleSave}
+                  onBlur={flushLocalAuth}
+                  onKeyDown={handleInputKeyDown}
                 />
               </td>
               <td>
@@ -232,6 +212,7 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
                         value: e.target.value
                       });
                     }}
+                    onBlur={flushLocalAuth}
                     className="mousetrap bg-transparent"
                   >
                     {sendInOptionsMap[grantType || 'authorization_code'][activeTab].map((optionValue) => (

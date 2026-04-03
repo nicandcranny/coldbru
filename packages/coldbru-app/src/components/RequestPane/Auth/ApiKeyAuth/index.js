@@ -1,20 +1,40 @@
 import React, { useRef, forwardRef, useEffect } from 'react';
 import { IconCaretDown } from '@tabler/icons';
 import Dropdown from 'components/Dropdown';
+import cloneDeep from 'lodash/cloneDeep';
+import { useDispatch } from 'react-redux';
+import { sendRequest } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import { humanizeRequestAPIKeyPlacement } from 'utils/collections';
 import NativeAuthField from '../NativeAuthField';
 import useLocalAuthMode from '../useLocalAuthMode';
 
 const ApiKeyAuth = ({ item, collection, updateAuth, request, save }) => {
+  const dispatch = useDispatch();
+  const canRun = item?.type !== 'folder';
   const dropdownTippyRef = useRef();
   const onDropdownCreate = (ref) => (dropdownTippyRef.current = ref);
+  const syncContent = React.useCallback((content) => {
+    dispatch(updateAuth({
+      mode: 'apikey',
+      collectionUid: collection.uid,
+      itemUid: item.uid,
+      content
+    }));
+  }, [dispatch, updateAuth, collection.uid, item.uid]);
+  const onRunWithContent = React.useCallback((content) => {
+    if (!canRun) return;
+    const itemToRun = cloneDeep(item);
+    const requestRoot = itemToRun.draft ? itemToRun.draft.request : itemToRun.request;
+    requestRoot.auth = { ...(requestRoot.auth || {}), mode: 'apikey', apikey: content };
+    dispatch(sendRequest(itemToRun, collection.uid));
+  }, [canRun, item, dispatch, collection.uid]);
   const { localAuth, updateLocalField, handleInputKeyDown, flushLocalAuth } = useLocalAuthMode({
     mode: 'apikey',
-    item,
-    collection,
     request,
     save,
+    syncContent,
+    onRunWithContent,
     defaultContent: {
       key: '',
       value: '',

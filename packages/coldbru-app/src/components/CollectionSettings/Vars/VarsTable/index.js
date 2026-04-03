@@ -1,24 +1,27 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
-import MultiLineEditor from 'components/MultiLineEditor';
 import InfoTip from 'components/InfoTip';
 import EditableTable from 'components/EditableTable';
+import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
-import toast from 'react-hot-toast';
 import { variableNameRegex } from 'utils/common/regex';
 import { setCollectionVars } from 'providers/ReduxStore/slices/collections/index';
 
 const VarsTable = ({ collection, vars, varType }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
-
-  const onSave = () => dispatch(saveCollectionSettings(collection.uid));
+  const onSave = useCallback(() => dispatch(saveCollectionSettings(collection.uid)), [dispatch, collection.uid]);
 
   const handleVarsChange = useCallback((updatedVars) => {
     dispatch(setCollectionVars({ collectionUid: collection.uid, vars: updatedVars, type: varType }));
   }, [dispatch, collection.uid, varType]);
+  const {
+    localRows,
+    flushRows,
+    updateRow,
+    addRow,
+    deleteRow
+  } = useLocalRows({ rows: vars, syncRows: handleVarsChange });
 
   const getRowError = useCallback((row, index, key) => {
     if (key !== 'name') return null;
@@ -29,7 +32,15 @@ const VarsTable = ({ collection, vars, varType }) => {
     return null;
   }, []);
 
-  const columns = [
+  const handleCellKeyDown = useCallback((event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      flushRows();
+      onSave();
+    }
+  }, [flushRows, onSave]);
+
+  const columns = useMemo(() => [
     {
       key: 'name',
       name: 'Name',
@@ -46,18 +57,10 @@ const VarsTable = ({ collection, vars, varType }) => {
         </div>
       ),
       placeholder: varType === 'request' ? 'Value' : 'Expr',
-      render: ({ value, onChange }) => (
-        <MultiLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={onSave}
-          onChange={onChange}
-          collection={collection}
-          placeholder={!value ? (varType === 'request' ? 'Value' : 'Expr') : ''}
-        />
-      )
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [varType, flushRows, handleCellKeyDown]);
 
   const defaultRow = {
     name: '',
@@ -69,10 +72,13 @@ const VarsTable = ({ collection, vars, varType }) => {
     <StyledWrapper className="w-full">
       <EditableTable
         columns={columns}
-        rows={vars}
-        onChange={handleVarsChange}
+        rows={localRows}
         defaultRow={defaultRow}
         getRowError={getRowError}
+        rowUpdateMode={true}
+        onRowChange={updateRow}
+        onAddRow={addRow}
+        onDeleteRow={deleteRow}
       />
     </StyledWrapper>
   );

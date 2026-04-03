@@ -1,77 +1,56 @@
 import React from 'react';
-import SensitiveFieldWarning from 'components/SensitiveFieldWarning';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField';
 import get from 'lodash/get';
-import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
-import SingleLineEditor from 'components/SingleLineEditor';
 import { updateCollectionAuth } from 'providers/ReduxStore/slices/collections';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
+import NativeAuthField from 'components/RequestPane/Auth/NativeAuthField';
+import useLocalAuthMode from 'components/RequestPane/Auth/useLocalAuthMode';
 
 const WsseAuth = ({ collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
-
   const wsseAuth = collection.draft?.root ? get(collection, 'draft.root.request.auth.wsse', {}) : get(collection, 'root.request.auth.wsse', {});
+  const syncContent = React.useCallback((content) => {
+    dispatch(updateCollectionAuth({
+      mode: 'wsse',
+      collectionUid: collection.uid,
+      content
+    }));
+  }, [dispatch, collection.uid]);
+  const { localAuth, updateLocalField, handleInputKeyDown, flushLocalAuth } = useLocalAuthMode({
+    mode: 'wsse',
+    request: { auth: { wsse: wsseAuth } },
+    save: () => dispatch(saveCollectionSettings(collection.uid)),
+    syncContent,
+    defaultContent: {
+      username: '',
+      password: ''
+    }
+  });
   const { isSensitive } = useDetectSensitiveField(collection);
-  const { showWarning, warningMessage } = isSensitive(wsseAuth?.password);
-
-  const handleSave = () => dispatch(saveCollectionSettings(collection.uid));
-
-  const handleUserChange = (username) => {
-    dispatch(
-      updateCollectionAuth({
-        mode: 'wsse',
-        collectionUid: collection.uid,
-        content: {
-          username: username || '',
-          password: wsseAuth.password || ''
-        }
-      })
-    );
-  };
-
-  const handlePasswordChange = (password) => {
-    dispatch(
-      updateCollectionAuth({
-        mode: 'wsse',
-        collectionUid: collection.uid,
-        content: {
-          username: wsseAuth.username || '',
-          password: password || ''
-        }
-      })
-    );
-  };
+  const { showWarning, warningMessage } = isSensitive(localAuth?.password);
 
   return (
     <StyledWrapper className="mt-2 w-full">
-      <label className="block mb-1">Username</label>
-      <div className="single-line-editor-wrapper mb-3">
-        <SingleLineEditor
-          value={wsseAuth.username || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handleUserChange(val)}
-          collection={collection}
-          isCompact
-        />
-      </div>
-
-      <label className="block mb-1">Password</label>
-      <div className="single-line-editor-wrapper flex items-center">
-        <SingleLineEditor
-          value={wsseAuth.password || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handlePasswordChange(val)}
-          collection={collection}
-          isSecret={true}
-          isCompact
-        />
-        {showWarning && <SensitiveFieldWarning fieldName="wsse-password" warningMessage={warningMessage} />}
-      </div>
+      <NativeAuthField
+        label="Username"
+        value={localAuth.username || ''}
+        onChange={(value) => updateLocalField('username', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+      />
+      <NativeAuthField
+        label="Password"
+        value={localAuth.password || ''}
+        onChange={(value) => updateLocalField('password', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+        isSecret={true}
+        showWarning={showWarning}
+        warningMessage={warningMessage}
+        fieldName="wsse-password"
+      />
     </StyledWrapper>
   );
 };

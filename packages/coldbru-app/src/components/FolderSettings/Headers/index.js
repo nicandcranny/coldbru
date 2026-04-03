@@ -1,14 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
 import { setFolderHeaders } from 'providers/ReduxStore/slices/collections';
 import { saveFolderRoot } from 'providers/ReduxStore/slices/collections/actions';
-import SingleLineEditor from 'components/SingleLineEditor';
 import EditableTable from 'components/EditableTable';
+import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
 import { headers as StandardHTTPHeaders } from 'know-your-http-well';
-import { MimeTypes } from 'utils/codemirror/autocompleteConstants';
 import BulkEditor from 'components/BulkEditor/index';
 import Button from 'ui/Button';
 import { headerNameRegex, headerValueRegex } from 'utils/common/regex';
@@ -17,7 +15,6 @@ const headerAutoCompleteList = StandardHTTPHeaders.map((e) => e.header);
 
 const Headers = ({ collection, folder }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const headers = folder.draft
     ? get(folder, 'draft.request.headers', [])
     : get(folder, 'root.request.headers', []);
@@ -34,8 +31,19 @@ const Headers = ({ collection, folder }) => {
       headers: updatedHeaders
     }));
   }, [dispatch, collection.uid, folder.uid]);
+  const {
+    localRows: localHeaders,
+    flushRows,
+    updateRow,
+    addRow,
+    deleteRow,
+    reorderRows
+  } = useLocalRows({ rows: headers, syncRows: handleHeadersChange });
 
-  const handleSave = () => dispatch(saveFolderRoot(collection.uid, folder.uid));
+  const handleSave = useCallback(() => {
+    flushRows();
+    dispatch(saveFolderRoot(collection.uid, folder.uid));
+  }, [flushRows, dispatch, collection.uid, folder.uid]);
 
   const getRowError = useCallback((row, index, key) => {
     if (key === 'name') {
@@ -53,43 +61,34 @@ const Headers = ({ collection, folder }) => {
     return null;
   }, []);
 
-  const columns = [
+  const handleCellKeyDown = useCallback((event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      handleSave();
+    }
+  }, [handleSave]);
+
+  const columns = useMemo(() => [
     {
       key: 'name',
       name: 'Name',
       isKeyField: true,
       placeholder: 'Name',
       width: '30%',
-      render: ({ value, onChange }) => (
-        <SingleLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(newValue) => onChange(newValue.replace(/[\r\n]/g, ''))}
-          autocomplete={headerAutoCompleteList}
-          collection={collection}
-          placeholder={!value ? 'Name' : ''}
-        />
-      )
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      autocompleteOptions: headerAutoCompleteList,
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     },
     {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
-        <SingleLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={onChange}
-          collection={collection}
-          item={folder}
-          autocomplete={MimeTypes}
-          placeholder={!value ? 'Value' : ''}
-        />
-      )
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [flushRows, handleCellKeyDown]);
 
   const defaultRow = {
     name: '',
@@ -120,10 +119,15 @@ const Headers = ({ collection, folder }) => {
       </div>
       <EditableTable
         columns={columns}
-        rows={headers}
-        onChange={handleHeadersChange}
+        rows={localHeaders}
         defaultRow={defaultRow}
         getRowError={getRowError}
+        rowUpdateMode={true}
+        onRowChange={updateRow}
+        onAddRow={addRow}
+        onDeleteRow={deleteRow}
+        onReorder={reorderRows}
+        reorderable={true}
       />
       <div className="flex justify-end mt-2">
         <button className="text-link select-none" onClick={toggleBulkEditMode}>

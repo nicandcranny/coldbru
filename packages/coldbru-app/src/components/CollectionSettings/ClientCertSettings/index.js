@@ -6,9 +6,7 @@ import StyledWrapper from './StyledWrapper';
 import { useRef } from 'react';
 import path from 'utils/common/path';
 import SensitiveFieldWarning from 'components/SensitiveFieldWarning/index';
-import SingleLineEditor from 'components/SingleLineEditor/index';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField/index';
-import { useTheme } from 'styled-components';
 import { useDispatch } from 'react-redux';
 import { updateCollectionClientCertificates } from 'providers/ReduxStore/slices/collections';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
@@ -25,7 +23,6 @@ const ClientCertSettings = ({ collection }) => {
   const certFilePathInputRef = useRef();
   const keyFilePathInputRef = useRef();
   const pfxFilePathInputRef = useRef();
-  const { storedTheme } = useTheme();
 
   const formik = useFormik({
     initialValues: {
@@ -361,12 +358,15 @@ const ClientCertSettings = ({ collection }) => {
             Passphrase
           </label>
           <div className="textbox flex flex-row items-center w-[300px] h-[1.70rem] relative">
-            <SingleLineEditor
+            <input
+              type="password"
+              className="mousetrap w-full bg-transparent"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
               value={formik.values.passphrase || ''}
-              theme={storedTheme}
-              onChange={(val) => formik.setFieldValue('passphrase', val)}
-              collection={collection}
-              isSecret={true}
+              onChange={(event) => formik.setFieldValue('passphrase', event.target.value.replace(/[\r\n]/g, ''))}
             />
             {showWarning && <SensitiveFieldWarning fieldName="basic-password" warningMessage={warningMessage} />}
           </div>

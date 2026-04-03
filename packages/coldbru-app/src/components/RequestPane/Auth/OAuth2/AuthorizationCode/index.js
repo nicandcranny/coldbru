@@ -1,11 +1,9 @@
 import React from 'react';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField';
 import get from 'lodash/get';
-import { useTheme } from 'providers/Theme';
 import { useDispatch, useSelector } from 'react-redux';
 import { IconCaretDown, IconSettings, IconKey, IconHelp, IconAdjustmentsHorizontal } from '@tabler/icons';
 import MenuDropdown from 'ui/MenuDropdown';
-import SingleLineEditor from 'components/SingleLineEditor';
 import StyledWrapper from './StyledWrapper';
 import { inputsConfig } from './inputsConfig';
 import Oauth2TokenViewer from '../Oauth2TokenViewer/index';
@@ -14,11 +12,11 @@ import AdditionalParams from '../AdditionalParams/index';
 import SensitiveFieldWarning from 'components/SensitiveFieldWarning';
 import { savePreferences } from 'providers/ReduxStore/slices/app';
 import toast from 'react-hot-toast';
+import NativeOAuth2Input from '../NativeOAuth2Input';
 
-const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAuth, collection, folder }) => {
+const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateLocalField, handleInputKeyDown, flushLocalAuth, collection }) => {
   const dispatch = useDispatch();
   const preferences = useSelector((state) => state.app.preferences);
-  const { storedTheme } = useTheme();
   const useSystemBrowser = get(preferences, 'request.oauth2.useSystemBrowser', false);
   const { isSensitive } = useDetectSensitiveField(collection);
   const oAuth = get(request, 'auth.oauth2', {});
@@ -49,64 +47,11 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
   const handleSave = () => { save(); };
 
   const handleChange = (key, value) => {
-    dispatch(
-      updateAuth({
-        mode: 'oauth2',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          grantType: 'authorization_code',
-          callbackUrl,
-          authorizationUrl,
-          accessTokenUrl,
-          clientId,
-          clientSecret,
-          state,
-          scope,
-          pkce,
-          credentialsPlacement,
-          credentialsId,
-          tokenPlacement,
-          tokenHeaderPrefix,
-          tokenQueryKey,
-          refreshTokenUrl,
-          autoRefreshToken,
-          autoFetchToken,
-          tokenSource,
-          additionalParameters,
-          [key]: value
-        }
-      })
-    );
+    updateLocalField(key, value);
   };
 
-  const handlePKCEToggle = (e) => {
-    dispatch(
-      updateAuth({
-        mode: 'oauth2',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          grantType: 'authorization_code',
-          callbackUrl,
-          authorizationUrl,
-          accessTokenUrl,
-          clientId,
-          clientSecret,
-          state,
-          scope,
-          credentialsPlacement,
-          credentialsId,
-          tokenPlacement,
-          tokenHeaderPrefix,
-          tokenQueryKey,
-          autoFetchToken,
-          tokenSource,
-          additionalParameters,
-          pkce: !Boolean(oAuth?.['pkce'])
-        }
-      })
-    );
+  const handlePKCEToggle = () => {
+    updateLocalField('pkce', !Boolean(oAuth?.['pkce']));
   };
 
   const handleUseSystemBrowserToggle = (e) => {
@@ -147,16 +92,12 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
         <label className="block min-w-[140px]">Callback URL</label>
         <div className="flex flex-col gap-1 w-full">
           <div className="single-line-editor-wrapper flex-1 flex items-center">
-            <SingleLineEditor
+            <NativeOAuth2Input
               value={callbackUrl}
-              theme={storedTheme}
-              onSave={handleSave}
               onChange={(val) => handleChange('callbackUrl', val)}
-              onRun={handleRun}
-              collection={collection}
-              item={item}
+              onBlur={flushLocalAuth}
+              onKeyDown={handleInputKeyDown}
               placeholder={useSystemBrowser ? 'coldbru://app/oauth2/callback' : undefined}
-              isCompact
             />
           </div>
         </div>
@@ -190,16 +131,12 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
           <div className="flex items-center gap-4 w-full" key={`input-${key}`}>
             <label className="block min-w-[140px]">{label}</label>
             <div className="single-line-editor-wrapper flex-1 flex items-center">
-              <SingleLineEditor
+              <NativeOAuth2Input
                 value={value}
-                theme={storedTheme}
-                onSave={handleSave}
                 onChange={(val) => handleChange(key, val)}
-                onRun={handleRun}
-                collection={collection}
-                item={item}
+                onBlur={flushLocalAuth}
+                onKeyDown={handleInputKeyDown}
                 isSecret={isSecret}
-                isCompact
               />
               {isSecret && showWarning && <SensitiveFieldWarning fieldName={key} warningMessage={warningMessage} />}
             </div>
@@ -262,15 +199,11 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
       <div className="flex items-center gap-4 w-full" key="input-token-name">
         <label className="block min-w-[140px]">Token ID</label>
         <div className="single-line-editor-wrapper flex-1">
-          <SingleLineEditor
+          <NativeOAuth2Input
             value={oAuth['credentialsId'] || ''}
-            theme={storedTheme}
-            onSave={handleSave}
             onChange={(val) => handleChange('credentialsId', val)}
-            onRun={handleRun}
-            collection={collection}
-            item={item}
-            isCompact
+            onBlur={flushLocalAuth}
+            onKeyDown={handleInputKeyDown}
           />
         </div>
       </div>
@@ -298,14 +231,11 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
               <div className="flex items-center gap-4 w-full" key="input-token-prefix">
                 <label className="block min-w-[140px]">Header Prefix</label>
                 <div className="single-line-editor-wrapper flex-1">
-                  <SingleLineEditor
+                  <NativeOAuth2Input
                     value={oAuth['tokenHeaderPrefix'] || ''}
-                    theme={storedTheme}
-                    onSave={handleSave}
                     onChange={(val) => handleChange('tokenHeaderPrefix', val)}
-                    onRun={handleRun}
-                    collection={collection}
-                    isCompact
+                    onBlur={flushLocalAuth}
+                    onKeyDown={handleInputKeyDown}
                   />
                 </div>
               </div>
@@ -314,14 +244,11 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
               <div className="flex items-center gap-4 w-full" key="input-token-query-param-key">
                 <label className="block min-w-[140px]">Query Param Key</label>
                 <div className="single-line-editor-wrapper flex-1">
-                  <SingleLineEditor
+                  <NativeOAuth2Input
                     value={oAuth['tokenQueryKey'] || ''}
-                    theme={storedTheme}
-                    onSave={handleSave}
                     onChange={(val) => handleChange('tokenQueryKey', val)}
-                    onRun={handleRun}
-                    collection={collection}
-                    isCompact
+                    onBlur={flushLocalAuth}
+                    onKeyDown={handleInputKeyDown}
                   />
                 </div>
               </div>
@@ -339,14 +266,11 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
       <div className="flex items-center gap-4 w-full mb-4">
         <label className="block min-w-[140px]">Refresh Token URL</label>
         <div className="single-line-editor-wrapper flex-1">
-          <SingleLineEditor
+          <NativeOAuth2Input
             value={get(request, 'auth.oauth2.refreshTokenUrl', '')}
-            theme={storedTheme}
-            onSave={handleSave}
             onChange={(val) => handleChange('refreshTokenUrl', val)}
-            collection={collection}
-            item={item}
-            isCompact
+            onBlur={flushLocalAuth}
+            onKeyDown={handleInputKeyDown}
           />
         </div>
       </div>
@@ -400,7 +324,9 @@ const OAuth2AuthorizationCode = ({ save, item = {}, request, handleRun, updateAu
         item={item}
         request={request}
         collection={collection}
-        updateAuth={updateAuth}
+        updateLocalField={updateLocalField}
+        handleInputKeyDown={handleInputKeyDown}
+        flushLocalAuth={flushLocalAuth}
         handleSave={handleSave}
       />
       <Oauth2ActionButtons item={item} request={request} collection={collection} url={accessTokenUrl} credentialsId={credentialsId} />

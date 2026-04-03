@@ -1,39 +1,38 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
-import { moveVar, setRequestVars } from 'providers/ReduxStore/slices/collections';
+import { setRequestVars } from 'providers/ReduxStore/slices/collections';
 import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
-import MultiLineEditor from 'components/MultiLineEditor';
 import InfoTip from 'components/InfoTip';
 import EditableTable from 'components/EditableTable';
+import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
-import toast from 'react-hot-toast';
 import { variableNameRegex } from 'utils/common/regex';
 
 const VarsTable = ({ item, collection, vars, varType }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
-
-  const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
-  const handleRun = () => dispatch(sendRequest(item, collection.uid));
-
-  const handleVarsChange = useCallback((updatedVars) => {
-    dispatch(setRequestVars({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      vars: updatedVars,
-      type: varType
-    }));
-  }, [dispatch, collection.uid, item.uid, varType]);
-
-  const handleVarDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveVar({
-      type: varType,
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, varType, collection.uid, item.uid]);
+  const onSave = useCallback(() => dispatch(saveRequest(item.uid, collection.uid)), [dispatch, item.uid, collection.uid]);
+  const {
+    localRows,
+    flushRows,
+    updateRow,
+    addRow,
+    deleteRow,
+    reorderRows
+  } = useLocalRows({
+    rows: vars || [],
+    syncRows: useCallback((updatedVars) => {
+      dispatch(setRequestVars({
+        collectionUid: collection.uid,
+        itemUid: item.uid,
+        vars: updatedVars,
+        type: varType
+      }));
+    }, [dispatch, collection.uid, item.uid, varType])
+  });
+  const handleRun = useCallback(() => {
+    flushRows();
+    dispatch(sendRequest(item, collection.uid));
+  }, [flushRows, dispatch, item, collection.uid]);
 
   const getRowError = useCallback((row, index, key) => {
     if (key !== 'name') return null;
@@ -44,13 +43,29 @@ const VarsTable = ({ item, collection, vars, varType }) => {
     return null;
   }, []);
 
-  const columns = [
+  const handleCellKeyDown = useCallback((event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleRun();
+      return;
+    }
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      flushRows();
+      onSave();
+    }
+  }, [handleRun, flushRows, onSave]);
+
+  const columns = useMemo(() => [
     {
       key: 'name',
       name: 'Name',
       isKeyField: true,
       placeholder: 'Name',
-      width: '35%'
+      width: '35%',
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     },
     {
       key: 'value',
@@ -61,20 +76,10 @@ const VarsTable = ({ item, collection, vars, varType }) => {
         </div>
       ),
       placeholder: varType === 'request' ? 'Value' : 'Expr',
-      render: ({ value, onChange }) => (
-        <MultiLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={onSave}
-          onChange={onChange}
-          onRun={handleRun}
-          collection={collection}
-          item={item}
-          placeholder={!value ? (varType === 'request' ? 'Value' : 'Expr') : ''}
-        />
-      )
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [varType, flushRows, handleCellKeyDown]);
 
   const defaultRow = {
     name: '',
@@ -86,12 +91,15 @@ const VarsTable = ({ item, collection, vars, varType }) => {
     <StyledWrapper className="w-full">
       <EditableTable
         columns={columns}
-        rows={vars || []}
-        onChange={handleVarsChange}
+        rows={localRows}
         defaultRow={defaultRow}
         getRowError={getRowError}
         reorderable={true}
-        onReorder={handleVarDrag}
+        onReorder={reorderRows}
+        rowUpdateMode={true}
+        onRowChange={updateRow}
+        onAddRow={addRow}
+        onDeleteRow={deleteRow}
       />
     </StyledWrapper>
   );

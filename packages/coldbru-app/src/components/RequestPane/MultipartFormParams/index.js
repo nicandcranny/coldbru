@@ -8,8 +8,6 @@ import {
   setMultipartFormParams
 } from 'providers/ReduxStore/slices/collections';
 import { browseFiles } from 'providers/ReduxStore/slices/collections/actions';
-import MultiLineEditor from 'components/MultiLineEditor';
-import SingleLineEditor from 'components/SingleLineEditor';
 import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
@@ -18,7 +16,6 @@ import { isWindowsOS } from 'utils/common/platform';
 
 const MultipartFormParams = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const params = item.draft ? get(item, 'draft.request.body.multipartForm') : get(item, 'request.body.multipartForm');
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
@@ -148,15 +145,28 @@ const MultipartFormParams = ({ item, collection }) => {
         return (
           <div className="flex items-center value-cell">
             <div className="flex-1">
-              <MultiLineEditor
-                onSave={onSave}
-                theme={storedTheme}
+              <input
+                type="text"
+                className="mousetrap w-full bg-transparent"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck="false"
                 value={value || ''}
-                onChange={(newValue) => handleValueChange(row, newValue, onChange)}
-                onRun={handleRun}
-                allowNewlines={true}
-                collection={collection}
-                item={item}
+                onChange={(event) => handleValueChange(row, event.target.value.replace(/[\r\n]/g, ''), onChange)}
+                onBlur={onSave}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleRun();
+                    return;
+                  }
+
+                  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+                    event.preventDefault();
+                    onSave();
+                  }
+                }}
                 placeholder={!value ? 'Value' : ''}
               />
             </div>
@@ -179,14 +189,29 @@ const MultipartFormParams = ({ item, collection }) => {
       placeholder: 'Auto',
       width: '20%',
       render: ({ value, onChange }) => (
-        <SingleLineEditor
-          onSave={onSave}
-          theme={storedTheme}
+        <input
+          type="text"
+          className="mousetrap w-full bg-transparent"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           placeholder={!value ? 'Auto' : ''}
           value={value || ''}
-          onChange={onChange}
-          onRun={handleRun}
-          collection={collection}
+          onChange={(event) => onChange(event.target.value.replace(/[\r\n]/g, ''))}
+          onBlur={onSave}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              handleRun();
+              return;
+            }
+
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+              event.preventDefault();
+              onSave();
+            }
+          }}
         />
       )
     }

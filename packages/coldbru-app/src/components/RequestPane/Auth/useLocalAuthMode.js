@@ -1,70 +1,64 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash/debounce';
-import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isEqual from 'lodash/isEqual';
-import { useDispatch } from 'react-redux';
-import { setAuthContent } from 'providers/ReduxStore/slices/collections';
-import { sendRequest } from 'providers/ReduxStore/slices/collections/actions';
 
 const useLocalAuthMode = ({
   mode,
-  item,
-  collection,
   request,
   save,
+  syncContent,
+  onRunWithContent,
   defaultContent = {}
 }) => {
-  const dispatch = useDispatch();
   const authContent = useMemo(() => ({
     ...defaultContent,
     ...(get(request, `auth.${mode}`, {}) || {})
   }), [defaultContent, mode, request]);
   const [localAuth, setLocalAuth] = useState(authContent);
+  const localAuthRef = useRef(authContent);
+  const authContentRef = useRef(authContent);
   const dirtyRef = useRef(false);
   const debouncedSyncRef = useRef(null);
 
-  const syncAuthToStore = useCallback((content) => {
-    dispatch(setAuthContent({
-      mode,
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      content
-    }));
-  }, [dispatch, mode, collection.uid, item.uid]);
-
   useEffect(() => {
-    if (isEqual(authContent, localAuth)) {
+    authContentRef.current = authContent;
+
+    if (isEqual(authContent, localAuthRef.current)) {
       dirtyRef.current = false;
       return;
     }
 
     if (!dirtyRef.current) {
       setLocalAuth(authContent);
+      localAuthRef.current = authContent;
     }
-  }, [authContent, localAuth]);
+  }, [authContent]);
+
+  useEffect(() => {
+    localAuthRef.current = localAuth;
+  }, [localAuth]);
 
   useEffect(() => {
     debouncedSyncRef.current = debounce((content) => {
-      syncAuthToStore(content);
+      syncContent(content);
     }, 400);
 
     return () => {
       debouncedSyncRef.current?.cancel();
       debouncedSyncRef.current = null;
     };
-  }, [syncAuthToStore]);
+  }, [syncContent]);
 
-  const flushLocalAuth = useCallback((content = localAuth) => {
+  const flushLocalAuth = useCallback((content = localAuthRef.current) => {
     debouncedSyncRef.current?.cancel();
 
-    if (!isEqual(content, authContent)) {
-      syncAuthToStore(content);
-      return;
+    if (!isEqual(content, authContentRef.current)) {
+      syncContent(content);
     }
 
     dirtyRef.current = false;
-  }, [authContent, localAuth, syncAuthToStore]);
+  }, [syncContent]);
 
   useEffect(() => {
     return () => {
@@ -75,6 +69,7 @@ const useLocalAuthMode = ({
   const updateLocalField = useCallback((key, value) => {
     setLocalAuth((currentAuth) => {
       const nextAuth = { ...currentAuth, [key]: value };
+      localAuthRef.current = nextAuth;
       dirtyRef.current = true;
       debouncedSyncRef.current?.(nextAuth);
       return nextAuth;
@@ -87,18 +82,10 @@ const useLocalAuthMode = ({
   }, [flushLocalAuth, save]);
 
   const handleRun = useCallback(() => {
-    flushLocalAuth();
-
-    const itemToRun = cloneDeep(item);
-    const requestRoot = itemToRun.draft ? itemToRun.draft.request : itemToRun.request;
-    requestRoot.auth = {
-      ...(requestRoot.auth || {}),
-      mode,
-      [mode]: localAuth
-    };
-
-    dispatch(sendRequest(itemToRun, collection.uid));
-  }, [flushLocalAuth, item, mode, localAuth, dispatch, collection.uid]);
+    const latestAuth = localAuthRef.current;
+    flushLocalAuth(latestAuth);
+    onRunWithContent?.(latestAuth);
+  }, [flushLocalAuth, onRunWithContent]);
 
   const handleInputKeyDown = useCallback((event) => {
     if (event.key === 'Enter') {

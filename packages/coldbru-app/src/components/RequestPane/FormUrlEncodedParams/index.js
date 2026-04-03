@@ -1,67 +1,75 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
 import {
-  moveFormUrlEncodedParam,
   setFormUrlEncodedParams
 } from 'providers/ReduxStore/slices/collections';
-import MultiLineEditor from 'components/MultiLineEditor';
 import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
+import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
 
 const FormUrlEncodedParams = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const params = item.draft ? get(item, 'draft.request.body.formUrlEncoded') : get(item, 'request.body.formUrlEncoded');
 
-  const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
-  const handleRun = () => dispatch(sendRequest(item, collection.uid));
+  const onSave = useCallback(() => dispatch(saveRequest(item.uid, collection.uid)), [dispatch, item.uid, collection.uid]);
+  const {
+    localRows,
+    flushRows,
+    updateRow,
+    addRow,
+    deleteRow,
+    reorderRows
+  } = useLocalRows({
+    rows: params || [],
+    syncRows: useCallback((updatedParams) => {
+      dispatch(setFormUrlEncodedParams({
+        collectionUid: collection.uid,
+        itemUid: item.uid,
+        params: updatedParams
+      }));
+    }, [dispatch, collection.uid, item.uid])
+  });
+  const handleRun = useCallback(() => {
+    flushRows();
+    dispatch(sendRequest(item, collection.uid));
+  }, [flushRows, dispatch, item, collection.uid]);
 
-  const handleParamsChange = useCallback((updatedParams) => {
-    dispatch(setFormUrlEncodedParams({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      params: updatedParams
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleCellKeyDown = useCallback((event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleRun();
+      return;
+    }
 
-  const handleParamDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveFormUrlEncodedParam({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      flushRows();
+      onSave();
+    }
+  }, [handleRun, flushRows, onSave]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       key: 'name',
       name: 'Key',
       isKeyField: true,
       placeholder: 'Key',
-      width: '30%'
+      width: '30%',
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     },
     {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
-        <MultiLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={onSave}
-          onChange={onChange}
-          allowNewlines={true}
-          onRun={handleRun}
-          collection={collection}
-          item={item}
-          placeholder={!value ? 'Value' : ''}
-        />
-      )
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushRows(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [flushRows, handleCellKeyDown]);
 
   const defaultRow = {
     name: '',
@@ -73,11 +81,14 @@ const FormUrlEncodedParams = ({ item, collection }) => {
     <StyledWrapper className="w-full">
       <EditableTable
         columns={columns}
-        rows={params || []}
-        onChange={handleParamsChange}
+        rows={localRows}
         defaultRow={defaultRow}
         reorderable={true}
-        onReorder={handleParamDrag}
+        onReorder={reorderRows}
+        rowUpdateMode={true}
+        onRowChange={updateRow}
+        onAddRow={addRow}
+        onDeleteRow={deleteRow}
       />
     </StyledWrapper>
   );

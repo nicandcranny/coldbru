@@ -1,10 +1,8 @@
 import React, { useMemo } from 'react';
 import get from 'lodash/get';
-import { useTheme } from 'providers/Theme';
 import { useDispatch, useSelector } from 'react-redux';
 import { IconCaretDown, IconSettings, IconKey, IconHelp, IconAdjustmentsHorizontal } from '@tabler/icons';
 import MenuDropdown from 'ui/MenuDropdown';
-import SingleLineEditor from 'components/SingleLineEditor';
 import Wrapper from './StyledWrapper';
 import { inputsConfig } from './inputsConfig';
 import Oauth2TokenViewer from '../Oauth2TokenViewer/index';
@@ -14,12 +12,12 @@ import { getAllVariables } from 'utils/collections/index';
 import { interpolate } from '@usebruno/common';
 import { savePreferences } from 'providers/ReduxStore/slices/app';
 import toast from 'react-hot-toast';
+import NativeOAuth2Input from '../NativeOAuth2Input';
 
-const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, collection, folder }) => {
+const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateLocalField, handleInputKeyDown, flushLocalAuth, collection }) => {
   const dispatch = useDispatch();
   const preferences = useSelector((state) => state.app.preferences);
   const useSystemBrowser = get(preferences, 'request.oauth2.useSystemBrowser', false);
-  const { storedTheme } = useTheme();
   const oAuth = get(request, 'auth.oauth2', {});
   const {
     callbackUrl,
@@ -43,28 +41,7 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
   const handleSave = () => { save(); };
 
   const handleChange = (key, value) => {
-    dispatch(
-      updateAuth({
-        mode: 'oauth2',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          grantType: 'implicit',
-          callbackUrl,
-          authorizationUrl,
-          clientId,
-          state,
-          scope,
-          credentialsId,
-          tokenPlacement,
-          tokenHeaderPrefix,
-          tokenQueryKey,
-          autoFetchToken,
-          tokenSource,
-          [key]: value
-        }
-      })
-    );
+    updateLocalField(key, value);
   };
 
   const handleAutoFetchTokenToggle = (e) => {
@@ -109,16 +86,12 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
         <label className="block min-w-[140px]">Callback URL</label>
         <div className="flex flex-col gap-1 w-full">
           <div className="oauth2-input-wrapper flex-1 flex items-center">
-            <SingleLineEditor
+            <NativeOAuth2Input
               value={callbackUrl}
-              theme={storedTheme}
-              onSave={handleSave}
               onChange={(val) => handleChange('callbackUrl', val)}
-              onRun={handleRun}
-              collection={collection}
-              item={item}
+              onBlur={flushLocalAuth}
+              onKeyDown={handleInputKeyDown}
               placeholder={useSystemBrowser ? 'coldbru://app/oauth2/callback' : undefined}
-              isCompact
             />
           </div>
         </div>
@@ -149,16 +122,12 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
           <div className="flex items-center gap-4 w-full" key={`input-${key}`}>
             <label className="block min-w-[140px]">{label}</label>
             <div className="oauth2-input-wrapper flex-1">
-              <SingleLineEditor
+              <NativeOAuth2Input
                 value={oAuth[key] || ''}
-                theme={storedTheme}
-                onSave={handleSave}
                 onChange={(val) => handleChange(key, val)}
-                onRun={handleRun}
-                collection={collection}
-                item={item}
+                onBlur={flushLocalAuth}
+                onKeyDown={handleInputKeyDown}
                 isSecret={isSecret}
-                isCompact
               />
             </div>
           </div>
@@ -196,15 +165,11 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
       <div className="flex items-center gap-4 w-full" key="input-token-name">
         <label className="block min-w-[140px]">Token ID</label>
         <div className="oauth2-input-wrapper flex-1">
-          <SingleLineEditor
+          <NativeOAuth2Input
             value={oAuth['credentialsId'] || 'credentials'}
-            theme={storedTheme}
-            onSave={handleSave}
             onChange={(val) => handleChange('credentialsId', val)}
-            onRun={handleRun}
-            collection={collection}
-            item={item}
-            isCompact
+            onBlur={flushLocalAuth}
+            onKeyDown={handleInputKeyDown}
           />
         </div>
       </div>
@@ -232,15 +197,11 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
         <div className="flex items-center gap-4 w-full" key="input-token-header-prefix">
           <label className="block min-w-[140px]">Header Prefix</label>
           <div className="oauth2-input-wrapper flex-1">
-            <SingleLineEditor
+            <NativeOAuth2Input
               value={oAuth.tokenHeaderPrefix || 'Bearer'}
-              theme={storedTheme}
-              onSave={handleSave}
               onChange={(val) => handleChange('tokenHeaderPrefix', val)}
-              onRun={handleRun}
-              collection={collection}
-              item={item}
-              isCompact
+              onBlur={flushLocalAuth}
+              onKeyDown={handleInputKeyDown}
             />
           </div>
         </div>
@@ -248,15 +209,11 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
         <div className="flex items-center gap-4 w-full" key="input-token-query-key">
           <label className="block min-w-[140px]">URL Query Key</label>
           <div className="oauth2-input-wrapper flex-1">
-            <SingleLineEditor
+            <NativeOAuth2Input
               value={oAuth.tokenQueryKey || 'access_token'}
-              theme={storedTheme}
-              onSave={handleSave}
               onChange={(val) => handleChange('tokenQueryKey', val)}
-              onRun={handleRun}
-              collection={collection}
-              item={item}
-              isCompact
+              onBlur={flushLocalAuth}
+              onKeyDown={handleInputKeyDown}
             />
           </div>
         </div>
@@ -293,7 +250,9 @@ const OAuth2Implicit = ({ save, item = {}, request, handleRun, updateAuth, colle
         item={item}
         request={request}
         collection={collection}
-        updateAuth={updateAuth}
+        updateLocalField={updateLocalField}
+        handleInputKeyDown={handleInputKeyDown}
+        flushLocalAuth={flushLocalAuth}
         handleSave={handleSave}
       />
       <Oauth2ActionButtons item={item} request={request} collection={collection} url={interpolatedAuthUrl} credentialsId={credentialsId} />

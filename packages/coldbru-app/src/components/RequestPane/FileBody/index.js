@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { get, cloneDeep, isArray } from 'lodash';
+import React, { useState } from 'react';
+import { get, cloneDeep } from 'lodash';
 import { IconTrash } from '@tabler/icons';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
 import { addFile as _addFile, updateFile, deleteFile } from 'providers/ReduxStore/slices/collections/index';
 import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import FilePickerEditor from 'components/FilePickerEditor/index';
-import SingleLineEditor from 'components/SingleLineEditor/index';
 
 const FileBody = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const params = item.draft ? get(item, 'draft.request.body.file') : get(item, 'request.body.file');
 
   const [enabledFileUid, setEnableFileUid] = useState(params && params.length ? params[0].uid : '');
@@ -106,24 +103,38 @@ const FileBody = ({ item, collection }) => {
                       />
                     </td>
                     <td>
-                      <SingleLineEditor
-                        className="flex items-center justify-center"
-                        onSave={onSave}
-                        theme={storedTheme}
+                      <input
+                        type="text"
+                        className="mousetrap w-full bg-transparent text-center"
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
                         placeholder="Auto"
-                        value={param.contentType}
-                        onChange={(newValue) =>
+                        value={param.contentType || ''}
+                        onChange={(event) =>
                           handleParamChange(
                             {
                               target: {
-                                contentType: newValue
+                                contentType: event.target.value.replace(/[\r\n]/g, '')
                               }
                             },
                             param,
                             'contentType'
                           )}
-                        onRun={handleRun}
-                        collection={collection}
+                        onBlur={onSave}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            handleRun();
+                            return;
+                          }
+
+                          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+                            event.preventDefault();
+                            onSave();
+                          }
+                        }}
                       />
                     </td>
                     <td>

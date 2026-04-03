@@ -1,16 +1,36 @@
 import React from 'react';
 import StyledWrapper from './StyledWrapper';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField';
+import cloneDeep from 'lodash/cloneDeep';
+import { useDispatch } from 'react-redux';
+import { sendRequest } from 'providers/ReduxStore/slices/collections/actions';
 import NativeAuthField from '../NativeAuthField';
 import useLocalAuthMode from '../useLocalAuthMode';
 
 const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
+  const dispatch = useDispatch();
+  const canRun = item?.type !== 'folder';
+  const syncContent = React.useCallback((content) => {
+    dispatch(updateAuth({
+      mode: 'awsv4',
+      collectionUid: collection.uid,
+      itemUid: item.uid,
+      content
+    }));
+  }, [dispatch, updateAuth, collection.uid, item.uid]);
+  const onRunWithContent = React.useCallback((content) => {
+    if (!canRun) return;
+    const itemToRun = cloneDeep(item);
+    const requestRoot = itemToRun.draft ? itemToRun.draft.request : itemToRun.request;
+    requestRoot.auth = { ...(requestRoot.auth || {}), mode: 'awsv4', awsv4: content };
+    dispatch(sendRequest(itemToRun, collection.uid));
+  }, [canRun, item, dispatch, collection.uid]);
   const { localAuth, updateLocalField, handleInputKeyDown, flushLocalAuth } = useLocalAuthMode({
     mode: 'awsv4',
-    item,
-    collection,
     request,
     save,
+    syncContent,
+    onRunWithContent,
     defaultContent: {
       accessKeyId: '',
       secretAccessKey: '',

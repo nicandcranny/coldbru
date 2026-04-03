@@ -1,8 +1,6 @@
 import React from 'react';
 import { IconTrash } from '@tabler/icons';
-import SingleLineEditor from 'components/SingleLineEditor';
 import AssertionOperator from '../AssertionOperator';
-import { useTheme } from 'providers/Theme';
 
 /**
  * Assertion operators
@@ -141,8 +139,6 @@ const AssertionRow = ({
   onSave,
   handleRun
 }) => {
-  const { storedTheme } = useTheme();
-
   const { operator, value } = parseAssertionOperator(assertion.value);
 
   return (
@@ -165,24 +161,32 @@ const AssertionRow = ({
       </td>
       <td>
         {!isUnaryOperator(operator) ? (
-          <SingleLineEditor
+          <input
+            type="text"
+            className="mousetrap w-full bg-transparent"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
             value={value}
-            theme={storedTheme}
-            onSave={onSave}
-            onChange={(newValue) => {
+            onChange={(event) => {
               handleAssertionChange(
                 {
                   target: {
-                    value: `${operator} ${newValue}`
+                    value: `${operator} ${event.target.value.replace(/[\r\n]/g, '')}`
                   }
                 },
                 assertion,
                 'value'
               );
             }}
-            onRun={handleRun}
-            collection={collection}
-            item={item}
+            onBlur={onSave}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleRun();
+              }
+            }}
           />
         ) : (
           <input type="text" className="cursor-default" disabled />

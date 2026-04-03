@@ -1,106 +1,64 @@
 import React from 'react';
-import SensitiveFieldWarning from 'components/SensitiveFieldWarning';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField';
 import get from 'lodash/get';
-import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
-import SingleLineEditor from 'components/SingleLineEditor';
 import { updateCollectionAuth } from 'providers/ReduxStore/slices/collections';
 import { saveCollectionSettings } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
+import NativeAuthField from 'components/RequestPane/Auth/NativeAuthField';
+import useLocalAuthMode from 'components/RequestPane/Auth/useLocalAuthMode';
 
 const NTLMAuth = ({ collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
-
   const ntlmAuth = collection.draft?.root ? get(collection, 'draft.root.request.auth.ntlm', {}) : get(collection, 'root.request.auth.ntlm', {});
+  const syncContent = React.useCallback((content) => {
+    dispatch(updateCollectionAuth({
+      mode: 'ntlm',
+      collectionUid: collection.uid,
+      content
+    }));
+  }, [dispatch, collection.uid]);
+  const { localAuth, updateLocalField, handleInputKeyDown, flushLocalAuth } = useLocalAuthMode({
+    mode: 'ntlm',
+    request: { auth: { ntlm: ntlmAuth } },
+    save: () => dispatch(saveCollectionSettings(collection.uid)),
+    syncContent,
+    defaultContent: {
+      username: '',
+      password: '',
+      domain: ''
+    }
+  });
   const { isSensitive } = useDetectSensitiveField(collection);
-  const { showWarning, warningMessage } = isSensitive(ntlmAuth?.password);
-
-  const handleSave = () => dispatch(saveCollectionSettings(collection.uid));
-
-  const handleUsernameChange = (username) => {
-    dispatch(
-      updateCollectionAuth({
-        mode: 'ntlm',
-        collectionUid: collection.uid,
-        content: {
-          username: username || '',
-          password: ntlmAuth.password || '',
-          domain: ntlmAuth.domain || ''
-
-        }
-      })
-    );
-  };
-
-  const handlePasswordChange = (password) => {
-    dispatch(
-      updateCollectionAuth({
-        mode: 'ntlm',
-        collectionUid: collection.uid,
-        content: {
-          username: ntlmAuth.username || '',
-          password: password || '',
-          domain: ntlmAuth.domain || ''
-        }
-      })
-    );
-  };
-
-  const handleDomainChange = (domain) => {
-    dispatch(
-      updateCollectionAuth({
-        mode: 'ntlm',
-        collectionUid: collection.uid,
-        content: {
-          username: ntlmAuth.username || '',
-          password: ntlmAuth.password || '',
-          domain: domain || ''
-        }
-      })
-    );
-  };
+  const { showWarning, warningMessage } = isSensitive(localAuth?.password);
 
   return (
     <StyledWrapper className="mt-2 w-full">
-      <label className="block mb-1">Username</label>
-      <div className="single-line-editor-wrapper mb-3">
-        <SingleLineEditor
-          value={ntlmAuth.username || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handleUsernameChange(val)}
-          collection={collection}
-          isCompact
-        />
-      </div>
-
-      <label className="block mb-1">Password</label>
-      <div className="single-line-editor-wrapper mb-3 flex items-center">
-        <SingleLineEditor
-          value={ntlmAuth.password || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handlePasswordChange(val)}
-          collection={collection}
-          isSecret={true}
-          isCompact
-        />
-        {showWarning && <SensitiveFieldWarning fieldName="ntlm-password" warningMessage={warningMessage} />}
-      </div>
-
-      <label className="block mb-1">Domain</label>
-      <div className="single-line-editor-wrapper">
-        <SingleLineEditor
-          value={ntlmAuth.domain || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handleDomainChange(val)}
-          collection={collection}
-          isCompact
-        />
-      </div>
+      <NativeAuthField
+        label="Username"
+        value={localAuth.username || ''}
+        onChange={(value) => updateLocalField('username', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+      />
+      <NativeAuthField
+        label="Password"
+        value={localAuth.password || ''}
+        onChange={(value) => updateLocalField('password', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+        isSecret={true}
+        showWarning={showWarning}
+        warningMessage={warningMessage}
+        fieldName="ntlm-password"
+      />
+      <NativeAuthField
+        label="Domain"
+        value={localAuth.domain || ''}
+        onChange={(value) => updateLocalField('domain', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+      />
     </StyledWrapper>
   );
 };

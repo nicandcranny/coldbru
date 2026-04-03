@@ -1,14 +1,13 @@
 import cn from 'classnames';
 import InfoTip from 'components/InfoTip/index';
-import SingleLineEditor from 'components/SingleLineEditor';
 import ToolHint from 'components/ToolHint/index';
-import { useFormik } from 'formik';
 import get from 'lodash/get';
 import { updateItemSettings } from 'providers/ReduxStore/slices/collections';
-import { useTheme } from 'providers/Theme';
-import React, { useEffect } from 'react';
+import { saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import * as Yup from 'yup';
+import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
 import StyledWrapper from './StyledWrapper';
 
 /**
@@ -30,26 +29,83 @@ const ERRORS = {
 
 const WSSettingsPane = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const requestPreferences = useSelector((state) => state.app.preferences.request);
 
   const { timeout: _connectionTimeout, keepAliveInterval = 0 } = getPropertyFromDraftOrRequest('settings', item);
 
   const connectionTimeout = _connectionTimeout ?? requestPreferences.timeout;
+  const [localSettings, setLocalSettings] = useState({
+    timeout: connectionTimeout,
+    keepAliveInterval
+  });
+  const localSettingsRef = useRef(localSettings);
+  const sourceSettingsRef = useRef({ timeout: connectionTimeout, keepAliveInterval });
+  const dirtyRef = useRef(false);
+  const debouncedSyncRef = useRef(null);
 
-  const updateSetting = (key, value) => {
+  useEffect(() => {
+    localSettingsRef.current = localSettings;
+  }, [localSettings]);
+
+  useEffect(() => {
+    sourceSettingsRef.current = { timeout: connectionTimeout, keepAliveInterval };
+    if (!dirtyRef.current) {
+      setLocalSettings({ timeout: connectionTimeout, keepAliveInterval });
+    } else if (isEqual(localSettingsRef.current, sourceSettingsRef.current)) {
+      dirtyRef.current = false;
+    }
+  }, [connectionTimeout, keepAliveInterval]);
+
+  const syncSettings = useCallback((settings) => {
     dispatch(updateItemSettings({
       collectionUid: collection.uid,
       itemUid: item.uid,
-      settings: {
-        [key]: value
-      }
+      settings
     }));
-  };
+  }, [dispatch, collection.uid, item.uid]);
+
+  useEffect(() => {
+    debouncedSyncRef.current = debounce(syncSettings, 400);
+    return () => {
+      debouncedSyncRef.current?.cancel();
+    };
+  }, [syncSettings]);
+
+  const flushSettings = useCallback((settings = localSettingsRef.current) => {
+    debouncedSyncRef.current?.cancel();
+    if (!isEqual(settings, sourceSettingsRef.current)) {
+      syncSettings(settings);
+    } else {
+      dirtyRef.current = false;
+    }
+  }, [syncSettings]);
+
+  useEffect(() => {
+    return () => {
+      flushSettings();
+    };
+  }, [flushSettings]);
+
+  const updateSetting = useCallback((key, value) => {
+    setLocalSettings((current) => {
+      const next = { ...current, [key]: value };
+      dirtyRef.current = true;
+      debouncedSyncRef.current?.(next);
+      return next;
+    });
+  }, []);
+
+  const handleKeyDown = useCallback((event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      flushSettings();
+      dispatch(saveRequest(item.uid, collection.uid));
+    }
+  }, [flushSettings, dispatch, item.uid, collection.uid]);
 
   const formErrors = {
-    timeout: isNaN(Number(connectionTimeout)) && ERRORS.timeout.invalid,
-    keepAliveInterval: isNaN(Number(keepAliveInterval)) && ERRORS.keepAliveInterval.invalid
+    timeout: isNaN(Number(localSettings.timeout)) && ERRORS.timeout.invalid,
+    keepAliveInterval: isNaN(Number(localSettings.keepAliveInterval)) && ERRORS.keepAliveInterval.invalid
   };
 
   return (
@@ -80,11 +136,13 @@ const WSSettingsPane = ({ item, collection }) => {
               place="top"
               text={formErrors.timeout ? formErrors.timeout : ''}
             >
-              <SingleLineEditor
-                value={connectionTimeout}
-                theme={storedTheme}
-                onChange={(newValue) => updateSetting('timeout', newValue)}
-                collection={collection}
+              <input
+                type="text"
+                className="mousetrap w-full bg-transparent"
+                value={localSettings.timeout ?? ''}
+                onChange={(event) => updateSetting('timeout', event.target.value)}
+                onBlur={() => flushSettings()}
+                onKeyDown={handleKeyDown}
               />
             </ToolHint>
           </div>
@@ -118,11 +176,13 @@ const WSSettingsPane = ({ item, collection }) => {
               place="top"
               text={formErrors.keepAliveInterval ? formErrors.keepAliveInterval : ''}
             >
-              <SingleLineEditor
-                value={keepAliveInterval}
-                theme={storedTheme}
-                onChange={(newValue) => updateSetting('keepAliveInterval', newValue)}
-                collection={collection}
+              <input
+                type="text"
+                className="mousetrap w-full bg-transparent"
+                value={localSettings.keepAliveInterval ?? ''}
+                onChange={(event) => updateSetting('keepAliveInterval', event.target.value)}
+                onBlur={() => flushSettings()}
+                onKeyDown={handleKeyDown}
               />
             </ToolHint>
           </div>
