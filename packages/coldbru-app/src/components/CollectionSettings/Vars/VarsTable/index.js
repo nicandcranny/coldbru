@@ -7,9 +7,12 @@ import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
 import { variableNameRegex } from 'utils/common/regex';
 import { setCollectionVars } from 'providers/ReduxStore/slices/collections/index';
+import { getAllVariables } from 'utils/collections';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
 
 const VarsTable = ({ collection, vars, varType }) => {
   const dispatch = useDispatch();
+  const variableHints = useMemo(() => buildVariableHints(getAllVariables(collection)), [collection]);
   const onSave = useCallback(() => dispatch(saveCollectionSettings(collection.uid)), [dispatch, collection.uid]);
 
   const handleVarsChange = useCallback((updatedVars) => {
@@ -57,10 +60,11 @@ const VarsTable = ({ collection, vars, varType }) => {
         </div>
       ),
       placeholder: varType === 'request' ? 'Value' : 'Expr',
+      variableHints,
       onBlurCell: () => flushRows(),
       onKeyDown: handleCellKeyDown
     }
-  ], [varType, flushRows, handleCellKeyDown]);
+  ], [varType, flushRows, handleCellKeyDown, variableHints]);
 
   const defaultRow = {
     name: '',

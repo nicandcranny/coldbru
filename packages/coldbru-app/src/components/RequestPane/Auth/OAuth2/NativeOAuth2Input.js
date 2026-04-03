@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { IconEye, IconEyeOff } from '@tabler/icons';
 import SensitiveFieldWarning from 'components/SensitiveFieldWarning';
+import NativeAutocompleteInput from 'components/NativeAutocompleteInput';
+import VariableHintsContext from '../VariableHintsContext';
 
 const NativeOAuth2Input = ({
   value,
@@ -8,12 +10,15 @@ const NativeOAuth2Input = ({
   onBlur,
   onKeyDown,
   placeholder = '',
+  variableHints = [],
+  variableContext = {},
   isSecret = false,
   showWarning = false,
   warningMessage = '',
   fieldName = ''
 }) => {
   const [showSecret, setShowSecret] = useState(false);
+  const contextAutocomplete = React.useContext(VariableHintsContext);
   const inputType = useMemo(() => {
     if (!isSecret) {
       return 'text';
@@ -24,16 +29,15 @@ const NativeOAuth2Input = ({
 
   return (
     <div className="flex items-center w-full">
-      <input
+      <NativeAutocompleteInput
         type={inputType}
-        className="mousetrap w-full bg-transparent"
-        autoComplete="off"
-        autoCorrect="off"
-        autoCapitalize="off"
-        spellCheck="false"
+        className="grow"
+        inputClassName="mousetrap w-full bg-transparent"
         value={value || ''}
         placeholder={placeholder}
-        onChange={(event) => onChange(event.target.value.replace(/[\r\n]/g, ''))}
+        variableHints={variableHints?.length ? variableHints : contextAutocomplete.hints}
+        variableContext={Object.keys(variableContext || {}).length ? variableContext : contextAutocomplete.variables}
+        onChange={(nextValue) => onChange(nextValue.replace(/[\r\n]/g, ''))}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
       />

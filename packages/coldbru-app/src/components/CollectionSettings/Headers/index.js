@@ -10,6 +10,8 @@ import { headers as StandardHTTPHeaders } from 'know-your-http-well';
 import BulkEditor from 'components/BulkEditor/index';
 import Button from 'ui/Button';
 import { headerNameRegex, headerValueRegex } from 'utils/common/regex';
+import { getAllVariables } from 'utils/collections';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
 
 const headerAutoCompleteList = StandardHTTPHeaders.map((e) => e.header);
 
@@ -18,6 +20,8 @@ const Headers = ({ collection }) => {
   const headers = collection.draft?.root
     ? get(collection, 'draft.root.request.headers', [])
     : get(collection, 'root.request.headers', []);
+  const allVariables = useMemo(() => getAllVariables(collection), [collection]);
+  const variableHints = useMemo(() => buildVariableHints(allVariables), [allVariables]);
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
 
   const toggleBulkEditMode = () => {
@@ -73,6 +77,8 @@ const Headers = ({ collection }) => {
       width: '30%',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       autocompleteOptions: headerAutoCompleteList,
+      variableHints,
+      variableContext: allVariables,
       onBlurCell: () => flushRows(),
       onKeyDown: handleCellKeyDown
     },
@@ -81,10 +87,12 @@ const Headers = ({ collection }) => {
       name: 'Value',
       placeholder: 'Value',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      variableHints,
+      variableContext: allVariables,
       onBlurCell: () => flushRows(),
       onKeyDown: handleCellKeyDown
     }
-  ], [flushRows, handleCellKeyDown]);
+  ], [allVariables, flushRows, handleCellKeyDown, variableHints]);
 
   const defaultRow = {
     name: '',

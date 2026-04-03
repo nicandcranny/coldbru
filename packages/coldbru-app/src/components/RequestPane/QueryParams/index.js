@@ -13,10 +13,14 @@ import { saveRequest, sendRequest } from 'providers/ReduxStore/slices/collection
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
 import BulkEditor from '../../BulkEditor';
+import { getAllVariables } from 'utils/collections';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
 
 const QueryParams = ({ item, collection }) => {
   const dispatch = useDispatch();
   const params = item.draft ? get(item, 'draft.request.params') : get(item, 'request.params');
+  const allVariables = useMemo(() => getAllVariables(collection, item), [collection, item]);
+  const variableHints = useMemo(() => buildVariableHints(allVariables), [allVariables]);
   const queryParams = params.filter((param) => param.type === 'query');
   const pathParams = params.filter((param) => param.type === 'path');
 
@@ -228,7 +232,9 @@ const QueryParams = ({ item, collection }) => {
       width: '30%',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       onBlurCell: () => flushQuerySync(),
-      onKeyDown: handleCellKeyDown
+      onKeyDown: handleCellKeyDown,
+      variableHints,
+      variableContext: allVariables
     },
     {
       key: 'value',
@@ -236,9 +242,11 @@ const QueryParams = ({ item, collection }) => {
       placeholder: 'Value',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       onBlurCell: () => flushQuerySync(),
-      onKeyDown: handleCellKeyDown
+      onKeyDown: handleCellKeyDown,
+      variableHints,
+      variableContext: allVariables
     }
-  ], [flushQuerySync, handleCellKeyDown]);
+  ], [allVariables, flushQuerySync, handleCellKeyDown, variableHints]);
 
   const pathColumns = useMemo(() => [
     {
@@ -254,9 +262,11 @@ const QueryParams = ({ item, collection }) => {
       placeholder: 'Value',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       onBlurCell: () => flushPathSync(),
-      onKeyDown: handleCellKeyDown
+      onKeyDown: handleCellKeyDown,
+      variableHints,
+      variableContext: allVariables
     }
-  ], [flushPathSync, handleCellKeyDown]);
+  ], [allVariables, flushPathSync, handleCellKeyDown, variableHints]);
 
   const defaultQueryRow = {
     name: '',

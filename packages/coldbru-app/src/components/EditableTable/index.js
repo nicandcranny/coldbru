@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { IconTrash, IconAlertCircle, IconGripVertical, IconMinusVertical } from '@tabler/icons';
 import { Tooltip } from 'react-tooltip';
 import { uuid } from 'utils/common';
+import NativeAutocompleteInput from 'components/NativeAutocompleteInput';
 import StyledWrapper from './StyledWrapper';
 
 const MIN_COLUMN_WIDTH = 80;
@@ -458,24 +459,22 @@ const EditableTable = ({
     return (
       <div className="flex items-center">
         <div className="w-full">
-          <input
+          <NativeAutocompleteInput
             type={column.inputType || 'text'}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck="false"
-            className="mousetrap"
+            inputClassName="mousetrap"
             list={column.autocompleteOptions?.length ? `${testId}-${column.key}-list` : undefined}
             value={value || ''}
             readOnly={column.readOnly}
             placeholder={!value ? column.placeholder || column.name : ''}
+            variableHints={column.variableHints}
+            variableContext={column.variableContext}
             onBlur={() => column.onBlurCell?.(row, value)}
             onKeyDown={column.onKeyDown}
-            onChange={(e) => {
-              const nextValue = column.sanitizeValue
-                ? column.sanitizeValue(e.target.value, row, rowIndex)
-                : e.target.value;
-              handleValueChange(row.uid, column.key, nextValue);
+            onChange={(nextValue) => {
+              const sanitizedValue = column.sanitizeValue
+                ? column.sanitizeValue(nextValue, row, rowIndex)
+                : nextValue;
+              handleValueChange(row.uid, column.key, sanitizedValue);
             }}
           />
           {column.autocompleteOptions?.length ? (

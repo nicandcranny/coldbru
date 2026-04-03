@@ -11,12 +11,16 @@ import StyledWrapper from './StyledWrapper';
 import { headers as StandardHTTPHeaders } from 'know-your-http-well';
 import BulkEditor from '../../BulkEditor';
 import { headerNameRegex, headerValueRegex } from 'utils/common/regex';
+import { getAllVariables } from 'utils/collections';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
 
 const headerAutoCompleteList = StandardHTTPHeaders.map((e) => e.header);
 
 const RequestHeaders = ({ item, collection, addHeaderText }) => {
   const dispatch = useDispatch();
   const headers = item.draft ? get(item, 'draft.request.headers') : get(item, 'request.headers');
+  const allVariables = useMemo(() => getAllVariables(collection, item), [collection, item]);
+  const variableHints = useMemo(() => buildVariableHints(allVariables), [allVariables]);
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
   const [localHeaders, setLocalHeaders] = useState(headers || []);
   const localHeadersRef = useRef(localHeaders);
@@ -176,7 +180,9 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       onBlurCell: () => flushHeadersSync(),
       onKeyDown: handleCellKeyDown,
-      autocompleteOptions: headerAutoCompleteList
+      autocompleteOptions: headerAutoCompleteList,
+      variableHints,
+      variableContext: allVariables
     },
     {
       key: 'value',
@@ -184,9 +190,11 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
       placeholder: 'Value',
       sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
       onBlurCell: () => flushHeadersSync(),
-      onKeyDown: handleCellKeyDown
+      onKeyDown: handleCellKeyDown,
+      variableHints,
+      variableContext: allVariables
     }
-  ], [flushHeadersSync, handleCellKeyDown]);
+  ], [allVariables, flushHeadersSync, handleCellKeyDown, variableHints]);
 
   const defaultRow = {
     name: '',

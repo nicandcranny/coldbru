@@ -14,7 +14,9 @@ import ApiKeyAuth from './ApiKeyAuth';
 import StyledWrapper from './StyledWrapper';
 import { humanizeRequestAuthMode } from 'utils/collections';
 import OAuth2 from './OAuth2/index';
-import { findItemInCollection, findParentItemInCollection } from 'utils/collections/index';
+import { findItemInCollection, findParentItemInCollection, getAllVariables } from 'utils/collections/index';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
+import VariableHintsContext from './VariableHintsContext';
 
 const getTreePathFromCollectionToItem = (collection, _item) => {
   let path = [];
@@ -30,6 +32,8 @@ const Auth = ({ item, collection }) => {
   const dispatch = useDispatch();
   const authMode = item.draft ? get(item, 'draft.request.auth.mode') : get(item, 'request.auth.mode');
   const requestTreePath = getTreePathFromCollectionToItem(collection, item);
+  const allVariables = React.useMemo(() => getAllVariables(collection, item), [collection, item]);
+  const variableHints = React.useMemo(() => buildVariableHints(allVariables), [allVariables]);
 
   // Create a request object to pass to the auth components
   const request = item.draft
@@ -114,9 +118,11 @@ const Auth = ({ item, collection }) => {
   };
 
   return (
-    <StyledWrapper className="w-full overflow-auto">
-      {getAuthView()}
-    </StyledWrapper>
+    <VariableHintsContext.Provider value={{ hints: variableHints, variables: allVariables }}>
+      <StyledWrapper className="w-full overflow-auto">
+        {getAuthView()}
+      </StyledWrapper>
+    </VariableHintsContext.Provider>
   );
 };
 

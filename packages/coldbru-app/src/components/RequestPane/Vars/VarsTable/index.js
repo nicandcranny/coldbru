@@ -7,9 +7,12 @@ import EditableTable from 'components/EditableTable';
 import useLocalRows from 'components/EditableTable/useLocalRows';
 import StyledWrapper from './StyledWrapper';
 import { variableNameRegex } from 'utils/common/regex';
+import { getAllVariables } from 'utils/collections';
+import { buildVariableHints } from 'utils/common/nativeAutocomplete';
 
 const VarsTable = ({ item, collection, vars, varType }) => {
   const dispatch = useDispatch();
+  const variableHints = useMemo(() => buildVariableHints(getAllVariables(collection, item)), [collection, item]);
   const onSave = useCallback(() => dispatch(saveRequest(item.uid, collection.uid)), [dispatch, item.uid, collection.uid]);
   const {
     localRows,
@@ -76,10 +79,11 @@ const VarsTable = ({ item, collection, vars, varType }) => {
         </div>
       ),
       placeholder: varType === 'request' ? 'Value' : 'Expr',
+      variableHints,
       onBlurCell: () => flushRows(),
       onKeyDown: handleCellKeyDown
     }
-  ], [varType, flushRows, handleCellKeyDown]);
+  ], [varType, flushRows, handleCellKeyDown, variableHints]);
 
   const defaultRow = {
     name: '',
