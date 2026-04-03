@@ -73,6 +73,40 @@ export const flattenItems = (items = []) => {
   return flattenedItems;
 };
 
+const findItemRecursive = (items = [], predicate) => {
+  for (const item of items) {
+    if (predicate(item)) {
+      return item;
+    }
+
+    if (item.items && item.items.length) {
+      const nestedMatch = findItemRecursive(item.items, predicate);
+      if (nestedMatch) {
+        return nestedMatch;
+      }
+    }
+  }
+
+  return null;
+};
+
+const findParentItemRecursive = (items = [], predicate) => {
+  for (const item of items) {
+    if (item.items?.some(predicate)) {
+      return item;
+    }
+
+    if (item.items && item.items.length) {
+      const nestedParent = findParentItemRecursive(item.items, predicate);
+      if (nestedParent) {
+        return nestedParent;
+      }
+    }
+  }
+
+  return null;
+};
+
 export const findItem = (items = [], itemUid) => {
   return find(items, (i) => i.uid === itemUid);
 };
@@ -92,43 +126,47 @@ export const findCollectionByItemUid = (collections, itemUid) => {
 };
 
 export const findItemByPathname = (items = [], pathname) => {
-  return find(items, (i) => i.pathname === pathname);
+  return findItemRecursive(items, (item) => item.pathname === pathname);
 };
 
 export const findItemInCollectionByPathname = (collection, pathname) => {
-  let flattenedItems = flattenItems(collection.items);
+  if (!collection?.items) {
+    return null;
+  }
 
-  return findItemByPathname(flattenedItems, pathname);
+  return findItemByPathname(collection.items, pathname);
 };
 
 export const findItemInCollectionByItemUid = (collection, itemUid) => {
-  let flattenedItems = flattenItems(collection.items);
-  return findItem(flattenedItems, itemUid);
+  if (!collection?.items) {
+    return null;
+  }
+
+  return findItemRecursive(collection.items, (item) => item.uid === itemUid);
 };
 
 export const findParentItemInCollectionByPathname = (collection, pathname) => {
-  let flattenedItems = flattenItems(collection.items);
+  if (!collection?.items) {
+    return null;
+  }
 
-  return find(flattenedItems, (item) => {
-    return item.items && find(item.items, (i) => i.pathname === pathname);
-  });
+  return findParentItemRecursive(collection.items, (item) => item.pathname === pathname);
 };
 
 export const findItemInCollection = (collection, itemUid) => {
   if (!collection || !collection.items) {
     return null;
   }
-  let flattenedItems = flattenItems(collection.items);
 
-  return findItem(flattenedItems, itemUid);
+  return findItemRecursive(collection.items, (item) => item.uid === itemUid);
 };
 
 export const findParentItemInCollection = (collection, itemUid) => {
-  let flattenedItems = flattenItems(collection.items);
+  if (!collection?.items) {
+    return null;
+  }
 
-  return find(flattenedItems, (item) => {
-    return item.items && find(item.items, (i) => i.uid === itemUid);
-  });
+  return findParentItemRecursive(collection.items, (item) => item.uid === itemUid);
 };
 
 export const recursivelyGetAllItemUids = (items = []) => {
@@ -1300,13 +1338,31 @@ export const maskInputValue = (value) => {
 };
 
 export const getTreePathFromCollectionToItem = (collection, _item) => {
-  let path = [];
-  let item = findItemInCollection(collection, _item?.uid);
-  while (item) {
-    path.unshift(item);
-    item = findParentItemInCollection(collection, item?.uid);
+  if (!collection?.items || !_item?.uid) {
+    return [];
   }
-  return path;
+
+  const targetUid = _item.uid;
+
+  const findPath = (items, currentPath = []) => {
+    for (const item of items) {
+      const nextPath = [...currentPath, item];
+      if (item.uid === targetUid) {
+        return nextPath;
+      }
+
+      if (item.items?.length) {
+        const nestedPath = findPath(item.items, nextPath);
+        if (nestedPath.length) {
+          return nestedPath;
+        }
+      }
+    }
+
+    return [];
+  };
+
+  return findPath(collection.items);
 };
 
 const mergeVars = (collection, requestTreePath = []) => {

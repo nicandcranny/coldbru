@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
 import get from 'lodash/get';
 import find from 'lodash/find';
+import cloneDeep from 'lodash/cloneDeep';
 import CodeEditor from 'components/CodeEditor';
 import FormUrlEncodedParams from 'components/RequestPane/FormUrlEncodedParams';
 import MultipartFormParams from 'components/RequestPane/MultipartFormParams';
@@ -12,6 +15,25 @@ import { updateRequestBodyScrollPosition } from 'providers/ReduxStore/slices/tab
 import StyledWrapper from './StyledWrapper';
 import FileBody from '../FileBody/index';
 
+const setBodyContentOnItem = (targetItem, mode, content) => {
+  const requestRoot = targetItem.draft ? targetItem.draft.request : targetItem.request;
+
+  switch (mode) {
+    case 'json':
+      requestRoot.body.json = content;
+      break;
+    case 'text':
+      requestRoot.body.text = content;
+      break;
+    case 'xml':
+      requestRoot.body.xml = content;
+      break;
+    case 'sparql':
+      requestRoot.body.sparql = content;
+      break;
+  }
+};
+
 const RequestBody = ({ item, collection }) => {
   const dispatch = useDispatch();
   const body = item.draft ? get(item, 'draft.request.body') : get(item, 'request.body');
@@ -21,8 +43,30 @@ const RequestBody = ({ item, collection }) => {
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
   const focusedTab = find(tabs, (t) => t.uid === activeTabUid);
+  const [localBodyContent, setLocalBodyContent] = useState('');
+  const isBodyDirtyRef = useRef(false);
 
-  const onEdit = (value) => {
+  const bodyContent = useMemo(() => ({
+    json: body.json,
+    text: body.text,
+    xml: body.xml,
+    sparql: body.sparql
+  }), [body.json, body.text, body.xml, body.sparql]);
+
+  const currentBodyValue = bodyContent[bodyMode] || '';
+
+  useEffect(() => {
+    if (isEqual(currentBodyValue, localBodyContent)) {
+      isBodyDirtyRef.current = false;
+      return;
+    }
+
+    if (!isBodyDirtyRef.current) {
+      setLocalBodyContent(currentBodyValue);
+    }
+  }, [item.uid, bodyMode, currentBodyValue]);
+
+  const syncBodyToStore = useCallback((value) => {
     dispatch(
       updateRequestBody({
         content: value,
@@ -30,10 +74,50 @@ const RequestBody = ({ item, collection }) => {
         collectionUid: collection.uid
       })
     );
-  };
+  }, [dispatch, item.uid, collection.uid]);
 
-  const onRun = () => dispatch(sendRequest(item, collection.uid));
-  const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
+  const debouncedSyncRef = useRef(null);
+
+  useEffect(() => {
+    debouncedSyncRef.current = debounce((value) => {
+      syncBodyToStore(value);
+    }, 400);
+
+    return () => {
+      debouncedSyncRef.current?.cancel();
+      debouncedSyncRef.current = null;
+    };
+  }, [syncBodyToStore]);
+
+  const flushBodySync = useCallback((value = localBodyContent) => {
+    debouncedSyncRef.current?.cancel();
+
+    if (value !== currentBodyValue) {
+      syncBodyToStore(value);
+    } else {
+      isBodyDirtyRef.current = false;
+    }
+  }, [currentBodyValue, localBodyContent, syncBodyToStore]);
+
+  const onEdit = useCallback((value) => {
+    isBodyDirtyRef.current = true;
+    setLocalBodyContent(value);
+    debouncedSyncRef.current?.(value);
+  }, []);
+
+  const onRun = useCallback(() => {
+    flushBodySync();
+
+    const itemToRun = cloneDeep(item);
+    setBodyContentOnItem(itemToRun, bodyMode, localBodyContent);
+
+    dispatch(sendRequest(itemToRun, collection.uid));
+  }, [flushBodySync, item, bodyMode, localBodyContent, dispatch, collection.uid]);
+
+  const onSave = useCallback(() => {
+    flushBodySync();
+    dispatch(saveRequest(item.uid, collection.uid));
+  }, [flushBodySync, dispatch, item.uid, collection.uid]);
 
   const onScroll = (editor) => {
     dispatch(
@@ -52,13 +136,6 @@ const RequestBody = ({ item, collection }) => {
       sparql: 'application/sparql-query'
     };
 
-    let bodyContent = {
-      json: body.json,
-      text: body.text,
-      xml: body.xml,
-      sparql: body.sparql
-    };
-
     return (
       <StyledWrapper className="w-full" data-testid="request-body-editor">
         <CodeEditor
@@ -67,10 +144,11 @@ const RequestBody = ({ item, collection }) => {
           theme={displayedTheme}
           font={get(preferences, 'font.codeFont', 'default')}
           fontSize={get(preferences, 'font.codeFontSize')}
-          value={bodyContent[bodyMode] || ''}
+          value={localBodyContent}
           onEdit={onEdit}
           onRun={onRun}
           onSave={onSave}
+          onBlur={() => flushBodySync()}
           onScroll={onScroll}
           initialScroll={focusedTab?.requestBodyScrollPosition || 0}
           mode={codeMirrorMode[bodyMode]}

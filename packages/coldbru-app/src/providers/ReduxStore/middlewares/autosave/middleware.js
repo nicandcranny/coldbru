@@ -95,6 +95,14 @@ const actionsToIntercept = [
 
 // Simple object to track pending save timers
 const pendingTimers = {};
+const HIGH_FREQUENCY_TEXT_ACTIONS = new Set([
+  'collections/requestUrlChanged',
+  'collections/setRequestHeaders',
+  'collections/updateRequestBody',
+  'collections/updateRequestGraphqlQuery',
+  'collections/updateRequestGraphqlVariables'
+]);
+const MIN_TEXT_AUTOSAVE_INTERVAL = 3000;
 
 // Helper to schedule autosave for an item
 const scheduleAutoSave = (key, save, interval) => {
@@ -106,6 +114,14 @@ const scheduleAutoSave = (key, save, interval) => {
     save();
     delete pendingTimers[key];
   }, interval);
+};
+
+const getAutoSaveInterval = (actionType, baseInterval) => {
+  if (HIGH_FREQUENCY_TEXT_ACTIONS.has(actionType)) {
+    return Math.max(baseInterval, MIN_TEXT_AUTOSAVE_INTERVAL);
+  }
+
+  return baseInterval;
 };
 
 // Helper to find and schedule saves for all existing drafts
@@ -257,7 +273,7 @@ export const autosaveMiddleware = ({ dispatch, getState }) => (next) => (action)
 
   const handler = determineSaveHandler(action.type, action.payload, dispatch, getState);
   if (handler) {
-    scheduleAutoSave(handler.key, handler.save, autoSave.interval);
+    scheduleAutoSave(handler.key, handler.save, getAutoSaveInterval(action.type, autoSave.interval));
   }
 
   return result;

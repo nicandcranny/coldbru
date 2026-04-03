@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import debounce from 'lodash/debounce';
+import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
 import {
@@ -33,15 +35,21 @@ const QueryUrl = ({ item, collection, handleRun }) => {
   const saveShortcut = isMac ? 'Cmd + S' : 'Ctrl + S';
   const editorRef = useRef(null);
   const isLoading = ['queued', 'sending'].includes(item.requestState);
+  const debouncedUrlSyncRef = useRef(null);
 
   const [generateCodeItemModalOpen, setGenerateCodeItemModalOpen] = useState(false);
   const hasChanges = useMemo(() => hasRequestChanges(item), [item]);
 
+  const getEditorUrl = useCallback(() => {
+    return editorRef.current?.editor?.getValue() ?? url;
+  }, [url]);
+
   const onSave = () => {
+    flushUrlSync(getEditorUrl());
     dispatch(saveRequest(item.uid, collection.uid));
   };
 
-  const onUrlChange = (value) => {
+  const syncUrlToStore = useCallback((value) => {
     if (!editorRef.current?.editor) return;
     const editor = editorRef.current.editor;
     const cursor = editor.getCursor();
@@ -64,7 +72,41 @@ const QueryUrl = ({ item, collection, handleRun }) => {
         }
       }, 0);
     }
+  }, [dispatch, item.uid, collection.uid]);
+
+  useEffect(() => {
+    debouncedUrlSyncRef.current = debounce((value) => {
+      syncUrlToStore(value);
+    }, 400);
+
+    return () => {
+      debouncedUrlSyncRef.current?.cancel();
+      debouncedUrlSyncRef.current = null;
+    };
+  }, [syncUrlToStore]);
+
+  const flushUrlSync = useCallback((value = getEditorUrl()) => {
+    debouncedUrlSyncRef.current?.cancel();
+
+    if (value !== url) {
+      syncUrlToStore(value);
+    }
+  }, [getEditorUrl, url, syncUrlToStore]);
+
+  useEffect(() => {
+    return () => {
+      flushUrlSync(getEditorUrl());
+    };
+  }, [flushUrlSync, getEditorUrl]);
+
+  const onUrlChange = (value) => {
+    debouncedUrlSyncRef.current?.(value);
   };
+
+  const handleRunWithLatestUrl = useCallback(() => {
+    flushUrlSync(getEditorUrl());
+    handleRun?.();
+  }, [flushUrlSync, getEditorUrl, handleRun]);
 
   const onMethodSelect = (verb) => {
     dispatch(
@@ -384,16 +426,17 @@ const QueryUrl = ({ item, collection, handleRun }) => {
           onSave={(finalValue) => onSave(finalValue)}
           theme={storedTheme}
           onChange={(newValue) => onUrlChange(newValue)}
-          onRun={handleRun}
+          onRun={handleRunWithLatestUrl}
           onPaste={item.type === 'http-request' ? handleHttpPaste : item.type === 'graphql-request' ? handleGraphqlPaste : null}
           collection={collection}
           highlightPathParams={true}
           item={item}
           showNewlineArrow={true}
+          changeDebounceMs={150}
         />
 
       </div>
-      <div className="flex items-center h-full mx-2 gap-3 cursor-pointer" id="send-request" onClick={handleRun}>
+      <div className="flex items-center h-full mx-2 gap-3 cursor-pointer" id="send-request" onClick={handleRunWithLatestUrl}>
         <div
           title="Generate Code"
           className="infotip"

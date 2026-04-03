@@ -38,7 +38,6 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
 
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
-  const collections = useSelector((state) => state.collections.collections);
   const activeTab = tabs.find((t) => t.uid === activeTabUid);
 
   const menuDropdownRef = useRef();
@@ -99,7 +98,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
       // Only the active tab component should handle this
       if (tab.uid !== activeTabUid) return;
 
-      const activeTabCollection = collections.find((candidateCollection) => candidateCollection.uid === activeTab.collectionUid);
+      const activeTabCollection = collection;
       const activeItem = activeTabCollection ? findItemInCollection(activeTabCollection, activeTabUid) : null;
 
       switch (activeTab.type) {
@@ -150,7 +149,7 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
 
     window.addEventListener('close-active-tab', handleCloseTabFromHotkeys);
     return () => window.removeEventListener('close-active-tab', handleCloseTabFromHotkeys);
-  }, [dispatch, activeTab, activeTabUid, tab.uid, collection, collections]);
+  }, [dispatch, activeTab, activeTabUid, tab.uid, collection]);
 
   const handleCloseClick = (event) => {
     event.stopPropagation();
@@ -529,7 +528,6 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
           tabIndex={tabIndex}
           collectionRequestTabs={collectionRequestTabs}
           collection={collection}
-          collections={collections}
           dispatch={dispatch}
           dropdownContainerRef={dropdownContainerRef}
         />
@@ -551,9 +549,10 @@ const RequestTab = ({ tab, collection, tabIndex, collectionRequestTabs, folderUi
   );
 };
 
-function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, tabIndex, collection, collections, dispatch, dropdownContainerRef }) {
+function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, tabIndex, collection, dispatch, dropdownContainerRef }) {
   const [showCloneRequestModal, setShowCloneRequestModal] = useState(false);
   const [showAddNewRequestModal, setShowAddNewRequestModal] = useState(false);
+  const collections = useSelector((state) => state.collections.collections);
 
   // Returns the tab-label's position for dropdown positioning.
   // Returns zero-sized rect if element isn't mounted yet (prevents Tippy errors).
@@ -746,4 +745,4 @@ function RequestTabMenu({ menuDropdownRef, tabLabelRef, collectionRequestTabs, t
   );
 }
 
-export default RequestTab;
+export default React.memo(RequestTab);

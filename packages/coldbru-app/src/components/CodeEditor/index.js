@@ -6,6 +6,7 @@
  */
 
 import React, { createRef } from 'react';
+import debounce from 'lodash/debounce';
 import { isEqual, escapeRegExp } from 'lodash';
 import { defineCodeMirrorBrunoVariablesMode } from 'utils/common/codemirror';
 import { setupAutoComplete, showRootHints } from 'utils/codemirror/autocomplete';
@@ -50,6 +51,8 @@ export default class CodeEditor extends React.Component {
 
     // Shortcuts cleanup function
     this._shortcutsCleanup = null;
+    this._pendingEdit = false;
+    this._setupDebouncedOnEdit(props);
   }
 
   componentDidMount() {
@@ -79,21 +82,25 @@ export default class CodeEditor extends React.Component {
       theme: this.props.theme === 'dark' ? 'monokai' : 'default',
       extraKeys: {
         'Cmd-Enter': () => {
+          this._flushPendingEdit();
           if (this.props.onRun) {
             this.props.onRun();
           }
         },
         'Ctrl-Enter': () => {
+          this._flushPendingEdit();
           if (this.props.onRun) {
             this.props.onRun();
           }
         },
         'Cmd-S': () => {
+          this._flushPendingEdit();
           if (this.props.onSave) {
             this.props.onSave();
           }
         },
         'Ctrl-S': () => {
+          this._flushPendingEdit();
           if (this.props.onSave) {
             this.props.onSave();
           }
@@ -201,6 +208,8 @@ export default class CodeEditor extends React.Component {
     if (editor) {
       editor.setOption('lint', this.props.mode && editor.getValue().trim().length > 0 ? this.lintOptions : false);
       editor.on('change', this._onEdit);
+      editor.on('blur', this._flushPendingEdit);
+      editor.on('blur', this._onBlur);
       editor.scrollTo(null, this.props.initialScroll);
       this.addOverlay();
 
@@ -232,6 +241,12 @@ export default class CodeEditor extends React.Component {
     // user-input changes which could otherwise result in an infinite
     // event loop.
     this.ignoreChangeEvent = true;
+
+    if (this.props.changeDebounceMs !== prevProps.changeDebounceMs) {
+      this._teardownDebouncedOnEdit();
+      this._setupDebouncedOnEdit(this.props);
+    }
+
     if (this.props.schema !== prevProps.schema && this.editor) {
       this.editor.options.lint.schema = this.props.schema;
       this.editor.options.hintOptions.schema = this.props.schema;
@@ -260,12 +275,13 @@ export default class CodeEditor extends React.Component {
         this.addOverlay();
       }
 
-      // Update collection and item when they change
+      // The request/collection trees can be large, so avoid deep comparisons here.
+      // Redux gives us new references when these objects change.
       if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
-        if (!isEqual(this.props.collection, this.editor.options.coldbruVarInfo.collection)) {
+        if (this.props.collection !== prevProps.collection) {
           this.editor.options.coldbruVarInfo.collection = this.props.collection;
         }
-        if (!isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)) {
+        if (this.props.item !== prevProps.item) {
           this.editor.options.coldbruVarInfo.item = this.props.item;
         }
       }
@@ -302,12 +318,15 @@ export default class CodeEditor extends React.Component {
     }
 
     if (this.editor) {
+      this._flushPendingEdit();
       if (this.props.onScroll) {
         this.props.onScroll(this.editor);
       }
 
       this.editor?._destroyLinkAware?.();
       this.editor.off('change', this._onEdit);
+      this.editor.off('blur', this._flushPendingEdit);
+      this.editor.off('blur', this._onBlur);
 
       // Clean up lint error tooltip
       this.cleanupLintErrorTooltip?.();
@@ -317,6 +336,7 @@ export default class CodeEditor extends React.Component {
 
       this.editor = null;
     }
+    this._teardownDebouncedOnEdit();
   }
 
   render() {
@@ -364,11 +384,52 @@ export default class CodeEditor extends React.Component {
 
   _onEdit = () => {
     if (!this.ignoreChangeEvent && this.editor) {
-      this.editor.setOption('lint', this.editor.getValue().trim().length > 0 ? this.lintOptions : false);
       this.cachedValue = this.editor.getValue();
+      const shouldEnableLint = this.cachedValue.trim().length > 0;
+      const isLintEnabled = Boolean(this.editor.getOption('lint'));
+      if (isLintEnabled !== shouldEnableLint) {
+        this.editor.setOption('lint', shouldEnableLint ? this.lintOptions : false);
+      }
       if (this.props.onEdit) {
-        this.props.onEdit(this.cachedValue);
+        if (this._debouncedOnEdit) {
+          this._pendingEdit = true;
+          this._debouncedOnEdit(this.cachedValue);
+        } else {
+          this.props.onEdit(this.cachedValue);
+        }
       }
     }
+  };
+
+  _onBlur = () => {
+    this.props.onBlur?.();
+  };
+
+  _setupDebouncedOnEdit = (props) => {
+    if (!props?.changeDebounceMs) {
+      this._debouncedOnEdit = null;
+      return;
+    }
+
+    this._debouncedOnEdit = debounce((value) => {
+      this._pendingEdit = false;
+      this.props.onEdit?.(value);
+    }, props.changeDebounceMs);
+  };
+
+  _teardownDebouncedOnEdit = () => {
+    this._debouncedOnEdit?.cancel();
+    this._debouncedOnEdit = null;
+    this._pendingEdit = false;
+  };
+
+  _flushPendingEdit = () => {
+    if (!this._pendingEdit || !this.props.onEdit) {
+      return;
+    }
+
+    this._debouncedOnEdit?.cancel();
+    this._pendingEdit = false;
+    this.props.onEdit(this.cachedValue);
   };
 }

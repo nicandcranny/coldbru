@@ -1,92 +1,58 @@
 import React, { useRef, forwardRef, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import get from 'lodash/get';
 import { IconCaretDown } from '@tabler/icons';
 import Dropdown from 'components/Dropdown';
-import { useTheme } from 'providers/Theme';
-import SingleLineEditor from 'components/SingleLineEditor';
-import { sendRequest } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import { humanizeRequestAPIKeyPlacement } from 'utils/collections';
+import NativeAuthField from '../NativeAuthField';
+import useLocalAuthMode from '../useLocalAuthMode';
 
 const ApiKeyAuth = ({ item, collection, updateAuth, request, save }) => {
-  const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const dropdownTippyRef = useRef();
   const onDropdownCreate = (ref) => (dropdownTippyRef.current = ref);
-
-  const apikeyAuth = get(request, 'auth.apikey', {});
-
-  const handleRun = () => dispatch(sendRequest(item, collection.uid));
-
-  const handleSave = () => {
-    save();
-  };
+  const { localAuth, updateLocalField, handleInputKeyDown, flushLocalAuth } = useLocalAuthMode({
+    mode: 'apikey',
+    item,
+    collection,
+    request,
+    save,
+    defaultContent: {
+      key: '',
+      value: '',
+      placement: 'header'
+    }
+  });
 
   const Icon = forwardRef((props, ref) => {
     return (
       <div ref={ref} className="flex items-center justify-end auth-type-label select-none">
-        {humanizeRequestAPIKeyPlacement(apikeyAuth?.placement)}
+        {humanizeRequestAPIKeyPlacement(localAuth?.placement)}
         <IconCaretDown className="caret ml-1 mr-1" size={14} strokeWidth={2} />
       </div>
     );
   });
 
-  const handleAuthChange = (property, value) => {
-    dispatch(
-      updateAuth({
-        mode: 'apikey',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          ...apikeyAuth,
-          [property]: value
-        }
-      })
-    );
-  };
-
   useEffect(() => {
-    !apikeyAuth?.placement
-    && dispatch(
-      updateAuth({
-        mode: 'apikey',
-        collectionUid: collection.uid,
-        itemUid: item.uid,
-        content: {
-          placement: 'header'
-        }
-      })
-    );
-  }, [apikeyAuth]);
+    if (!localAuth?.placement) {
+      updateLocalField('placement', 'header');
+    }
+  }, [localAuth?.placement, updateLocalField]);
 
   return (
     <StyledWrapper className="w-full">
-      <label className="block mb-1">Key</label>
-      <div className="single-line-editor-wrapper mb-3">
-        <SingleLineEditor
-          value={apikeyAuth.key || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handleAuthChange('key', val)}
-          onRun={handleRun}
-          collection={collection}
-          isCompact
-        />
-      </div>
-
-      <label className="block mb-1">Value</label>
-      <div className="single-line-editor-wrapper mb-3">
-        <SingleLineEditor
-          value={apikeyAuth.value || ''}
-          theme={storedTheme}
-          onSave={handleSave}
-          onChange={(val) => handleAuthChange('value', val)}
-          onRun={handleRun}
-          collection={collection}
-          isCompact
-        />
-      </div>
+      <NativeAuthField
+        label="Key"
+        value={localAuth.key || ''}
+        onChange={(value) => updateLocalField('key', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+      />
+      <NativeAuthField
+        label="Value"
+        value={localAuth.value || ''}
+        onChange={(value) => updateLocalField('value', value)}
+        onBlur={() => flushLocalAuth()}
+        onKeyDown={handleInputKeyDown}
+      />
 
       <label className="block mb-1">Add To</label>
       <div className="inline-flex items-center cursor-pointer auth-placement-selector w-fit">
@@ -95,7 +61,8 @@ const ApiKeyAuth = ({ item, collection, updateAuth, request, save }) => {
             className="dropdown-item"
             onClick={() => {
               dropdownTippyRef?.current?.hide();
-              handleAuthChange('placement', 'header');
+              updateLocalField('placement', 'header');
+              flushLocalAuth({ ...localAuth, placement: 'header' });
             }}
           >
             Header
@@ -104,7 +71,8 @@ const ApiKeyAuth = ({ item, collection, updateAuth, request, save }) => {
             className="dropdown-item"
             onClick={() => {
               dropdownTippyRef?.current?.hide();
-              handleAuthChange('placement', 'queryparams');
+              updateLocalField('placement', 'queryparams');
+              flushLocalAuth({ ...localAuth, placement: 'queryparams' });
             }}
           >
             Query Param

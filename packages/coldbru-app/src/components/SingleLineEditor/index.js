@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import debounce from 'lodash/debounce';
 import isEqual from 'lodash/isEqual';
 import { getAllVariables } from 'utils/collections';
 import { defineCodeMirrorBrunoVariablesMode } from 'utils/common/codemirror';
@@ -24,6 +25,8 @@ class SingleLineEditor extends Component {
 
     // Shortcuts cleanup function
     this._shortcutsCleanup = null;
+    this._pendingChange = false;
+    this._setupDebouncedOnChange(props);
 
     this.state = {
       maskInput: props.isSecret || false
@@ -33,14 +36,16 @@ class SingleLineEditor extends Component {
   componentDidMount() {
     // Initialize CodeMirror as a single line editor
     /** @type {import("codemirror").Editor} */
-    const variables = getAllVariables(this.props.collection, this.props.item);
+    const variables = this._getVariables(this.props);
 
     const runHandler = () => {
+      this._flushPendingChange();
       if (this.props.onRun) {
         this.props.onRun();
       }
     };
     const saveHandler = () => {
+      this._flushPendingChange();
       if (this.props.onSave) {
         this.props.onSave();
       }
@@ -84,7 +89,7 @@ class SingleLineEditor extends Component {
       }
     });
 
-    const getAllVariablesHandler = () => getAllVariables(this.props.collection, this.props.item);
+    const getAllVariablesHandler = () => this._getVariables(this.props);
     const getAnywordAutocompleteHints = () => this.props.autocomplete || [];
 
     // Setup AutoComplete Helper
@@ -103,6 +108,7 @@ class SingleLineEditor extends Component {
     this.editor.setValue(String(this.props.value ?? ''));
     this.editor.on('change', this._onEdit);
     this.editor.on('paste', this._onPaste);
+    this.editor.on('blur', this._flushPendingChange);
     this.addOverlay(variables);
     this._enableMaskedEditor(this.props.isSecret);
     this.setState({ maskInput: this.props.isSecret });
@@ -137,7 +143,12 @@ class SingleLineEditor extends Component {
     if (!this.ignoreChangeEvent && this.editor) {
       this.cachedValue = this.editor.getValue();
       if (this.props.onChange && (this.props.value !== this.cachedValue)) {
-        this.props.onChange(this.cachedValue);
+        if (this._debouncedOnChange) {
+          this._pendingChange = true;
+          this._debouncedOnChange(this.cachedValue);
+        } else {
+          this.props.onChange(this.cachedValue);
+        }
       }
 
       // Update newline markers after edit
@@ -155,7 +166,12 @@ class SingleLineEditor extends Component {
     // event loop.
     this.ignoreChangeEvent = true;
 
-    let variables = getAllVariables(this.props.collection, this.props.item);
+    if (this.props.changeDebounceMs !== prevProps.changeDebounceMs) {
+      this._teardownDebouncedOnChange();
+      this._setupDebouncedOnChange(this.props);
+    }
+
+    let variables = this._getVariables(this.props);
     if (!isEqual(variables, this.variables)) {
       if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
         this.editor.options.coldbruVarInfo.variables = variables;
@@ -163,12 +179,13 @@ class SingleLineEditor extends Component {
       this.addOverlay(variables);
     }
 
-    // Update collection and item when they change
+    // The request/collection trees can be large, so avoid deep comparisons here.
+    // Redux gives us new references when these objects change.
     if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
-      if (!isEqual(this.props.collection, this.editor.options.coldbruVarInfo.collection)) {
+      if (this.props.collection !== prevProps.collection) {
         this.editor.options.coldbruVarInfo.collection = this.props.collection;
       }
-      if (!isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)) {
+      if (this.props.item !== prevProps.item) {
         this.editor.options.coldbruVarInfo.item = this.props.item;
       }
     }
@@ -216,11 +233,13 @@ class SingleLineEditor extends Component {
     }
 
     if (this.editor) {
+      this._flushPendingChange();
       if (this.editor?._destroyLinkAware) {
         this.editor._destroyLinkAware();
       }
       this.editor.off('change', this._onEdit);
       this.editor.off('paste', this._onPaste);
+      this.editor.off('blur', this._flushPendingChange);
       this._clearNewlineMarkers();
       this.editor.getWrapperElement().remove();
       this.editor = null;
@@ -232,7 +251,52 @@ class SingleLineEditor extends Component {
       this.maskedEditor.destroy();
       this.maskedEditor = null;
     }
+    this._teardownDebouncedOnChange();
   }
+
+  _setupDebouncedOnChange = (props) => {
+    if (!props?.changeDebounceMs) {
+      this._debouncedOnChange = null;
+      return;
+    }
+
+    this._debouncedOnChange = debounce((value) => {
+      this._pendingChange = false;
+      this.props.onChange?.(value);
+    }, props.changeDebounceMs);
+  };
+
+  _teardownDebouncedOnChange = () => {
+    this._debouncedOnChange?.cancel();
+    this._debouncedOnChange = null;
+    this._pendingChange = false;
+  };
+
+  _flushPendingChange = () => {
+    if (!this._pendingChange || !this.props.onChange) {
+      return;
+    }
+
+    this._debouncedOnChange?.cancel();
+    this._pendingChange = false;
+    this.props.onChange(this.cachedValue);
+  };
+
+  _shouldUseVariables = (props = this.props) => {
+    if (props.enableBrunoVarInfo !== false) {
+      return true;
+    }
+
+    return Array.isArray(props.showHintsFor) && props.showHintsFor.includes('variables');
+  };
+
+  _getVariables = (props = this.props) => {
+    if (!this._shouldUseVariables(props)) {
+      return {};
+    }
+
+    return getAllVariables(props.collection, props.item);
+  };
 
   addOverlay = (variables) => {
     this.variables = variables;

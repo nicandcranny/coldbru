@@ -1,14 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import debounce from 'lodash/debounce';
+import isEqual from 'lodash/isEqual';
+import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import InfoTip from 'components/InfoTip';
 import { useDispatch } from 'react-redux';
-import { useTheme } from 'providers/Theme';
 import {
-  moveQueryParam,
   updatePathParam,
   setQueryParams
 } from 'providers/ReduxStore/slices/collections';
-import MultiLineEditor from 'components/MultiLineEditor';
 import { saveRequest, sendRequest } from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
@@ -16,17 +16,53 @@ import BulkEditor from '../../BulkEditor';
 
 const QueryParams = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const { storedTheme } = useTheme();
   const params = item.draft ? get(item, 'draft.request.params') : get(item, 'request.params');
   const queryParams = params.filter((param) => param.type === 'query');
   const pathParams = params.filter((param) => param.type === 'path');
 
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
+  const [localQueryParams, setLocalQueryParams] = useState(queryParams);
+  const [localPathParams, setLocalPathParams] = useState(pathParams);
+  const localQueryParamsRef = useRef(localQueryParams);
+  const localPathParamsRef = useRef(localPathParams);
+  const debouncedQuerySyncRef = useRef(null);
+  const debouncedPathSyncRef = useRef(null);
+  const areQueryParamsDirtyRef = useRef(false);
+  const arePathParamsDirtyRef = useRef(false);
+  const queryParamsRef = useRef(queryParams);
+  const pathParamsRef = useRef(pathParams);
 
-  const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
-  const handleRun = () => dispatch(sendRequest(item, collection.uid));
+  useEffect(() => {
+    localQueryParamsRef.current = localQueryParams;
+  }, [localQueryParams]);
 
-  const handleQueryParamsChange = useCallback((updatedParams) => {
+  useEffect(() => {
+    localPathParamsRef.current = localPathParams;
+  }, [localPathParams]);
+
+  useEffect(() => {
+    queryParamsRef.current = queryParams;
+  }, [queryParams]);
+
+  useEffect(() => {
+    pathParamsRef.current = pathParams;
+  }, [pathParams]);
+
+  useEffect(() => {
+    if (isEqual(queryParams, localQueryParams)) {
+      areQueryParamsDirtyRef.current = false;
+    } else if (!areQueryParamsDirtyRef.current) {
+      setLocalQueryParams(queryParams);
+    }
+
+    if (isEqual(pathParams, localPathParams)) {
+      arePathParamsDirtyRef.current = false;
+    } else if (!arePathParamsDirtyRef.current) {
+      setLocalPathParams(pathParams);
+    }
+  }, [item.uid, queryParams, pathParams]);
+
+  const syncQueryParamsToStore = useCallback((updatedParams) => {
     const paramsWithType = updatedParams.map((p) => ({ ...p, type: 'query' }));
     dispatch(setQueryParams({
       collectionUid: collection.uid,
@@ -35,58 +71,176 @@ const QueryParams = ({ item, collection }) => {
     }));
   }, [dispatch, collection.uid, item.uid]);
 
-  const handlePathParamChange = useCallback((rowUid, key, value) => {
-    const pathParam = pathParams.find((p) => p.uid === rowUid);
-    if (pathParam) {
+  const syncPathParamsToStore = useCallback((updatedPathParams) => {
+    updatedPathParams.forEach((pathParam) => {
       dispatch(updatePathParam({
-        pathParam: { ...pathParam, [key]: value },
+        pathParam,
         itemUid: item.uid,
         collectionUid: collection.uid
       }));
-    }
-  }, [dispatch, pathParams, item.uid, collection.uid]);
+    });
+  }, [dispatch, item.uid, collection.uid]);
 
-  const handleQueryParamDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveQueryParam({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
+  useEffect(() => {
+    debouncedQuerySyncRef.current = debounce((updatedParams) => {
+      syncQueryParamsToStore(updatedParams);
+    }, 400);
+
+    debouncedPathSyncRef.current = debounce((updatedParams) => {
+      syncPathParamsToStore(updatedParams);
+    }, 400);
+
+    return () => {
+      debouncedQuerySyncRef.current?.cancel();
+      debouncedPathSyncRef.current?.cancel();
+      debouncedQuerySyncRef.current = null;
+      debouncedPathSyncRef.current = null;
+    };
+  }, [syncQueryParamsToStore, syncPathParamsToStore]);
+
+  const flushQuerySync = useCallback((updatedParams = localQueryParamsRef.current) => {
+    debouncedQuerySyncRef.current?.cancel();
+    if (!isEqual(updatedParams, queryParamsRef.current)) {
+      syncQueryParamsToStore(updatedParams);
+    } else {
+      areQueryParamsDirtyRef.current = false;
+    }
+  }, [syncQueryParamsToStore]);
+
+  const flushPathSync = useCallback((updatedParams = localPathParamsRef.current) => {
+    debouncedPathSyncRef.current?.cancel();
+    if (!isEqual(updatedParams, pathParamsRef.current)) {
+      syncPathParamsToStore(updatedParams);
+    } else {
+      arePathParamsDirtyRef.current = false;
+    }
+  }, [syncPathParamsToStore]);
+
+  useEffect(() => {
+    return () => {
+      flushQuerySync();
+      flushPathSync();
+    };
+  }, [flushQuerySync, flushPathSync]);
+
+  const onSave = useCallback(() => {
+    flushQuerySync();
+    flushPathSync();
+    dispatch(saveRequest(item.uid, collection.uid));
+  }, [flushQuerySync, flushPathSync, dispatch, item.uid, collection.uid]);
+
+  const handleRun = useCallback(() => {
+    flushQuerySync();
+    flushPathSync();
+    const itemToRun = cloneDeep(item);
+    const requestRoot = itemToRun.draft ? itemToRun.draft.request : itemToRun.request;
+    requestRoot.params = [
+      ...localQueryParamsRef.current.map((param) => ({ ...param, type: 'query' })),
+      ...localPathParamsRef.current.map((param) => ({ ...param, type: 'path' }))
+    ];
+    dispatch(sendRequest(itemToRun, collection.uid));
+  }, [flushQuerySync, flushPathSync, item, dispatch, collection.uid]);
+
+  const handleQueryParamsChange = useCallback((updatedParams) => {
+    areQueryParamsDirtyRef.current = true;
+    setLocalQueryParams(updatedParams);
+    debouncedQuerySyncRef.current?.(updatedParams);
+  }, []);
+
+  const commitLocalQueryParams = useCallback((updater) => {
+    setLocalQueryParams((currentQueryParams) => {
+      const nextQueryParams = typeof updater === 'function' ? updater(currentQueryParams) : updater;
+      areQueryParamsDirtyRef.current = true;
+      debouncedQuerySyncRef.current?.(nextQueryParams);
+      return nextQueryParams;
+    });
+  }, []);
+
+  const commitLocalPathParams = useCallback((updater) => {
+    setLocalPathParams((currentPathParams) => {
+      const nextPathParams = typeof updater === 'function' ? updater(currentPathParams) : updater;
+      arePathParamsDirtyRef.current = true;
+      debouncedPathSyncRef.current?.(nextPathParams);
+      return nextPathParams;
+    });
+  }, []);
+
+  const updateQueryParamRow = useCallback((rowUid, patch) => {
+    commitLocalQueryParams((currentQueryParams) => currentQueryParams.map((queryParam) => {
+      if (queryParam.uid !== rowUid) {
+        return queryParam;
+      }
+
+      const nextQueryParam = { ...queryParam, ...patch };
+      return isEqual(nextQueryParam, queryParam) ? queryParam : nextQueryParam;
     }));
-  }, [dispatch, collection.uid, item.uid]);
+  }, [commitLocalQueryParams]);
+
+  const addQueryParamRow = useCallback((row) => {
+    commitLocalQueryParams((currentQueryParams) => [...currentQueryParams, row]);
+  }, [commitLocalQueryParams]);
+
+  const deleteQueryParamRow = useCallback((rowUid) => {
+    commitLocalQueryParams((currentQueryParams) => currentQueryParams.filter((queryParam) => queryParam.uid !== rowUid));
+  }, [commitLocalQueryParams]);
+
+  const handlePathParamChange = useCallback((rowUid, key, value) => {
+    commitLocalPathParams((currentPathParams) => currentPathParams.map((pathParam) => {
+      if (pathParam.uid !== rowUid) {
+        return pathParam;
+      }
+
+      const nextPathParam = { ...pathParam, [key]: value };
+      return isEqual(nextPathParam, pathParam) ? pathParam : nextPathParam;
+    }));
+  }, [commitLocalPathParams]);
+
+  const reorderQueryParams = useCallback(({ updateReorderedItem }) => {
+    commitLocalQueryParams((currentQueryParams) => {
+      const queryParamByUid = new Map(currentQueryParams.map((queryParam) => [queryParam.uid, queryParam]));
+      return updateReorderedItem.map((uid) => queryParamByUid.get(uid)).filter(Boolean);
+    });
+  }, [commitLocalQueryParams]);
 
   const toggleBulkEditMode = () => {
     setIsBulkEditMode(!isBulkEditMode);
   };
 
-  const queryColumns = [
+  const handleCellKeyDown = useCallback((event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleRun();
+      return;
+    }
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      onSave();
+    }
+  }, [handleRun, onSave]);
+
+  const queryColumns = useMemo(() => [
     {
       key: 'name',
       name: 'Name',
       isKeyField: true,
       placeholder: 'Name',
-      width: '30%'
+      width: '30%',
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushQuerySync(),
+      onKeyDown: handleCellKeyDown
     },
     {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
-        <MultiLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={onSave}
-          onChange={onChange}
-          onRun={handleRun}
-          collection={collection}
-          item={item}
-          variablesAutocomplete={true}
-          placeholder={!value ? 'Value' : ''}
-        />
-      )
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushQuerySync(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [flushQuerySync, handleCellKeyDown]);
 
-  const pathColumns = [
+  const pathColumns = useMemo(() => [
     {
       key: 'name',
       name: 'Name',
@@ -98,19 +252,11 @@ const QueryParams = ({ item, collection }) => {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ row, value, onChange }) => (
-        <MultiLineEditor
-          value={value || ''}
-          theme={storedTheme}
-          onSave={onSave}
-          onChange={(newValue) => handlePathParamChange(row.uid, 'value', newValue)}
-          onRun={handleRun}
-          collection={collection}
-          item={item}
-        />
-      )
+      sanitizeValue: (value) => value.replace(/[\r\n]/g, ''),
+      onBlurCell: () => flushPathSync(),
+      onKeyDown: handleCellKeyDown
     }
-  ];
+  ], [flushPathSync, handleCellKeyDown]);
 
   const defaultQueryRow = {
     name: '',
@@ -123,7 +269,7 @@ const QueryParams = ({ item, collection }) => {
     return (
       <StyledWrapper className="w-full mt-3">
         <BulkEditor
-          params={queryParams}
+          params={localQueryParams}
           onChange={handleQueryParamsChange}
           onToggle={toggleBulkEditMode}
           onSave={onSave}
@@ -139,11 +285,14 @@ const QueryParams = ({ item, collection }) => {
         <div className="mb-3 title text-xs">Query</div>
         <EditableTable
           columns={queryColumns}
-          rows={queryParams || []}
-          onChange={handleQueryParamsChange}
+          rows={localQueryParams || []}
           defaultRow={defaultQueryRow}
           reorderable={true}
-          onReorder={handleQueryParamDrag}
+          onReorder={reorderQueryParams}
+          rowUpdateMode={true}
+          onRowChange={updateQueryParamRow}
+          onAddRow={addQueryParamRow}
+          onDeleteRow={deleteQueryParamRow}
         />
         <div className="flex justify-end mt-2">
           <button className="btn-action text-link select-none" onClick={toggleBulkEditMode}>
@@ -164,15 +313,20 @@ const QueryParams = ({ item, collection }) => {
             </div>
           </InfoTip>
         </div>
-        {pathParams && pathParams.length > 0 ? (
+        {localPathParams && localPathParams.length > 0 ? (
           <EditableTable
             columns={pathColumns}
-            rows={pathParams}
-            onChange={() => {}}
+            rows={localPathParams}
             defaultRow={{}}
             showCheckbox={false}
             showDelete={false}
             showAddRow={false}
+            rowUpdateMode={true}
+            onRowChange={(rowUid, patch) => {
+              if (patch.value !== undefined) {
+                handlePathParamChange(rowUid, 'value', patch.value);
+              }
+            }}
           />
         ) : (
           <div className="title pr-2 py-3 mt-2 text-xs"></div>

@@ -6,10 +6,115 @@ import StyledWrapper from './StyledWrapper';
 
 const MIN_COLUMN_WIDTH = 80;
 
+const getColumnValue = (column, row) => {
+  return column.getValue ? column.getValue(row) : row[column.key];
+};
+
+const hasAnyValue = (row, columns, defaultRow) => {
+  for (const col of columns) {
+    const value = getColumnValue(col, row);
+    const defaultValue = defaultRow[col.key];
+    if (value && value !== defaultValue && (typeof value !== 'string' || value.trim() !== '')) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const EditableTableRow = React.memo(({
+  row,
+  rowIndex,
+  columns,
+  renderCell,
+  hoveredRow,
+  checkboxKey,
+  disableCheckbox,
+  showCheckbox,
+  showDelete,
+  reorderable,
+  canDrag,
+  isEmpty,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onMouseEnter,
+  onMouseLeave,
+  onCheckboxChange,
+  onRemoveRow
+}) => {
+  return (
+    <tr
+      draggable={canDrag}
+      onDragStart={canDrag ? (e) => onDragStart(e, rowIndex) : undefined}
+      onDragOver={canDrag ? (e) => onDragOver(e, rowIndex) : undefined}
+      onDrop={canDrag ? (e) => onDrop(e, rowIndex) : undefined}
+      onDragEnd={canDrag ? onDragEnd : undefined}
+      onMouseEnter={() => onMouseEnter(rowIndex)}
+      onMouseLeave={onMouseLeave}
+    >
+      {showCheckbox && (
+        <td className="text-center relative">
+          {reorderable && canDrag && (
+            <div
+              draggable
+              className="drag-handle group absolute z-10 left-[-8px] top-1/2 -translate-y-1/2 p-1 cursor-grab"
+            >
+              {hoveredRow === rowIndex && (
+                <>
+                  <IconGripVertical
+                    size={14}
+                    className="icon-grip hidden group-hover:block"
+                  />
+                  <IconMinusVertical
+                    size={14}
+                    className="icon-minus block group-hover:hidden"
+                  />
+                </>
+              )}
+            </div>
+          )}
+          {!isEmpty && (
+            <input
+              type="checkbox"
+              className="mousetrap"
+              data-testid="column-checkbox"
+              checked={row[checkboxKey] ?? true}
+              disabled={disableCheckbox}
+              onChange={(e) => onCheckboxChange(row.uid, e.target.checked)}
+            />
+          )}
+        </td>
+      )}
+      {columns.map((column) => (
+        <td key={column.key} data-testid={`column-${column.key}`}>
+          {renderCell(column, row, rowIndex)}
+        </td>
+      ))}
+      {showDelete && (
+        <td>
+          {!isEmpty && (
+            <button
+              data-testid="column-delete"
+              onClick={() => onRemoveRow(row.uid)}
+            >
+              <IconTrash strokeWidth={1.5} size={18} />
+            </button>
+          )}
+        </td>
+      )}
+    </tr>
+  );
+});
+
 const EditableTable = ({
   columns,
   rows,
   onChange,
+  onRowChange,
+  onAddRow,
+  onDeleteRow,
   defaultRow,
   getRowError,
   showCheckbox = true,
@@ -20,10 +125,16 @@ const EditableTable = ({
   reorderable = false,
   onReorder,
   showAddRow = true,
+  showErrorTooltips = true,
+  rowUpdateMode = false,
   testId = 'editable-table'
 }) => {
   const tableRef = useRef(null);
   const emptyRowUidRef = useRef(null);
+  const rowsRef = useRef(rows);
+  const rowsWithEmptyRef = useRef([]);
+  const columnsRef = useRef(columns);
+  const defaultRowRef = useRef(defaultRow);
   const [hoveredRow, setHoveredRow] = useState(null);
   const [resizing, setResizing] = useState(null);
   const [tableHeight, setTableHeight] = useState(0);
@@ -34,6 +145,15 @@ const EditableTable = ({
     });
     return initialWidths;
   });
+
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
+
+  useEffect(() => {
+    columnsRef.current = columns;
+    defaultRowRef.current = defaultRow;
+  }, [columns, defaultRow]);
 
   const handleResizeStart = useCallback((e, columnKey) => {
     e.preventDefault();
@@ -163,6 +283,10 @@ const EditableTable = ({
     }];
   }, [rows, columns, defaultRow, checkboxKey, createEmptyRow, showAddRow]);
 
+  useEffect(() => {
+    rowsWithEmptyRef.current = rowsWithEmpty;
+  }, [rowsWithEmpty]);
+
   const isEmptyRow = useCallback((row) => {
     const keyColumn = columns.find((col) => col.isKeyField);
     if (!keyColumn) return false;
@@ -177,62 +301,83 @@ const EditableTable = ({
   }, [rowsWithEmpty.length, isEmptyRow, showAddRow]);
 
   const handleValueChange = useCallback((rowUid, key, value) => {
-    const rowIndex = rowsWithEmpty.findIndex((r) => r.uid === rowUid);
+    const currentRowsWithEmpty = rowsWithEmptyRef.current;
+    const currentColumns = columnsRef.current;
+    const currentDefaultRow = defaultRowRef.current;
+    const rowIndex = currentRowsWithEmpty.findIndex((r) => r.uid === rowUid);
     if (rowIndex === -1) return;
 
-    const currentRow = rowsWithEmpty[rowIndex];
-    const isLast = rowIndex === rowsWithEmpty.length - 1;
-    const wasEmpty = isEmptyRow(currentRow);
+    const currentRow = currentRowsWithEmpty[rowIndex];
 
-    const keyColumn = columns.find((col) => col.isKeyField);
+    if (rowUpdateMode && onRowChange) {
+      const existingRow = rowsRef.current.find((row) => row.uid === rowUid);
+
+      if (existingRow) {
+        onRowChange(rowUid, { [key]: value });
+        return;
+      }
+
+      if (!onAddRow) {
+        return;
+      }
+
+      const nextRow = {
+        uid: rowUid,
+        [checkboxKey]: true,
+        ...currentDefaultRow,
+        [key]: value
+      };
+
+      if (hasAnyValue(nextRow, currentColumns, currentDefaultRow)) {
+        onAddRow(nextRow);
+      }
+      return;
+    }
+
+    const isLast = rowIndex === currentRowsWithEmpty.length - 1;
+    const wasEmpty = isEmptyRow(currentRow);
+    const keyColumn = currentColumns.find((col) => col.isKeyField);
     const isKeyFieldChange = keyColumn && keyColumn.key === key;
 
-    let updatedRows = rowsWithEmpty.map((row) => {
+    let updatedRows = currentRowsWithEmpty.map((row) => {
       if (row.uid === rowUid) {
         return { ...row, [key]: value };
       }
       return row;
     });
 
-    // Only add a new empty row when the key field is filled
     if (showAddRow && isLast && wasEmpty && isKeyFieldChange && value && value.trim() !== '') {
       emptyRowUidRef.current = uuid();
       updatedRows.push({
         uid: emptyRowUidRef.current,
         [checkboxKey]: true,
-        ...defaultRow
+        ...currentDefaultRow
       });
     }
 
-    const hasAnyValue = (row) => {
-      for (const col of columns) {
-        const val = col.getValue ? col.getValue(row) : row[col.key];
-        const defaultVal = defaultRow[col.key];
-        if (val && val !== defaultVal && (typeof val !== 'string' || val.trim() !== '')) {
-          return true;
-        }
-      }
-      return false;
-    };
-
     const result = updatedRows.filter((row, i) => {
       if (showAddRow && i === updatedRows.length - 1) {
-        return hasAnyValue(row);
+        return hasAnyValue(row, currentColumns, currentDefaultRow);
       }
       return true;
     });
 
     onChange(result);
-  }, [rowsWithEmpty, columns, onChange, checkboxKey, defaultRow, isEmptyRow, showAddRow]);
+  }, [rowUpdateMode, onRowChange, onAddRow, checkboxKey, isEmptyRow, showAddRow, onChange]);
 
   const handleCheckboxChange = useCallback((rowUid, checked) => {
     handleValueChange(rowUid, checkboxKey, checked);
   }, [handleValueChange, checkboxKey]);
 
   const handleRemoveRow = useCallback((rowUid) => {
+    if (rowUpdateMode && onDeleteRow) {
+      onDeleteRow(rowUid);
+      return;
+    }
+
     const filteredRows = rows.filter((row) => row.uid !== rowUid);
     onChange(filteredRows);
-  }, [rows, onChange]);
+  }, [rowUpdateMode, onDeleteRow, rows, onChange]);
 
   const handleDragStart = useCallback((e, index) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -249,7 +394,8 @@ const EditableTable = ({
     e.preventDefault();
     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
     if (fromIndex !== toIndex && onReorder) {
-      const reorderableRows = showAddRow ? rowsWithEmpty.slice(0, -1) : rowsWithEmpty;
+      const currentRowsWithEmpty = rowsWithEmptyRef.current;
+      const reorderableRows = showAddRow ? currentRowsWithEmpty.slice(0, -1) : currentRowsWithEmpty;
       const updatedOrder = [...reorderableRows];
       const [movedRow] = updatedOrder.splice(fromIndex, 1);
       if (!movedRow) {
@@ -260,29 +406,37 @@ const EditableTable = ({
       onReorder({ updateReorderedItem: updatedOrder.map((row) => row.uid) });
     }
     setHoveredRow(null);
-  }, [onReorder, rowsWithEmpty, showAddRow]);
+  }, [onReorder, showAddRow]);
 
   const handleDragEnd = useCallback(() => {
     setHoveredRow(null);
   }, []);
 
+  const clearHoveredRow = useCallback(() => {
+    setHoveredRow(null);
+  }, []);
+
   const renderCell = useCallback((column, row, rowIndex) => {
     const isEmpty = isLastEmptyRow(row, rowIndex);
-    const value = column.getValue ? column.getValue(row) : row[column.key];
+    const value = getColumnValue(column, row);
     const error = getRowError?.(row, rowIndex, column.key);
 
     const errorIcon = error && !isEmpty ? (
       <span>
         <IconAlertCircle
-          data-tooltip-id={`error-${row.uid}-${column.key}`}
+          data-tooltip-id={showErrorTooltips ? `error-${row.uid}-${column.key}` : undefined}
           className="text-red-600 cursor-pointer ml-1"
           size={20}
+          title={!showErrorTooltips ? error : undefined}
+          aria-label={error}
         />
-        <Tooltip
-          className="tooltip-mod"
-          id={`error-${row.uid}-${column.key}`}
-          html={error}
-        />
+        {showErrorTooltips && (
+          <Tooltip
+            className="tooltip-mod"
+            id={`error-${row.uid}-${column.key}`}
+            html={error}
+          />
+        )}
       </span>
     ) : null;
 
@@ -303,22 +457,39 @@ const EditableTable = ({
 
     return (
       <div className="flex items-center">
-        <input
-          type="text"
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck="false"
-          className="mousetrap"
-          value={value || ''}
-          readOnly={column.readOnly}
-          placeholder={!value ? column.placeholder || column.name : ''}
-          onChange={(e) => handleValueChange(row.uid, column.key, e.target.value)}
-        />
+        <div className="w-full">
+          <input
+            type={column.inputType || 'text'}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            className="mousetrap"
+            list={column.autocompleteOptions?.length ? `${testId}-${column.key}-list` : undefined}
+            value={value || ''}
+            readOnly={column.readOnly}
+            placeholder={!value ? column.placeholder || column.name : ''}
+            onBlur={() => column.onBlurCell?.(row, value)}
+            onKeyDown={column.onKeyDown}
+            onChange={(e) => {
+              const nextValue = column.sanitizeValue
+                ? column.sanitizeValue(e.target.value, row, rowIndex)
+                : e.target.value;
+              handleValueChange(row.uid, column.key, nextValue);
+            }}
+          />
+          {column.autocompleteOptions?.length ? (
+            <datalist id={`${testId}-${column.key}-list`}>
+              {column.autocompleteOptions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          ) : null}
+        </div>
         {errorIcon}
       </div>
     );
-  }, [isLastEmptyRow, getRowError, handleValueChange]);
+  }, [isLastEmptyRow, getRowError, handleValueChange, showErrorTooltips, testId]);
 
   const reorderableRowCount = showAddRow ? rowsWithEmpty.length - 1 : rowsWithEmpty.length;
 
@@ -357,67 +528,29 @@ const EditableTable = ({
               const canDrag = reorderable && !isEmpty && rowIndex < reorderableRowCount;
 
               return (
-                <tr
+                <EditableTableRow
                   key={row.uid}
-                  draggable={canDrag}
-                  onDragStart={canDrag ? (e) => handleDragStart(e, rowIndex) : undefined}
-                  onDragOver={canDrag ? (e) => handleDragOver(e, rowIndex) : undefined}
-                  onDrop={canDrag ? (e) => handleDrop(e, rowIndex) : undefined}
-                  onDragEnd={canDrag ? handleDragEnd : undefined}
-                  onMouseEnter={() => setHoveredRow(rowIndex)}
-                  onMouseLeave={() => setHoveredRow(null)}
-                >
-                  {showCheckbox && (
-                    <td className="text-center relative">
-                      {reorderable && canDrag && (
-                        <div
-                          draggable
-                          className="drag-handle group absolute z-10 left-[-8px] top-1/2 -translate-y-1/2 p-1 cursor-grab"
-                        >
-                          {hoveredRow === rowIndex && (
-                            <>
-                              <IconGripVertical
-                                size={14}
-                                className="icon-grip hidden group-hover:block"
-                              />
-                              <IconMinusVertical
-                                size={14}
-                                className="icon-minus block group-hover:hidden"
-                              />
-                            </>
-                          )}
-                        </div>
-                      )}
-                      {!isEmpty && (
-                        <input
-                          type="checkbox"
-                          className="mousetrap"
-                          data-testid="column-checkbox"
-                          checked={row[checkboxKey] ?? true}
-                          disabled={disableCheckbox}
-                          onChange={(e) => handleCheckboxChange(row.uid, e.target.checked)}
-                        />
-                      )}
-                    </td>
-                  )}
-                  {columns.map((column) => (
-                    <td key={column.key} data-testid={`column-${column.key}`}>
-                      {renderCell(column, row, rowIndex)}
-                    </td>
-                  ))}
-                  {showDelete && (
-                    <td>
-                      {!isEmpty && (
-                        <button
-                          data-testid="column-delete"
-                          onClick={() => handleRemoveRow(row.uid)}
-                        >
-                          <IconTrash strokeWidth={1.5} size={18} />
-                        </button>
-                      )}
-                    </td>
-                  )}
-                </tr>
+                  row={row}
+                  rowIndex={rowIndex}
+                  columns={columns}
+                  renderCell={renderCell}
+                  hoveredRow={hoveredRow}
+                  checkboxKey={checkboxKey}
+                  disableCheckbox={disableCheckbox}
+                  showCheckbox={showCheckbox}
+                  showDelete={showDelete}
+                  reorderable={reorderable}
+                  canDrag={canDrag}
+                  isEmpty={isEmpty}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onDragEnd={handleDragEnd}
+                  onMouseEnter={setHoveredRow}
+                  onMouseLeave={clearHoveredRow}
+                  onCheckboxChange={handleCheckboxChange}
+                  onRemoveRow={handleRemoveRow}
+                />
               );
             })}
           </tbody>
