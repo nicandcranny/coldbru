@@ -15,6 +15,7 @@ coverage
 
 # production
 build
+release
 chrome-extension
 chrome-extension.pem
 chrome-extension.crx

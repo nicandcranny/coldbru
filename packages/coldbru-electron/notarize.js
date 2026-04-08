@@ -8,6 +8,19 @@ const notarize = async function (params) {
     return;
   }
 
+  const appleId = process.env.APPLE_ID;
+  const appleIdPassword = process.env.APPLE_ID_PASSWORD;
+
+  if (process.env.SKIP_NOTARIZE === 'true') {
+    console.log('Skipping notarization because SKIP_NOTARIZE=true');
+    return;
+  }
+
+  if (!appleId || !appleIdPassword) {
+    console.log('Skipping notarization because APPLE_ID / APPLE_ID_PASSWORD are not configured');
+    return;
+  }
+
   let appId = 'com.coldbru.app';
 
   let appPath = path.join(params.appOutDir, `${params.packager.appInfo.productFilename}.app`);
@@ -16,14 +29,14 @@ const notarize = async function (params) {
     return;
   }
 
-  console.log(`Notarizing ${appId} found at ${appPath} using Apple ID ${process.env.APPLE_ID}`);
+  console.log(`Notarizing ${appId} found at ${appPath} using Apple ID ${appleId}`);
 
   try {
     await electron_notarize.notarize({
       appBundleId: appId,
       appPath: appPath,
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_ID_PASSWORD,
+      appleId,
+      appleIdPassword,
       ascProvider: 'W7LPPWA48L'
     });
   } catch (error) {

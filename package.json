@@ -56,6 +56,8 @@
     "build:electron:deb": "./scripts/build-electron.sh deb",
     "build:electron:rpm": "./scripts/build-electron.sh rpm",
     "build:electron:snap": "./scripts/build-electron.sh snap",
+    "release:stage": "node ./scripts/stage-release-artifacts.js",
+    "release:assemble": "node ./scripts/assemble-release.js",
     "lint": "cross-env NODE_OPTIONS=\"--max_old_space_size=4096\" npx eslint",
     "lint:fix": "cross-env NODE_OPTIONS=\"--max_old_space_size=4096\" npx eslint --fix",
     "prepare": "husky"
