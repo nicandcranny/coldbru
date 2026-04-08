@@ -77,6 +77,24 @@ function hasActiveCopySelection() {
   return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0);
 }
 
+function hasActiveEditableTarget() {
+  const activeElement = document.activeElement;
+
+  if (!activeElement) {
+    return false;
+  }
+
+  if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+    return !activeElement.readOnly && !activeElement.disabled;
+  }
+
+  if (activeElement.isContentEditable) {
+    return true;
+  }
+
+  return Boolean(activeElement.closest?.('.CodeMirror'));
+}
+
 /**
  * Bind a single hotkey action using Mousetrap.
  * Reads from merged defaults + user preferences via getKeyBindingsForActionAllOS.
@@ -87,6 +105,10 @@ function bindHotkey(action, handler, userKeyBindings) {
 
   Mousetrap.bind([...combos], (e) => {
     if (action === 'copyItem' && hasActiveCopySelection()) {
+      return true;
+    }
+
+    if ((action === 'copyItem' || action === 'pasteItem') && hasActiveEditableTarget()) {
       return true;
     }
 
