@@ -172,13 +172,14 @@ function buildKeymap(context) {
  * @param {Object} context - Context object containing props and other editor context
  * @returns {Object} Cleanup function to remove the keymap
  */
-function setupShortcuts(editor, context = {}) {
+function setupShortcuts(editor, context = {}, storeInstance = store) {
   if (!editor) {
     return () => { };
   }
 
   let currentKeyMap = null;
   let unsubscribeStore = null;
+  let previousKeyBindings = null;
 
   /**
    * Apply the consolidated custom keymap to the CodeMirror editor
@@ -202,9 +203,16 @@ function setupShortcuts(editor, context = {}) {
 
   // Apply keymap on setup
   applyKeyMap();
+  previousKeyBindings = storeInstance.getState()?.app?.preferences?.keyBindings;
 
   // Subscribe to store changes to rebuild keymap when preferences change
-  unsubscribeStore = store.subscribe(() => {
+  unsubscribeStore = storeInstance.subscribe(() => {
+    const nextKeyBindings = storeInstance.getState()?.app?.preferences?.keyBindings;
+    if (nextKeyBindings === previousKeyBindings) {
+      return;
+    }
+
+    previousKeyBindings = nextKeyBindings;
     applyKeyMap();
   });
 
