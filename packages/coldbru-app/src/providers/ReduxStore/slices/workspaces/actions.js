@@ -9,9 +9,9 @@ import {
   updateWorkspaceLoadingState,
   setWorkspaceScratchCollection
 } from '../workspaces';
-import { showHomePage } from '../app';
+import { removeCollection, addTransientDirectory, updateCollectionMountStatus, sortCollections } from '../collections';
+import { showHomePage, savePreferences } from '../app';
 import { createCollection, openCollection, openMultipleCollections, openScratchCollectionEvent } from '../collections/actions';
-import { removeCollection, addTransientDirectory, updateCollectionMountStatus } from '../collections';
 import { clearCollectionState } from '../openapi-sync';
 import { updateGlobalEnvironments } from '../global-environments';
 import { addTab, focusTab } from '../tabs';
@@ -244,7 +244,26 @@ export const switchWorkspace = (workspaceUid) => {
   return async (dispatch, getState) => {
     dispatch(setActiveWorkspace(workspaceUid));
 
-    const workspace = getState().workspaces.workspaces.find((w) => w.uid === workspaceUid);
+    const state = getState();
+    const preferences = state.app.preferences;
+    const prefActiveWorkspaceUid = preferences?.workspaces?.activeWorkspaceUid;
+
+    if (prefActiveWorkspaceUid !== workspaceUid) {
+      dispatch(
+        savePreferences({
+          ...preferences,
+          workspaces: {
+            ...preferences.workspaces,
+            activeWorkspaceUid: workspaceUid
+          }
+        })
+      );
+    }
+
+    const sortOrder = preferences?.collections?.sortOrders?.[workspaceUid] || 'default';
+    dispatch(sortCollections({ order: sortOrder }));
+
+    const workspace = state.workspaces.workspaces.find((w) => w.uid === workspaceUid);
 
     if (!workspace) {
       return;
@@ -270,12 +289,12 @@ export const switchWorkspace = (workspaceUid) => {
     const scratchCollection = await dispatch(mountScratchCollection(workspaceUid));
     await loadWorkspaceCollectionsForSwitch(dispatch, workspace);
 
-    const state = getState();
-    const requestTabView = state.requestTabView || { mode: 'home', collectionUid: null };
-    const activeWorkspace = state.workspaces.workspaces.find((w) => w.uid === workspaceUid);
-    const workspaceCollectionUids = getWorkspaceCollectionUids(state, activeWorkspace);
-    const tabs = state.tabs.tabs || [];
-    const activeTab = tabs.find((tab) => tab.uid === state.tabs.activeTabUid);
+    const currentState = getState();
+    const requestTabView = currentState.requestTabView || { mode: 'home', collectionUid: null };
+    const activeWorkspace = currentState.workspaces.workspaces.find((w) => w.uid === workspaceUid);
+    const workspaceCollectionUids = getWorkspaceCollectionUids(currentState, activeWorkspace);
+    const tabs = currentState.tabs.tabs || [];
+    const activeTab = tabs.find((tab) => tab.uid === currentState.tabs.activeTabUid);
     const overviewResult = getOverviewTabResult(scratchCollection?.uid || activeWorkspace?.scratchCollectionUid);
 
     const focusOverview = () => {
@@ -442,9 +461,12 @@ export const workspaceOpenedEvent = (workspacePath, workspaceUid, workspaceConfi
 
     const state = getState();
     const activeWorkspaceUid = state.workspaces.activeWorkspaceUid;
-    const activeWorkspace = state.workspaces.workspaces.find((workspace) => workspace.uid === activeWorkspaceUid);
+    const preferences = state.app.preferences;
+    const prefActiveWorkspaceUid = preferences?.workspaces?.activeWorkspaceUid;
 
-    if (!activeWorkspaceUid || !activeWorkspace) {
+    if (prefActiveWorkspaceUid === workspaceUid) {
+      dispatch(switchWorkspace(workspaceUid));
+    } else if (!activeWorkspaceUid && !prefActiveWorkspaceUid) {
       dispatch(switchWorkspace(workspaceUid));
     }
   };
