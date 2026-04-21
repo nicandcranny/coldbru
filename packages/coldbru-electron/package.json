@@ -81,8 +81,8 @@
     "dmg-license": "^1.0.11"
   },
   "devDependencies": {
-    "electron": "~37.6.1",
-    "electron-builder": "^24.13.3",
+    "electron": "41.2.1",
+    "electron-builder": "^26.8.1",
     "electron-devtools-installer": "^4.0.0"
   }
 }
