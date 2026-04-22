@@ -3,7 +3,7 @@ require('dotenv').config({ path: process.env.DOTENV_PATH });
 const config = {
   appId: 'com.coldbru.app',
   productName: 'ColdBru',
-  electronVersion: '37.6.1',
+  electronVersion: '41.2.1',
   directories: {
     buildResources: 'resources',
     output: 'out'
