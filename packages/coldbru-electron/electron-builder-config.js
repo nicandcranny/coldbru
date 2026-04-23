@@ -47,6 +47,7 @@ const config = {
   linux: {
     artifactName: '${name}_${version}_${arch}_${os}.${ext}',
     icon: 'resources/icons/png',
+    mimeTypes: ['x-scheme-handler/coldbru'],
     target: [
       {
         target: 'AppImage',
@@ -67,10 +68,7 @@ const config = {
         schemes: ['coldbru']
       }
     ],
-    category: 'Development',
-    desktop: {
-      MimeType: 'x-scheme-handler/coldbru;'
-    }
+    category: 'Development'
   },
   deb: {
     // Docs: https://www.electron.build/configuration/linux#debian-package-options
@@ -95,9 +93,7 @@ const config = {
         target: 'nsis',
         arch: ['x64', 'arm64']
       }
-    ],
-    sign: null,
-    publisherName: 'ColdBru Software Inc'
+    ]
   },
   nsis: {
     oneClick: false,
