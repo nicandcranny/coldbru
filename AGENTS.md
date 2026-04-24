@@ -48,9 +48,12 @@ coldbru/
 ├── scripts/                  # Dev, build, and release scripts
 │   ├── dev.js                # `npm run dev` — starts web + electron
 │   ├── dev-hot-reload.js     # `npm run dev:watch` — with hot reload
-│   ├── build-electron.js     # JS build orchestrator
-│   ├── build-electron.sh     # Shell wrapper for platform builds
-│   ├── assemble-release.js   # Assembles release artifacts + SHA256SUMS
+│   ├── release/
+│   │   ├── build-electron.js # JS build orchestrator
+│   │   ├── build-electron.sh # Shell wrapper for platform builds
+│   │   ├── build-electron-linux-docker.sh # Linux x64 build on macOS via Docker
+│   │   ├── collect-release-artifacts.js # Copies public artifacts into build/v<version>
+│   │   └── assemble-release.js # Assembles release artifacts + SHA256SUMS
 │   ├── generate-icons.js     # Icon generation
 │   ├── setup.js              # First-time setup
 │   ├── count-locs.js         # LOC counter

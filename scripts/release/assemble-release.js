@@ -1,63 +1,59 @@
-const crypto = require("crypto");
-const fs = require("fs");
-const path = require("path");
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
-const repoRoot = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(__dirname, '..', '..');
 const electronPackageJsonPath = path.join(
   repoRoot,
-  "packages",
-  "coldbru-electron",
-  "package.json"
+  'packages',
+  'coldbru-electron',
+  'package.json'
 );
 const electronPackageJson = JSON.parse(
-  fs.readFileSync(electronPackageJsonPath, "utf8")
+  fs.readFileSync(electronPackageJsonPath, 'utf8')
 );
 const version = electronPackageJson.version;
-const outDir = path.join(repoRoot, "packages", "coldbru-electron", "out");
-const releaseDir = path.join(repoRoot, "build", `v${version}`);
+const releaseDir = path.join(repoRoot, 'build', `v${version}`);
 
 const artifacts = [
   {
     source: `coldbru_${version}_arm64_mac.dmg`,
-    destination: `coldbru_${version}_arm64_mac.dmg`,
+    destination: `coldbru_${version}_arm64_mac.dmg`
   },
   {
     source: `coldbru_${version}_x64_mac.dmg`,
-    destination: `coldbru_${version}_x64_mac.dmg`,
+    destination: `coldbru_${version}_x64_mac.dmg`
   },
   {
     source: `coldbru_${version}_x64_win.exe`,
-    destination: `coldbru_${version}_x64_win.exe`,
+    destination: `coldbru_${version}_x64_win.exe`
   },
   {
     source: `coldbru_${version}_x64_linux.AppImage`,
     destination: `coldbru_${version}_x86_64_linux.AppImage`,
-    optionalAlternates: [`coldbru_${version}_x86_64_linux.AppImage`],
-  },
+    optionalAlternates: [`coldbru_${version}_x86_64_linux.AppImage`]
+  }
 ];
 
 function sha256(filePath) {
-  const hash = crypto.createHash("sha256");
+  const hash = crypto.createHash('sha256');
   hash.update(fs.readFileSync(filePath));
-  return hash.digest("hex");
+  return hash.digest('hex');
 }
 
 function resolveSourcePath(artifact) {
   const candidates = [artifact.source, ...(artifact.optionalAlternates || [])];
   for (const fileName of candidates) {
-    const filePath = path.join(outDir, fileName);
+    const filePath = path.join(releaseDir, fileName);
     if (fs.existsSync(filePath)) {
       return filePath;
     }
   }
 
-  throw new Error(
-    `Missing expected artifact in ${outDir}: ${candidates.join(", ")}`
-  );
+  throw new Error(`Missing expected artifact in ${releaseDir}: ${candidates.join(', ')}`);
 }
 
 function main() {
-  fs.rmSync(releaseDir, { recursive: true, force: true });
   fs.mkdirSync(releaseDir, { recursive: true });
 
   const checksums = [];
@@ -66,15 +62,14 @@ function main() {
     const sourcePath = resolveSourcePath(artifact);
     const destinationPath = path.join(releaseDir, artifact.destination);
 
-    fs.copyFileSync(sourcePath, destinationPath);
+    if (sourcePath !== destinationPath) {
+      fs.copyFileSync(sourcePath, destinationPath);
+    }
     checksums.push(`${sha256(destinationPath)}  ${artifact.destination}`);
     console.log(`Prepared ${artifact.destination}`);
   }
 
-  fs.writeFileSync(
-    path.join(releaseDir, "SHA256SUMS.txt"),
-    `${checksums.join("\n")}\n`
-  );
+  fs.writeFileSync(path.join(releaseDir, 'SHA256SUMS.txt'), `${checksums.join('\n')}\n`);
   console.log(`Release artifacts assembled in ${releaseDir}`);
 }
 

@@ -1,6 +1,8 @@
 require('dotenv').config({ path: process.env.DOTENV_PATH });
 
 const macIdentity = process.env.CSC_NAME || process.env.CSC_LINK ? undefined : '-';
+const requestedArchs = ['x64', 'arm64'].filter((arch) => process.argv.includes(`--${arch}`));
+const resolvedTargetArchs = requestedArchs.length ? requestedArchs : ['x64', 'arm64'];
 
 const config = {
   appId: 'com.coldbru.app',
@@ -38,11 +40,11 @@ const config = {
     target: [
       {
         target: 'dmg',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'zip',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ],
     icon: 'resources/icons/png',
@@ -67,15 +69,15 @@ const config = {
     target: [
       {
         target: 'AppImage',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'deb',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'rpm',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ],
     protocols: [
@@ -107,7 +109,7 @@ const config = {
     target: [
       {
         target: 'nsis',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ]
   },
