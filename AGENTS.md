@@ -209,6 +209,29 @@ To release, follow the guideline at [RELEASE.md](RELEASE.md) ([GitHub](https://g
 
 See [SECURITY.md](SECURITY.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/SECURITY.md)). Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/nicandcranny/coldbru/security).
 
+## Architecture
+
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/docs/ARCHITECTURE.md)) is the single source of truth for how data flows through the app. It covers:
+
+- The two-process mental model (renderer ↔ main via IPC).
+- Domain map — every IPC file mapped to its Redux slice and components.
+- Redux middleware pipeline — execution order, triggers, side effects, gotchas.
+- Deep dives for complex flows: HTTP request lifecycle, collection opening & file watching, importing, OAuth2, Git, WebSocket & gRPC.
+- Edge cases & gotchas: transient vs saved requests, file watcher dedup, collection formats, variable precedence, draft state, preview tabs.
+
+Update this doc in the same PR when you:
+
+- Add, remove, or rename an IPC channel.
+- Add or change a Redux middleware.
+- Change variable precedence or auth resolution order.
+- Change file watching, collection mounting, or async loading behavior.
+- Add a new auth strategy or grant type.
+- Change the request lifecycle pipeline.
+- Add a new persistent connection protocol.
+- Discover a new edge case or gotcha worth documenting.
+
+If a PR changes IPC channels, middleware behavior, or cross-process data flows and doesn't update ARCHITECTURE.md, that's a review blocker.
+
 ## Keeping Docs Up to Date
 
 These docs are living documents. When you change the codebase, update the relevant docs in the same PR:
@@ -217,7 +240,6 @@ These docs are living documents. When you change the codebase, update the releva
 - **Change coding conventions, testing philosophy, or UI patterns** → update [CODING_STANDARDS.md](CODING_STANDARDS.md).
 - **Change build, release, or dev setup steps** → update [RELEASE.md](RELEASE.md) or this file.
 - **Change repo structure (new packages, moved directories)** → update the Repository Structure section in this file.
-
 If a PR changes a component's props, path, or purpose and doesn't update COMPONENTS.md, that's a review blocker.
 
 ## Other Documentation
@@ -225,6 +247,7 @@ If a PR changes a component's props, path, or purpose and doesn't update COMPONE
 | Document | Description |
 |---|---|
 | [README.md](README.md) | Project overview and motivation |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Internal data flows, middleware pipeline, deep dives, and edge cases |
 | [DIFFERENCES.md](DIFFERENCES.md) | What ColdBru changes vs upstream Bruno |
 | [IMPORTING.md](IMPORTING.md) | Importing from Postman, Insomnia, OpenAPI, etc. |
 | [LICENSE.md](LICENSE.md) | MIT License |
