@@ -1,5 +1,9 @@
 require('dotenv').config({ path: process.env.DOTENV_PATH });
 
+const macIdentity = process.env.CSC_NAME || process.env.CSC_LINK ? undefined : '-';
+const requestedArchs = ['x64', 'arm64'].filter((arch) => process.argv.includes(`--${arch}`));
+const resolvedTargetArchs = requestedArchs.length ? requestedArchs : ['x64', 'arm64'];
+
 const config = {
   appId: 'com.coldbru.app',
   productName: 'ColdBru',
@@ -27,20 +31,7 @@ const config = {
     '!**/.DS_Store',
     '!**/*.map',
     '!**/*.md',
-    '!**/._*',
-    '!node_modules/.bin{,/**}',
-    '!node_modules/**/{test,tests,__tests__,powered-test,example,examples,docs,doc,website,benchmark,benchmarks,coverage,.nyc_output}{,/**}',
-    '!node_modules/**/*.d.ts',
-    '!node_modules/**/*.ts',
-    '!node_modules/**/*.tsx',
-    '!node_modules/**/tsconfig*.json',
-    '!node_modules/**/{CHANGELOG,CHANGES,README,readme,AUTHORS,CONTRIBUTORS}.{md,markdown,txt}',
-    '!node_modules/electron{,/**}',
-    '!node_modules/electron-builder{,/**}',
-    '!node_modules/app-builder-{bin,lib}{,/**}',
-    '!node_modules/dmg-builder{,/**}',
-    '!node_modules/electron-publish{,/**}',
-    '!node_modules/@electron{,/**}'
+    '!**/._*'
   ],
   afterSign: 'notarize.js',
   mac: {
@@ -49,16 +40,16 @@ const config = {
     target: [
       {
         target: 'dmg',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'zip',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ],
     icon: 'resources/icons/png',
     hardenedRuntime: true,
-    identity: 'Anoop MD (W7LPPWA48L)',
+    identity: macIdentity,
     entitlements: 'resources/entitlements.mac.plist',
     entitlementsInherit: 'resources/entitlements.mac.plist',
     notarize: false,
@@ -78,15 +69,15 @@ const config = {
     target: [
       {
         target: 'AppImage',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'deb',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       },
       {
         target: 'rpm',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ],
     protocols: [
@@ -118,7 +109,7 @@ const config = {
     target: [
       {
         target: 'nsis',
-        arch: ['x64', 'arm64']
+        arch: resolvedTargetArchs
       }
     ]
   },

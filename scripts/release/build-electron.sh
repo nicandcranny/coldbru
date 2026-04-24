@@ -5,17 +5,26 @@ set -e
 TARGET="$1"
 shift || true
 
+reset_dir() {
+  local dir="$1"
+
+  if [ -d "$dir" ]; then
+    find "$dir" -mindepth 1 -delete 2>/dev/null || true
+    rm -rf "$dir"
+  fi
+}
+
 # Build the web app that gets packaged into the desktop app.
 npm run build:web
 
 # Remove out directory
-rm -rf packages/coldbru-electron/out
+reset_dir packages/coldbru-electron/out
 
 # Remove web directory
-rm -rf packages/coldbru-electron/web
+reset_dir packages/coldbru-electron/web
 
 # Create a new web directory
-mkdir packages/coldbru-electron/web
+mkdir -p packages/coldbru-electron/web
 
 # Copy build
 cp -r packages/coldbru-app/dist/* packages/coldbru-electron/web
@@ -52,4 +61,4 @@ else
   exit 1
 fi
 
-node ./scripts/stage-release-artifacts.js
+node ./scripts/release/collect-release-artifacts.js "$TARGET"

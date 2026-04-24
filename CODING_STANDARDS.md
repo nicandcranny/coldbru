@@ -62,7 +62,15 @@ Remember, these rules are here to make our codebase harmonious. If something doe
 - Tests should be fast enough to run continuously. Avoid long-running operations unless absolutely necessary; prefer lightweight fixtures and isolated units.
 
 
-## UI Specific instructions 
+## UI Specific instructions
+
+### Component Reuse
+
+- MUST: Before creating a new component, check the existing catalog in [COMPONENTS.md](COMPONENTS.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/COMPONENTS.md)). Reuse what already exists.
+- MUST: UI primitives live in `src/ui/` (Button, ActionIcon, MenuDropdown, StatusBadge, etc.). Use these instead of building one-off equivalents.
+- MUST: Shared components live in `src/components/` (Modal, Spinner, Checkbox, SearchInput, EditableTable, CodeEditor, etc.). Check there before creating a new one.
+- SHOULD: If a new component is generic enough to be used in 3+ places, build it as a reusable component in `src/ui/` (for primitives) or `src/components/` (for compound components) — not inline in a feature folder.
+- SHOULD: Custom hooks that encapsulate reusable logic belong in `src/hooks/`. Check existing hooks before writing new ones.
 
 ### React
 
