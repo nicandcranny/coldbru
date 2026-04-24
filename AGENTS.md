@@ -132,6 +132,7 @@ Summary of the most important rules:
 - Add `data-testid` for testable elements.
 - Meaningful comments on complex flows; skip obvious ones.
 - Minimal diffs — don't introduce whitespace-only changes.
+- **Reuse existing components** — check [COMPONENTS.md](COMPONENTS.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/COMPONENTS.md)) before building anything new. UI primitives live in `src/ui/`, shared components in `src/components/`, and custom hooks in `src/hooks/`.
 
 ## Commit Guidelines
 
@@ -204,6 +205,17 @@ To release, follow the guideline at [RELEASE.md](RELEASE.md) ([GitHub](https://g
 ## Security
 
 See [SECURITY.md](SECURITY.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/SECURITY.md)). Report vulnerabilities privately via [GitHub Security Advisories](https://github.com/nicandcranny/coldbru/security).
+
+## Keeping Docs Up to Date
+
+These docs are living documents. When you change the codebase, update the relevant docs in the same PR:
+
+- **Add, remove, or change a reusable component, UI primitive, or custom hook** → update [COMPONENTS.md](COMPONENTS.md).
+- **Change coding conventions, testing philosophy, or UI patterns** → update [CODING_STANDARDS.md](CODING_STANDARDS.md).
+- **Change build, release, or dev setup steps** → update [RELEASE.md](RELEASE.md) or this file.
+- **Change repo structure (new packages, moved directories)** → update the Repository Structure section in this file.
+
+If a PR changes a component's props, path, or purpose and doesn't update COMPONENTS.md, that's a review blocker.
 
 ## Other Documentation
 
