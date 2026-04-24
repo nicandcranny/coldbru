@@ -51,5 +51,3 @@ else
   echo "Please pass a build distribution type"
   exit 1
 fi
-
-node ./scripts/stage-release-artifacts.js
