@@ -155,6 +155,7 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
   const [showCreateCollectionModal, setShowCreateCollectionModal] = useState(false);
   const [showImportCollectionModal, setShowImportCollectionModal] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const workspaces = useSelector((state) => state.workspaces.workspaces);
   const activeWorkspaceUid = useSelector((state) => state.workspaces.activeWorkspaceUid);
@@ -207,7 +208,6 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
   }, [activeTab, safeCollection.uid, showCollectionEnv]);
 
   const hideDropdown = () => {
-    setSearchText('');
     dropdownTippyRef.current?.hide();
   };
 
@@ -323,6 +323,11 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
             />
           )}
           placement="bottom-end"
+          onShow={() => setIsDropdownOpen(true)}
+          onHide={() => {
+            setIsDropdownOpen(false);
+            setSearchText('');
+          }}
         >
           {/* Tab Headers */}
           <div className="tab-header flex pt-3 pb-2 px-3">
@@ -352,10 +357,12 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
               description={description}
               searchText={searchText}
               setSearchText={setSearchText}
+              isOpen={isDropdownOpen}
               onEnvironmentSelect={handleEnvironmentSelect}
               onSettingsClick={handleSettingsClick}
               onCreateClick={handleCreateClick}
               onImportClick={handleImportClick}
+              onClose={hideDropdown}
             />
           </div>
         </Dropdown>

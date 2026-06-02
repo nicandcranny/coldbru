@@ -92,18 +92,14 @@ const Wrapper = styled.div`
     border-top: 0.0625rem solid ${(props) => props.theme.dropdown.separator};
     z-index: 10;
     margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: ${(props) => props.theme.text};
 
     &:hover {
       background-color: ${(props) => props.theme.dropdown.bg + ' !important'};
-    }
-
-    button {
-      color: ${(props) => props.theme.text};
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      gap: 0.5rem;
     }
   }
 

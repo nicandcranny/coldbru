@@ -139,3 +139,4 @@ ColdBru is released under the [MIT License](LICENSE.md).
 - Arrow button to select after search on environment list
 - Arrow button to move between requests
 - Add go to file feature in the Git menu
+- Import Postman's export
