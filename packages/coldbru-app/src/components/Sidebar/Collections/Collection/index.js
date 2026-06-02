@@ -16,6 +16,8 @@ import {
   IconEdit,
   IconShare,
   IconFoldDown,
+  IconArrowBarToUp,
+  IconArrowBarToDown,
   IconX,
   IconSettings,
   IconTerminal2,
@@ -24,7 +26,7 @@ import {
 } from '@tabler/icons';
 import OpenAPISyncIcon from 'components/Icons/OpenAPISync';
 import { toggleCollection, collapseFullCollection } from 'providers/ReduxStore/slices/collections';
-import { mountCollection, moveCollectionAndPersist, handleCollectionItemDrop, pasteItem, showInFolder, saveCollectionSecurityConfig } from 'providers/ReduxStore/slices/collections/actions';
+import { mountCollection, moveCollectionAndPersist, moveCollectionToPositionAndPersist, handleCollectionItemDrop, pasteItem, showInFolder, saveCollectionSecurityConfig } from 'providers/ReduxStore/slices/collections/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTab, makeTabPermanent } from 'providers/ReduxStore/slices/tabs';
 import toast from 'react-hot-toast';
@@ -50,6 +52,7 @@ import ActionIcon from 'ui/ActionIcon';
 import MenuDropdown from 'ui/MenuDropdown';
 import { useSidebarAccordion } from 'components/Sidebar/SidebarAccordionContext';
 import { createEmptyStateMenuItems } from 'utils/collections/emptyStateRequest';
+import { focusSidebarRowByOffset } from '../utils/keyboardNavigation';
 
 // Delay before showing empty collection state (ms)
 // This prevents flicker from race condition between loading state and item batch updates
@@ -130,10 +133,7 @@ const Collection = ({ collection, searchText }) => {
     'rotate-90': !collectionIsCollapsed
   });
 
-  const handleClick = (event) => {
-    if (event.detail != 1) return;
-    // Check if the click came from the chevron icon
-    const isChevronClick = event.target.closest('svg')?.classList.contains('chevron-icon');
+  const activateCollection = ({ openSettings = true, isChevronClick = false } = {}) => {
     setTimeout(scrollToTheActiveTab, 50);
 
     ensureCollectionIsMounted();
@@ -148,7 +148,7 @@ const Collection = ({ collection, searchText }) => {
       }
     }
 
-    if (!isChevronClick) {
+    if (openSettings && !isChevronClick) {
       dispatch(
         addTab({
           uid: collection.uid,
@@ -157,6 +157,14 @@ const Collection = ({ collection, searchText }) => {
         })
       );
     }
+  };
+
+  const handleClick = (event) => {
+    if (event.detail != 1) return;
+
+    // Check if the click came from the chevron icon
+    const isChevronClick = event.target.closest('svg')?.classList.contains('chevron-icon');
+    activateCollection({ isChevronClick });
   };
 
   const handleDoubleClick = (_event) => {
@@ -219,8 +227,44 @@ const Collection = ({ collection, searchText }) => {
       });
   };
 
+  const handleMoveCollectionToPosition = (position) => {
+    dispatch(moveCollectionToPositionAndPersist({ collectionUid: collection.uid, position }))
+      .catch((err) => {
+        toast.error(err ? err.message : 'Failed to reorder collection');
+      });
+  };
+
   // Keyboard shortcuts handler for collection
   const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, 1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, -1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      activateCollection();
+      return;
+    }
+
     // Detect Mac by checking both metaKey and platform
     const isMac = navigator.userAgent?.includes('Mac') || navigator.platform?.startsWith('Mac');
     const isModifierPressed = isMac ? e.metaKey : e.ctrlKey;
@@ -416,6 +460,18 @@ const Collection = ({ collection, searchText }) => {
       }
     },
     {
+      id: 'send-to-top',
+      leftSection: IconArrowBarToUp,
+      label: 'Send to Top',
+      onClick: () => handleMoveCollectionToPosition('top')
+    },
+    {
+      id: 'send-to-bottom',
+      leftSection: IconArrowBarToDown,
+      label: 'Send to Bottom',
+      onClick: () => handleMoveCollectionToPosition('bottom')
+    },
+    {
       id: 'clone',
       leftSection: IconCopy,
       label: 'Clone',
@@ -538,6 +594,7 @@ const Collection = ({ collection, searchText }) => {
         onFocus={handleFocus}
         onBlur={handleBlur}
         data-testid="sidebar-collection-row"
+        data-sidebar-navigable="true"
       >
         <div
           className="flex flex-grow items-center overflow-hidden min-w-0"

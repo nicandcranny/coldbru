@@ -66,6 +66,8 @@ const GraphQLVariables = ({ variables, item, collection }) => {
         mode="application/json"
         onRun={onRun}
         onSave={onSave}
+        onPrettify={onPrettify}
+        syncValueWhileFocused={true}
         enableVariableHighlighting={true}
         showHintsFor={['variables']}
       />

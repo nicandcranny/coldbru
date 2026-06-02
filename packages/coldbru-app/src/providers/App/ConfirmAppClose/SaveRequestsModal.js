@@ -101,7 +101,9 @@ const SaveRequestsModal = ({ onClose }) => {
 
   useEffect(() => {
     if (totalDraftsCount === 0) {
-      return dispatch(completeQuitFlow());
+      console.log('[quit-flow] No unsaved drafts — completing quit flow');
+      dispatch(completeQuitFlow());
+      return;
     }
   }, [totalDraftsCount, dispatch]);
 

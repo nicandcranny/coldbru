@@ -395,10 +395,28 @@ app.on('ready', async () => {
     mainWindow.webContents.send('main:leave-full-screen');
   });
 
+  let isQuitting = false;
   mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+    isQuitting = true;
     e.preventDefault();
     terminalManager.cleanup(mainWindow.webContents);
+
+    // Flush cookies before quit since app.exit() skips before-quit
+    try { cookiesStore.saveCookieJar(true); } catch (err) { console.warn('Failed to flush cookies on quit', err); }
+    systemMonitor.stop();
+    try { terminalManager.killAll(); } catch (err) { console.error('Failed to kill all terminals on quit', err); }
+    if (useSingleInstance && gotTheLock) { app.releaseSingleInstanceLock(); }
+
     ipcMain.emit('main:start-quit-flow');
+
+    // Safety net: force quit if the renderer never responds
+    setTimeout(() => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        console.warn('Quit flow timed out — forcing quit');
+        process.exit(0);
+      }
+    }, 5000);
   });
 
   mainWindow.webContents.on('will-redirect', (event, url) => {

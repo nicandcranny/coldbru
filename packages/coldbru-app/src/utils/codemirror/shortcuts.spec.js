@@ -1,4 +1,4 @@
-const { describe, it, expect, jest, beforeEach, afterEach } = require('@jest/globals');
+const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
 
 jest.mock('codemirror', () => ({
   Pass: 'CodeMirror.Pass'
@@ -6,6 +6,16 @@ jest.mock('codemirror', () => ({
 
 jest.mock('providers/Hotkeys/keyMappings', () => ({
   getKeyBindingsForActionAllOS: jest.fn(() => [])
+}));
+
+jest.mock('providers/ReduxStore/index', () => ({
+  dispatch: jest.fn(),
+  getState: jest.fn(() => ({
+    app: {
+      preferences: {}
+    }
+  })),
+  subscribe: jest.fn()
 }));
 
 jest.mock('providers/ReduxStore/slices/tabs', () => ({
@@ -18,7 +28,8 @@ jest.mock('providers/ReduxStore/slices/app', () => ({
   toggleSidebarCollapse: jest.fn(() => ({ type: 'app/toggleSidebarCollapse' }))
 }));
 
-import { setupShortcuts } from './shortcuts';
+const { setupShortcuts } = require('./shortcuts');
+const { getKeyBindingsForActionAllOS } = require('providers/Hotkeys/keyMappings');
 
 describe('setupShortcuts', () => {
   let editor;
@@ -91,5 +102,26 @@ describe('setupShortcuts', () => {
 
     expect(editor.removeKeyMap).toHaveBeenCalledTimes(1);
     expect(editor.addKeyMap).toHaveBeenCalledTimes(2);
+  });
+
+  it('calls onPrettify when format json shortcut fires', () => {
+    const onPrettify = jest.fn();
+    getKeyBindingsForActionAllOS.mockImplementation((action) => {
+      if (action === 'formatJson') {
+        return ['shift+alt+f'];
+      }
+
+      return [];
+    });
+
+    setupShortcuts(editor, { props: { onPrettify } }, mockStore);
+
+    const keyMap = editor.addKeyMap.mock.calls[0][0];
+    expect(typeof keyMap['Shift-Alt-F']).toBe('function');
+
+    const handled = keyMap['Shift-Alt-F']();
+
+    expect(handled).toBe(true);
+    expect(onPrettify).toHaveBeenCalledTimes(1);
   });
 });

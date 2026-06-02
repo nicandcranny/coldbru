@@ -1,4 +1,5 @@
 export const DEFAULT_KEY_BINDINGS = {
+  commandPalette: { mac: 'command+bind+shift+bind+p', windows: 'ctrl+bind+shift+bind+p', name: 'Command Palette' },
   save: { mac: 'command+bind+s', windows: 'ctrl+bind+s', name: 'Save' },
   sendRequest: { mac: 'command+bind+enter', windows: 'ctrl+bind+enter', name: 'Send Request' },
   editEnvironment: { mac: 'command+bind+e', windows: 'ctrl+bind+e', name: 'Edit Environment' },
@@ -39,6 +40,7 @@ export const DEFAULT_KEY_BINDINGS = {
   zoomIn: { mac: 'command+bind+=', windows: 'ctrl+bind+=', name: 'Zoom In' },
   zoomOut: { mac: 'command+bind+-', windows: 'ctrl+bind+-', name: 'Zoom Out' },
   resetZoom: { mac: 'command+bind+0', windows: 'ctrl+bind+0', name: 'Reset Zoom' },
+  formatJson: { mac: 'shift+bind+alt+bind+f', windows: 'shift+bind+alt+bind+f', name: 'Format JSON' },
   cloneItem: { mac: 'command+bind+d', windows: 'ctrl+bind+d', name: 'Clone Item' },
   copyItem: { mac: 'command+bind+c', windows: 'ctrl+bind+c', name: 'Copy Item' },
   pasteItem: { mac: 'command+bind+v', windows: 'ctrl+bind+v', name: 'Paste Item' },

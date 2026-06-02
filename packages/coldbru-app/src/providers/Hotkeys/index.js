@@ -8,6 +8,7 @@ import NewRequest from 'components/Sidebar/NewRequest';
 import NetworkError from 'components/ResponsePane/NetworkError';
 import GlobalSearchModal from 'components/GlobalSearchModal';
 import ImportCollection from 'components/Sidebar/ImportCollection';
+import CommandPaletteModal from 'components/CommandPaletteModal';
 
 import store from 'providers/ReduxStore/index';
 import {
@@ -29,6 +30,7 @@ export const HotkeysContext = createContext(null);
 
 // List of all actions that are bound in this provider
 const BOUND_ACTIONS = [
+  'commandPalette',
   'save',
   'sendRequest',
   'editEnvironment',
@@ -117,6 +119,11 @@ function unbindAllHotkeys(userKeyBindings) {
  */
 function bindAllHotkeys(userKeyBindings) {
   const { dispatch, getState } = store;
+
+  // SAVE
+  bindHotkey('commandPalette', () => {
+    window.dispatchEvent(new CustomEvent('command-palette-open'));
+  }, userKeyBindings);
 
   // SAVE
   bindHotkey('save', () => {
@@ -338,6 +345,7 @@ export const HotkeysProvider = (props) => {
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [showGlobalSearchModal, setShowGlobalSearchModal] = useState(false);
   const [showImportCollectionModal, setShowImportCollectionModal] = useState(false);
+  const [showCommandPaletteModal, setShowCommandPaletteModal] = useState(false);
 
   // Keep a ref to the previous userKeyBindings so we can unbind old combos
   const prevKeyBindingsRef = useRef(undefined);
@@ -375,15 +383,18 @@ export const HotkeysProvider = (props) => {
     const openNewRequest = () => setShowNewRequestModal(true);
     const openGlobalSearch = () => setShowGlobalSearchModal(true);
     const openImportCollection = () => setShowImportCollectionModal(true);
+    const openCommandPalette = () => setShowCommandPaletteModal(true);
 
     window.addEventListener('new-request-open', openNewRequest);
     window.addEventListener('global-search-open', openGlobalSearch);
     window.addEventListener('import-collection-open', openImportCollection);
+    window.addEventListener('command-palette-open', openCommandPalette);
 
     return () => {
       window.removeEventListener('new-request-open', openNewRequest);
       window.removeEventListener('global-search-open', openGlobalSearch);
       window.removeEventListener('import-collection-open', openImportCollection);
+      window.removeEventListener('command-palette-open', openCommandPalette);
     };
   }, []);
 
@@ -397,6 +408,9 @@ export const HotkeysProvider = (props) => {
       )}
       {showImportCollectionModal && (
         <ImportCollection onClose={() => setShowImportCollectionModal(false)} />
+      )}
+      {showCommandPaletteModal && (
+        <CommandPaletteModal isOpen={showCommandPaletteModal} onClose={() => setShowCommandPaletteModal(false)} />
       )}
       <div>{props.children}</div>
     </HotkeysContext.Provider>
