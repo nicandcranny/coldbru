@@ -3,12 +3,18 @@ const path = require('path');
 const fsExtra = require('fs-extra');
 const archiver = require('archiver');
 const extractZip = require('extract-zip');
+const { postmanToBruno, postmanToBrunoEnvironment } = require('@usebruno/converters');
 const { ipcMain, dialog } = require('electron');
 const isDev = require('electron-is-dev');
 const { createDirectory, sanitizeName, writeFile, DEFAULT_GITIGNORE } = require('../utils/filesystem');
 const yaml = require('js-yaml');
 const LastOpenedWorkspaces = require('../store/last-opened-workspaces');
 const { globalEnvironmentsManager } = require('../store/workspace-environments');
+const { importCollection } = require('../utils/collection-import');
+const {
+  isPostmanWorkspaceExportDirectory,
+  readPostmanWorkspaceExportDirectory
+} = require('../utils/postman-workspace-import');
 
 const {
   createWorkspaceConfig,
@@ -44,6 +50,136 @@ const prepareWorkspaceConfigForClient = (workspaceConfig, workspacePath) => {
     ...workspaceConfig,
     collections: filteredCollections
   };
+};
+
+const getUniqueWorkspacePath = (extractLocation, workspaceName) => {
+  const safeWorkspaceName = sanitizeName(workspaceName) || 'Imported-Workspace';
+  let workspacePath = path.join(extractLocation, safeWorkspaceName);
+  let counter = 1;
+
+  while (fs.existsSync(workspacePath)) {
+    workspacePath = path.join(extractLocation, `${safeWorkspaceName} (${counter})`);
+    counter++;
+  }
+
+  return workspacePath;
+};
+
+const getUniqueEnvironmentName = (workspacePath, environmentName) => {
+  const baseName = environmentName || 'Imported Environment';
+  let nextName = baseName;
+  let counter = 1;
+
+  while (fs.existsSync(path.join(workspacePath, 'environments', `${nextName}.yml`))) {
+    nextName = `${baseName} (${counter})`;
+    counter++;
+  }
+
+  return nextName;
+};
+
+const openImportedWorkspace = ({ mainWindow, workspaceWatcher, lastOpenedWorkspaces, workspacePath }) => {
+  validateWorkspacePath(workspacePath);
+
+  const workspaceConfig = readWorkspaceConfig(workspacePath);
+  validateWorkspaceConfig(workspaceConfig);
+
+  const workspaceUid = getWorkspaceUid(workspacePath);
+  const configForClient = prepareWorkspaceConfigForClient(workspaceConfig, workspacePath);
+
+  lastOpenedWorkspaces.add(workspacePath);
+  mainWindow.webContents.send('main:workspace-opened', workspacePath, workspaceUid, configForClient);
+
+  if (workspaceWatcher) {
+    workspaceWatcher.addWatcher(mainWindow, workspacePath);
+  }
+
+  return {
+    success: true,
+    workspaceConfig: configForClient,
+    workspaceUid,
+    workspacePath
+  };
+};
+
+const importPostmanWorkspace = async ({
+  extractedDirectory,
+  zipFilePath,
+  extractLocation,
+  mainWindow
+}) => {
+  const { collections, environments } = readPostmanWorkspaceExportDirectory(extractedDirectory);
+
+  if (collections.length === 0 && environments.length === 0) {
+    throw new Error('Postman export does not contain any collections or environments');
+  }
+
+  const workspaceName = path.basename(zipFilePath, path.extname(zipFilePath)) || 'Imported Postman Workspace';
+  const workspacePath = getUniqueWorkspacePath(extractLocation, workspaceName);
+  const collectionsPath = path.join(workspacePath, 'collections');
+  let importedCollectionsCount = 0;
+  let importedEnvironmentsCount = 0;
+
+  try {
+    validateWorkspaceDirectory(workspacePath);
+
+    await createDirectory(workspacePath);
+    await createDirectory(collectionsPath);
+
+    const workspaceConfig = createWorkspaceConfig(workspaceName);
+    await writeWorkspaceConfig(workspacePath, workspaceConfig);
+    await writeFile(path.join(workspacePath, '.gitignore'), DEFAULT_GITIGNORE);
+
+    for (const collectionFile of collections) {
+      try {
+        const brunoCollection = await postmanToBruno(collectionFile.content, { useWorkers: true });
+        const importedCollection = await importCollection(
+          brunoCollection,
+          collectionsPath,
+          mainWindow,
+          null,
+          'bru',
+          { skipOpenEvent: true }
+        );
+
+        await addCollectionToWorkspace(workspacePath, {
+          name: importedCollection.brunoConfig?.name || brunoCollection.name || path.basename(importedCollection.collectionPath),
+          path: importedCollection.collectionPath
+        });
+
+        importedCollectionsCount++;
+      } catch (error) {
+        console.error(`Failed to import Postman collection ${collectionFile.fileName}:`, error);
+      }
+    }
+
+    for (const environmentFile of environments) {
+      try {
+        const brunoEnvironment = postmanToBrunoEnvironment(environmentFile.content);
+        const environmentName = sanitizeName(brunoEnvironment.name || 'Imported Environment') || 'Imported Environment';
+        const uniqueEnvironmentName = getUniqueEnvironmentName(workspacePath, environmentName);
+
+        await globalEnvironmentsManager.createGlobalEnvironment(workspacePath, {
+          name: uniqueEnvironmentName,
+          variables: brunoEnvironment.variables || [],
+          color: brunoEnvironment.color
+        });
+
+        importedEnvironmentsCount++;
+      } catch (error) {
+        console.error(`Failed to import Postman environment ${environmentFile.fileName}:`, error);
+      }
+    }
+
+    if (importedCollectionsCount === 0 && importedEnvironmentsCount === 0) {
+      throw new Error('Failed to import any collections or environments from Postman export');
+    }
+
+    return workspacePath;
+  } catch (error) {
+    await fsExtra.remove(workspacePath).catch(() => {});
+    throw error;
+  }
 };
 
 const registerWorkspaceIpc = (mainWindow, workspaceWatcher) => {
@@ -366,60 +502,47 @@ const registerWorkspaceIpc = (mainWindow, workspaceWatcher) => {
         await extractZip(zipFilePath, { dir: tempDir });
 
         const extractedItems = fs.readdirSync(tempDir);
-        let workspaceDir = tempDir;
+        let importedDir = tempDir;
 
         if (extractedItems.length === 1) {
           const singleItem = path.join(tempDir, extractedItems[0]);
           if (fs.statSync(singleItem).isDirectory()) {
-            workspaceDir = singleItem;
+            importedDir = singleItem;
           }
         }
 
-        const workspaceYmlPath = path.join(workspaceDir, 'workspace.yml');
-        if (!fs.existsSync(workspaceYmlPath)) {
-          throw new Error('Invalid workspace: workspace.yml not found in the zip file');
-        }
+        const workspaceYmlPath = path.join(importedDir, 'workspace.yml');
+        let finalWorkspacePath;
 
-        const workspaceConfig = yaml.load(fs.readFileSync(workspaceYmlPath, 'utf8'));
-        const workspaceName = workspaceConfig.info.name || 'Imported Workspace';
-        const sanitizedName = sanitizeName(workspaceName);
+        if (fs.existsSync(workspaceYmlPath)) {
+          const workspaceConfig = yaml.load(fs.readFileSync(workspaceYmlPath, 'utf8'));
+          const workspaceName = workspaceConfig.info.name || 'Imported Workspace';
+          finalWorkspacePath = getUniqueWorkspacePath(extractLocation, workspaceName);
 
-        let finalWorkspacePath = path.join(extractLocation, sanitizedName);
-        let counter = 1;
-        while (fs.existsSync(finalWorkspacePath)) {
-          finalWorkspacePath = path.join(extractLocation, `${sanitizedName} (${counter})`);
-          counter++;
-        }
-
-        if (workspaceDir !== tempDir) {
-          await fsExtra.move(workspaceDir, finalWorkspacePath);
+          if (importedDir !== tempDir) {
+            await fsExtra.move(importedDir, finalWorkspacePath);
+            await fsExtra.remove(tempDir);
+          } else {
+            await fsExtra.move(tempDir, finalWorkspacePath);
+          }
+        } else if (isPostmanWorkspaceExportDirectory(importedDir)) {
+          finalWorkspacePath = await importPostmanWorkspace({
+            extractedDirectory: importedDir,
+            zipFilePath,
+            extractLocation,
+            mainWindow
+          });
           await fsExtra.remove(tempDir);
         } else {
-          await fsExtra.move(tempDir, finalWorkspacePath);
+          throw new Error('Invalid workspace import: zip must contain either workspace.yml or a Postman workspace export');
         }
 
-        validateWorkspacePath(finalWorkspacePath);
-
-        const finalConfig = readWorkspaceConfig(finalWorkspacePath);
-        validateWorkspaceConfig(finalConfig);
-
-        const workspaceUid = getWorkspaceUid(finalWorkspacePath);
-        const configForClient = prepareWorkspaceConfigForClient(finalConfig, finalWorkspacePath);
-
-        lastOpenedWorkspaces.add(finalWorkspacePath);
-
-        mainWindow.webContents.send('main:workspace-opened', finalWorkspacePath, workspaceUid, configForClient);
-
-        if (workspaceWatcher) {
-          workspaceWatcher.addWatcher(mainWindow, finalWorkspacePath);
-        }
-
-        return {
-          success: true,
-          workspaceConfig: configForClient,
-          workspaceUid,
+        return openImportedWorkspace({
+          mainWindow,
+          workspaceWatcher,
+          lastOpenedWorkspaces,
           workspacePath: finalWorkspacePath
-        };
+        });
       } catch (error) {
         await fsExtra.remove(tempDir).catch(() => {});
         throw error;

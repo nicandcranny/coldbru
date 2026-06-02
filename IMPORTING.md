@@ -8,6 +8,8 @@ ColdBru currently has import or conversion paths for:
 
 - Bruno and ColdBru collections
 - Postman collections
+- Postman workspace export ZIP files
+- Postman environments
 - Insomnia collections
 - OpenAPI definitions
 - WSDL definitions
@@ -16,7 +18,7 @@ ColdBru currently has import or conversion paths for:
 ## General Import Flow
 
 1. Open ColdBru and create or open the workspace you want to use.
-2. Use the import collection to select the source file, export, or definition you want to bring in.
+2. Use the relevant import flow to select the source file, export, or definition you want to bring in.
 3. Choose where the imported collection should be stored on disk.
 4. Review the imported result and make any adjustments needed for your workflow.
 
@@ -25,6 +27,15 @@ ColdBru currently has import or conversion paths for:
 Use the Import Collection Menu to import collections or API definitions from supported sources.
 
 ![Import Collection menu](assets/images/import-collection.png)
+
+### Import Workspace Menu
+
+Use the Import Workspace Menu when you want ColdBru to create a workspace from a ZIP export.
+
+- This supports ColdBru & Postman workspace export (in ZIP format).
+- ColdBru workspace ZIPs restore the workspace directly.
+- Postman workspace export ZIPs are converted into a new ColdBru workspace with imported collections and workspace environments.
+- Choose the destination folder where ColdBru should create the imported workspace.
 
 ## Import Notes by Source
 
@@ -37,7 +48,8 @@ Use the Import Collection Menu to import collections or API definitions from sup
 
 - Export your Postman collections using [this guideline](https://learning.postman.com/docs/getting-started/importing-and-exporting/exporting-data).
 - Import Postman collections into ColdBru by using the [Import Collection Menu](#import-collection-menu).
-- Environments import is not supported yet from the UI. Please check the [Import using Conversion Script](#import-using-conversion-script) section.
+- Export your full Postman workspace as a ZIP if you want to bring collections and environments together, then import it from the [Import Workspace Menu](#import-workspace-menu).
+- Import Postman environments from the environment import flow in ColdBru. Global environments can be imported from the workspace environment screen, and collection environments can be imported from the collection environment UI.
 
 ### Insomnia
 
@@ -63,7 +75,7 @@ If you need to import environments or convert many collections in one go, you ca
 
 This approach is useful when:
 
-- you want to convert environments, which are not fully supported from the ColdBru UI yet
+- you want to convert environments from sources that are not supported from the ColdBru UI yet
 - you want to mass-convert collections from another client into Bruno-compatible files before bringing them into ColdBru
 
 Recommended workflow:
