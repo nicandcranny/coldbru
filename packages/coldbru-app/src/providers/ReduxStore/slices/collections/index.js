@@ -274,6 +274,20 @@ export const collectionsSlice = createSlice({
       const targetItemIndex = state.collections.findIndex((i) => i.uid === targetItem.uid); // Find target item
       state.collections.splice(targetItemIndex, 0, draggedItem); // Insert dragged-item above target-item
     },
+    moveCollectionToPosition: (state, action) => {
+      const { collectionUid, position } = action.payload;
+      const collectionIndex = state.collections.findIndex((i) => i.uid === collectionUid);
+      if (collectionIndex === -1) {
+        return;
+      }
+
+      const [collection] = state.collections.splice(collectionIndex, 1);
+      if (position === 'top') {
+        state.collections.unshift(collection);
+      } else {
+        state.collections.push(collection);
+      }
+    },
     updateLastAction: (state, action) => {
       const { collectionUid, lastAction } = action.payload;
       const collection = findCollectionByUid(state.collections, collectionUid);
@@ -3695,6 +3709,7 @@ export const {
   updateRequestDocs,
   updateFolderDocs,
   moveCollection,
+  moveCollectionToPosition,
   streamDataReceived,
   collectionAddOauth2CredentialsByUrl,
   collectionClearOauth2CredentialsByUrlAndCredentialsId,

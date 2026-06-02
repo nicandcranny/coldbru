@@ -37,6 +37,7 @@ import {
   sortCollections as _sortCollections,
   updateCollectionMountStatus,
   moveCollection,
+  moveCollectionToPosition,
   workspaceEnvUpdateEvent,
   requestCancelled,
   resetRunResults,
@@ -2777,6 +2778,46 @@ export const moveCollectionAndPersist
         .invoke('renderer:reorder-workspace-collections', activeWorkspace.pathname, collectionPaths)
         .then(() => {
           dispatch(moveCollection({ draggedItem, targetItem }));
+        })
+        .catch((err) => {
+          console.error('Failed to reorder workspace collections', err);
+          return Promise.reject(err);
+        });
+    };
+
+export const moveCollectionToPositionAndPersist
+  = ({ collectionUid, position }) =>
+    (dispatch, getState) => {
+      const state = getState();
+      const activeWorkspace = state.workspaces.workspaces.find(
+        (w) => w.uid === state.workspaces.activeWorkspaceUid
+      );
+      if (!activeWorkspace?.pathname || !activeWorkspace.collections?.length) {
+        return Promise.resolve();
+      }
+
+      const workspacePathSet = new Set(
+        activeWorkspace.collections.map((wc) => normalizePath(wc.path))
+      );
+      const collectionsInWorkspace = state.collections.collections
+        .filter((c) => workspacePathSet.has(normalizePath(c.pathname)));
+      const collectionToMove = collectionsInWorkspace.find((c) => c.uid === collectionUid);
+      if (!collectionToMove) {
+        return Promise.resolve();
+      }
+
+      const reordered = collectionsInWorkspace.filter((c) => c.uid !== collectionUid);
+      if (position === 'top') {
+        reordered.unshift(collectionToMove);
+      } else {
+        reordered.push(collectionToMove);
+      }
+      const collectionPaths = reordered.map((c) => c.pathname);
+
+      return window.ipcRenderer
+        .invoke('renderer:reorder-workspace-collections', activeWorkspace.pathname, collectionPaths)
+        .then(() => {
+          dispatch(moveCollectionToPosition({ collectionUid, position }));
         })
         .catch((err) => {
           console.error('Failed to reorder workspace collections', err);

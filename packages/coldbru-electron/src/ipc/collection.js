@@ -2444,11 +2444,13 @@ const registerMainEventHandlers = (mainWindow, watcher) => {
 
   // The app listen for this event and allows the user to save unsaved requests before closing the app
   ipcMain.on('main:start-quit-flow', () => {
+    console.log('[quit-flow] Sending start-quit-flow to renderer');
     mainWindow.webContents.send('main:start-quit-flow');
   });
 
   ipcMain.handle('main:complete-quit-flow', () => {
-    mainWindow.destroy();
+    console.log('[quit-flow] Renderer completed quit flow — quitting app');
+    process.exit(0);
   });
 
   ipcMain.handle('main:force-quit', () => {

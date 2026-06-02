@@ -14,6 +14,7 @@ const ConfirmAppClose = () => {
     }
 
     const clearListener = ipcRenderer.on('main:start-quit-flow', () => {
+      console.log('[quit-flow] Renderer received start-quit-flow');
       setShowConfirmClose(true);
     });
 

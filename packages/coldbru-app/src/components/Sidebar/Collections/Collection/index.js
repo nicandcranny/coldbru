@@ -16,6 +16,8 @@ import {
   IconEdit,
   IconShare,
   IconFoldDown,
+  IconArrowBarToUp,
+  IconArrowBarToDown,
   IconX,
   IconSettings,
   IconTerminal2,
@@ -24,7 +26,7 @@ import {
 } from '@tabler/icons';
 import OpenAPISyncIcon from 'components/Icons/OpenAPISync';
 import { toggleCollection, collapseFullCollection } from 'providers/ReduxStore/slices/collections';
-import { mountCollection, moveCollectionAndPersist, handleCollectionItemDrop, pasteItem, showInFolder, saveCollectionSecurityConfig } from 'providers/ReduxStore/slices/collections/actions';
+import { mountCollection, moveCollectionAndPersist, moveCollectionToPositionAndPersist, handleCollectionItemDrop, pasteItem, showInFolder, saveCollectionSecurityConfig } from 'providers/ReduxStore/slices/collections/actions';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTab, makeTabPermanent } from 'providers/ReduxStore/slices/tabs';
 import toast from 'react-hot-toast';
@@ -216,6 +218,13 @@ const Collection = ({ collection, searchText }) => {
       })
       .catch((err) => {
         toast.error(err ? err.message : 'An error occurred while pasting the item');
+      });
+  };
+
+  const handleMoveCollectionToPosition = (position) => {
+    dispatch(moveCollectionToPositionAndPersist({ collectionUid: collection.uid, position }))
+      .catch((err) => {
+        toast.error(err ? err.message : 'Failed to reorder collection');
       });
   };
 
@@ -414,6 +423,18 @@ const Collection = ({ collection, searchText }) => {
         ensureCollectionIsMounted();
         handleRun();
       }
+    },
+    {
+      id: 'send-to-top',
+      leftSection: IconArrowBarToUp,
+      label: 'Send to Top',
+      onClick: () => handleMoveCollectionToPosition('top')
+    },
+    {
+      id: 'send-to-bottom',
+      leftSection: IconArrowBarToDown,
+      label: 'Send to Bottom',
+      onClick: () => handleMoveCollectionToPosition('bottom')
     },
     {
       id: 'clone',
