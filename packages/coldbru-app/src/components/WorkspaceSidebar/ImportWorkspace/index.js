@@ -194,7 +194,7 @@ const ImportWorkspace = ({ onClose }) => {
                   </button>
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Supports exported ColdBru workspace zip files
+                  Supports exported ColdBru workspace zip files and Postman workspace export zip files
                 </p>
               </div>
             </div>

@@ -150,7 +150,7 @@ Summary of the most important rules:
 
 ## Pull Request Guidelines
 
-Full template: [PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/.github/PULL_REQUEST_TEMPLATE.md))
+Follow the template for the PR description: [PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/.github/PULL_REQUEST_TEMPLATE.md))
 
 Contributing guide: [CONTRIBUTING.md](CONTRIBUTING.md) ([GitHub](https://github.com/nicandcranny/coldbru/blob/main/CONTRIBUTING.md))
 
