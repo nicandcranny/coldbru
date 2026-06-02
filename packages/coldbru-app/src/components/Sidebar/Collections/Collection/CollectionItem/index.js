@@ -57,6 +57,7 @@ import { openDevtoolsAndSwitchToTerminal } from 'utils/terminal';
 import ActionIcon from 'ui/ActionIcon';
 import MenuDropdown from 'ui/MenuDropdown';
 import { useSidebarAccordion } from 'components/Sidebar/SidebarAccordionContext';
+import { focusSidebarRowByOffset } from '../../utils/keyboardNavigation';
 
 const CollectionItem = ({ item, collectionUid, collectionPathname, searchText }) => {
   const { dropdownContainerRef } = useSidebarAccordion();
@@ -315,8 +316,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
     );
   };
 
-  const handleClick = (event) => {
-    if (event && event.detail != 1) return;
+  const activateItem = () => {
     // scroll to the active tab
     setTimeout(scrollToTheActiveTab, 50);
     const isRequest = isItemARequest(item);
@@ -354,6 +354,11 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
         );
       }
     }
+  };
+
+  const handleClick = (event) => {
+    if (event && event.detail != 1) return;
+    activateItem();
   };
 
   const handleFolderCollapse = (e) => {
@@ -677,6 +682,35 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
 
   // Keyboard shortcuts handler
   const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, 1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, -1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      activateItem();
+      return;
+    }
+
     // Detect Mac by checking both metaKey and platform
     const isMac = navigator.userAgent?.includes('Mac') || navigator.platform?.startsWith('Mac');
     const isModifierPressed = isMac ? e.metaKey : e.ctrlKey;
@@ -750,6 +784,7 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
         onBlur={handleBlur}
         onContextMenu={handleContextMenu}
         data-testid="sidebar-collection-item-row"
+        data-sidebar-navigable="true"
       >
         <div className="flex items-center h-full w-full min-w-0">
           {indents && indents.length

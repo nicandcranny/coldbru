@@ -52,6 +52,7 @@ import ActionIcon from 'ui/ActionIcon';
 import MenuDropdown from 'ui/MenuDropdown';
 import { useSidebarAccordion } from 'components/Sidebar/SidebarAccordionContext';
 import { createEmptyStateMenuItems } from 'utils/collections/emptyStateRequest';
+import { focusSidebarRowByOffset } from '../utils/keyboardNavigation';
 
 // Delay before showing empty collection state (ms)
 // This prevents flicker from race condition between loading state and item batch updates
@@ -132,10 +133,7 @@ const Collection = ({ collection, searchText }) => {
     'rotate-90': !collectionIsCollapsed
   });
 
-  const handleClick = (event) => {
-    if (event.detail != 1) return;
-    // Check if the click came from the chevron icon
-    const isChevronClick = event.target.closest('svg')?.classList.contains('chevron-icon');
+  const activateCollection = ({ openSettings = true, isChevronClick = false } = {}) => {
     setTimeout(scrollToTheActiveTab, 50);
 
     ensureCollectionIsMounted();
@@ -150,7 +148,7 @@ const Collection = ({ collection, searchText }) => {
       }
     }
 
-    if (!isChevronClick) {
+    if (openSettings && !isChevronClick) {
       dispatch(
         addTab({
           uid: collection.uid,
@@ -159,6 +157,14 @@ const Collection = ({ collection, searchText }) => {
         })
       );
     }
+  };
+
+  const handleClick = (event) => {
+    if (event.detail != 1) return;
+
+    // Check if the click came from the chevron icon
+    const isChevronClick = event.target.closest('svg')?.classList.contains('chevron-icon');
+    activateCollection({ isChevronClick });
   };
 
   const handleDoubleClick = (_event) => {
@@ -230,6 +236,35 @@ const Collection = ({ collection, searchText }) => {
 
   // Keyboard shortcuts handler for collection
   const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, 1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      const moved = focusSidebarRowByOffset(e.currentTarget, -1);
+
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      activateCollection();
+      return;
+    }
+
     // Detect Mac by checking both metaKey and platform
     const isMac = navigator.userAgent?.includes('Mac') || navigator.platform?.startsWith('Mac');
     const isModifierPressed = isMac ? e.metaKey : e.ctrlKey;
@@ -559,6 +594,7 @@ const Collection = ({ collection, searchText }) => {
         onFocus={handleFocus}
         onBlur={handleBlur}
         data-testid="sidebar-collection-row"
+        data-sidebar-navigable="true"
       >
         <div
           className="flex flex-grow items-center overflow-hidden min-w-0"
