@@ -135,6 +135,6 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 ## Future Improvements
 
-- Instant action (like Cmd+Shift+P) - for git, etc.
+- Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
 - Import Postman's export
