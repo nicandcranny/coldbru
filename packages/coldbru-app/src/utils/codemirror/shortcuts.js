@@ -72,6 +72,17 @@ const KEYBINDING_ACTIONS = [
       store.dispatch(toggleSidebarCollapse());
       return true;
     }
+  },
+  {
+    actionName: 'formatJson',
+    handler: (context) => {
+      if (context?.props?.onPrettify) {
+        context.props.onPrettify();
+        return true;
+      }
+
+      return false;
+    }
   }
 ];
 

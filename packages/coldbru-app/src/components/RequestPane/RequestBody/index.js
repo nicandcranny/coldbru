@@ -11,6 +11,8 @@ import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collection
 import { updateRequestBodyScrollPosition } from 'providers/ReduxStore/slices/tabs';
 import StyledWrapper from './StyledWrapper';
 import FileBody from '../FileBody/index';
+import { prettifyJsonString } from 'utils/common/index';
+import { toastError } from 'utils/common/error';
 
 const RequestBody = ({ item, collection }) => {
   const dispatch = useDispatch();
@@ -34,6 +36,16 @@ const RequestBody = ({ item, collection }) => {
 
   const onRun = () => dispatch(sendRequest(item, collection.uid));
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
+  const onPrettify = () => {
+    if (bodyMode !== 'json' || !body?.json) return;
+
+    try {
+      const prettyBodyJson = prettifyJsonString(body.json);
+      onEdit(prettyBodyJson);
+    } catch (error) {
+      toastError(new Error('Unable to prettify. Invalid JSON format.'));
+    }
+  };
 
   const onScroll = (editor) => {
     dispatch(
@@ -71,6 +83,8 @@ const RequestBody = ({ item, collection }) => {
           onEdit={onEdit}
           onRun={onRun}
           onSave={onSave}
+          onPrettify={bodyMode === 'json' ? onPrettify : undefined}
+          syncValueWhileFocused={bodyMode === 'json'}
           onScroll={onScroll}
           initialScroll={focusedTab?.requestBodyScrollPosition || 0}
           mode={codeMirrorMode[bodyMode]}

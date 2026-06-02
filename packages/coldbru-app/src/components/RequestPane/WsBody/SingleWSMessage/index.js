@@ -175,6 +175,8 @@ export const SingleWSMessage = ({
           onEdit={onEdit}
           onRun={handleRun}
           onSave={onSave}
+          onPrettify={codeType === 'json' ? onPrettify : undefined}
+          syncValueWhileFocused={codeType === 'json'}
           mode={codemirrorMode[codeType] ?? 'text/plain'}
           enableVariableHighlighting={true}
         />

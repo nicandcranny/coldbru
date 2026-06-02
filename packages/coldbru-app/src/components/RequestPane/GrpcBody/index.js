@@ -207,6 +207,8 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
           onEdit={onEdit}
           onRun={handleRun}
           onSave={onSave}
+          onPrettify={onPrettify}
+          syncValueWhileFocused={true}
           mode="application/ld+json"
           enableVariableHighlighting={true}
         />
