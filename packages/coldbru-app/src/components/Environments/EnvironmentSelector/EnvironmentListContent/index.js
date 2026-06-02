@@ -11,6 +11,7 @@ const EnvironmentListContent = ({
   searchText,
   setSearchText,
   isOpen,
+  autoFocusSearch = false,
   onEnvironmentSelect,
   onSettingsClick,
   onCreateClick,
@@ -18,6 +19,7 @@ const EnvironmentListContent = ({
   onClose
 }) => {
   const optionRefs = useRef([]);
+  const inputRef = useRef(null);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const selectableOptions = useMemo(() => {
@@ -53,6 +55,15 @@ const EnvironmentListContent = ({
       setHighlightedIndex(-1);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !autoFocusSearch || !hasEnvironments) {
+      return;
+    }
+
+    inputRef.current?.focus();
+    inputRef.current?.select?.();
+  }, [autoFocusSearch, hasEnvironments, isOpen]);
 
   useEffect(() => {
     setHighlightedIndex(-1);
@@ -145,6 +156,7 @@ const EnvironmentListContent = ({
           <div className="environment-search">
             <IconSearch size={13} strokeWidth={1.5} className="environment-search-icon" />
             <input
+              ref={inputRef}
               type="text"
               placeholder="Search environments..."
               value={searchText}

@@ -207,6 +207,33 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
     }
   }, [activeTab, safeCollection.uid, showCollectionEnv]);
 
+  useEffect(() => {
+    const handleOpenEnvironmentSelector = (event) => {
+      const preferredTab = event?.detail?.preferredTab;
+
+      if (preferredTab === 'collection' && (!showCollectionEnv || !safeCollection.uid)) {
+        toast.error('Collection environments are not available in current view');
+        return;
+      }
+
+      if (preferredTab === 'collection' || preferredTab === 'global') {
+        setActiveTab(preferredTab);
+      }
+
+      setSearchText('');
+
+      window.requestAnimationFrame(() => {
+        dropdownTippyRef.current?.show();
+      });
+    };
+
+    window.addEventListener('environment-selector-open', handleOpenEnvironmentSelector);
+
+    return () => {
+      window.removeEventListener('environment-selector-open', handleOpenEnvironmentSelector);
+    };
+  }, [safeCollection.uid, showCollectionEnv]);
+
   const hideDropdown = () => {
     dropdownTippyRef.current?.hide();
   };
@@ -358,6 +385,7 @@ const EnvironmentSelector = ({ collection, showCollectionEnv = true }) => {
               searchText={searchText}
               setSearchText={setSearchText}
               isOpen={isDropdownOpen}
+              autoFocusSearch={isDropdownOpen}
               onEnvironmentSelect={handleEnvironmentSelect}
               onSettingsClick={handleSettingsClick}
               onCreateClick={handleCreateClick}

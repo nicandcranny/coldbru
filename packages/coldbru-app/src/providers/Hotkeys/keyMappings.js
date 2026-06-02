@@ -1,4 +1,5 @@
 export const DEFAULT_KEY_BINDINGS = {
+  commandPalette: { mac: 'command+bind+shift+bind+p', windows: 'ctrl+bind+shift+bind+p', name: 'Command Palette' },
   save: { mac: 'command+bind+s', windows: 'ctrl+bind+s', name: 'Save' },
   sendRequest: { mac: 'command+bind+enter', windows: 'ctrl+bind+enter', name: 'Send Request' },
   editEnvironment: { mac: 'command+bind+e', windows: 'ctrl+bind+e', name: 'Edit Environment' },

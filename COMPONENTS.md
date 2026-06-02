@@ -30,6 +30,7 @@ Low-level, generic building blocks. Use these first.
 | Portal | `components/Portal` | Renders children into `document.body` via React portal. |
 | ErrorCapture | `components/ErrorCapture` | React error boundary + global `console.error` interceptor that dispatches to Redux debug log. |
 | Notifications | `components/Notifications` | Bell icon with unread badge, opens paginated notifications modal. No props (uses Redux internally). |
+| CommandPaletteModal | `components/CommandPaletteModal` | Keyboard-first action launcher opened from `Cmd/Ctrl+Shift+P`, with fuzzy command filtering and arrow-key navigation. Props: `isOpen`, `onClose`. |
 
 ### Form Controls
 

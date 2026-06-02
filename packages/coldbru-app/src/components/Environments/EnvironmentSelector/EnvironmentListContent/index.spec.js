@@ -42,6 +42,14 @@ const renderComponent = (props = {}) => {
 };
 
 describe('EnvironmentListContent keyboard navigation', () => {
+  it('autofocuses search input when requested', () => {
+    renderComponent({
+      autoFocusSearch: true
+    });
+
+    expect(screen.getByPlaceholderText('Search environments...')).toHaveFocus();
+  });
+
   it('selects first matching environment with ArrowDown then Enter while searching', () => {
     const props = renderComponent({
       environments: [{ uid: 'env-1', name: 'Development', color: '#00ff00' }],
