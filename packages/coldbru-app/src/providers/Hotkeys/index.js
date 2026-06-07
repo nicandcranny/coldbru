@@ -57,6 +57,8 @@ const BOUND_ACTIONS = [
   'renameItem'
 ];
 
+const INPUT_ENABLED_ACTIONS = ['commandPalette', 'globalSearch'];
+
 function hasActiveCopySelection() {
   const activeElement = document.activeElement;
   const selection = window.getSelection?.();
@@ -77,6 +79,24 @@ function hasActiveCopySelection() {
   }
 
   return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0);
+}
+
+function getInputEnabledCombos(userKeyBindings) {
+  return new Set(
+    INPUT_ENABLED_ACTIONS.flatMap((action) => getKeyBindingsForActionAllOS(action, userKeyBindings) || [])
+  );
+}
+
+export function createHotkeyStopCallback(userKeyBindings, defaultStopCallback = Mousetrap.prototype.stopCallback) {
+  const inputEnabledCombos = getInputEnabledCombos(userKeyBindings);
+
+  return (e, element, combo) => {
+    if (inputEnabledCombos.has(combo)) {
+      return false;
+    }
+
+    return defaultStopCallback.call(Mousetrap, e, element, combo);
+  };
 }
 
 /**
@@ -375,6 +395,19 @@ export const HotkeysProvider = (props) => {
     return () => {
       // Cleanup on unmount
       unbindAllHotkeys(userKeyBindings);
+    };
+  }, [userKeyBindings]);
+
+  useEffect(() => {
+    const defaultStopCallback = Mousetrap.prototype.stopCallback;
+    const stopCallback = createHotkeyStopCallback(userKeyBindings, defaultStopCallback);
+
+    Mousetrap.stopCallback = stopCallback;
+    Mousetrap.prototype.stopCallback = stopCallback;
+
+    return () => {
+      Mousetrap.stopCallback = defaultStopCallback;
+      Mousetrap.prototype.stopCallback = defaultStopCallback;
     };
   }, [userKeyBindings]);
 
