@@ -177,11 +177,6 @@ app.on('ready', async () => {
         loadExtensionOptions: { allowFileAccess: true }
       });
       console.log(`Added Extensions:  ${extensions.map((ext) => ext.name).join(', ')}`);
-      await require('node:timers/promises').setTimeout(1000);
-      session.defaultSession.getAllExtensions().map((ext) => {
-        console.log(`Loading Extension: ${ext.name}`);
-        session.defaultSession.loadExtension(ext.path);
-      });
     } catch (err) {
       console.error('An error occurred while loading extensions: ', err);
     }
