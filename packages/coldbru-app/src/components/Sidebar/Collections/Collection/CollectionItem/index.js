@@ -704,7 +704,9 @@ const CollectionItem = ({ item, collectionUid, collectionPathname, searchText })
       return;
     }
 
-    if (e.key === 'Enter') {
+    const hasModifierKey = e.metaKey || e.ctrlKey || e.altKey || e.shiftKey;
+
+    if (e.key === 'Enter' && !hasModifierKey) {
       e.preventDefault();
       e.stopPropagation();
       activateItem();
