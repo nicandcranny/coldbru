@@ -655,7 +655,7 @@ export const cancelRunnerExecution = (cancelTokenUid) => (dispatch) => {
 };
 
 export const runCollectionFolder
-  = (collectionUid, folderUid, recursive, delay, tags, selectedRequestUids) => (dispatch, getState) => {
+  = (collectionUid, folderUid, recursive, delay, tags, selectedRequestUids, runnerData) => (dispatch, getState) => {
     const state = getState();
     const { globalEnvironments, activeGlobalEnvironmentUid } = state.globalEnvironments;
     const collection = findCollectionByUid(state.collections.collections, collectionUid);
@@ -699,7 +699,8 @@ export const runCollectionFolder
           recursive,
           delay,
           tags,
-          selectedRequestUids
+          selectedRequestUids,
+          runnerData
         )
         .then(resolve)
         .catch((err) => {
@@ -3018,13 +3019,14 @@ export const showInFolder = (collectionPath) => () => {
 };
 
 export const updateRunnerConfiguration
-  = (collectionUid, selectedRequestItems, requestItemsOrder, delay) => (dispatch) => {
+  = (collectionUid, selectedRequestItems, requestItemsOrder, delay, runnerData) => (dispatch) => {
     dispatch(
       _updateRunnerConfiguration({
         collectionUid,
         selectedRequestItems,
         requestItemsOrder,
-        delay
+        delay,
+        runnerData
       })
     );
   };

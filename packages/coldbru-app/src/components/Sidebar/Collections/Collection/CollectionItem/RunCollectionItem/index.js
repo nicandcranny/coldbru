@@ -1,21 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import get from 'lodash/get';
 import { uuid } from 'utils/common';
 import Modal from 'components/Modal';
 import { useDispatch, useSelector } from 'react-redux';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
-import { runCollectionFolder } from 'providers/ReduxStore/slices/collections/actions';
-import { flattenItems } from 'utils/collections';
+import { runCollectionFolder, updateRunnerConfiguration } from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import { areItemsLoading } from 'utils/collections';
 import RunnerTags from 'components/RunnerResults/RunnerTags/index';
 import { getRequestItemsForCollectionRun } from 'utils/collections/index';
 import Button from 'ui/Button';
+import RunnerCsvInput from './RunnerCsvInput';
 
 const RunCollectionItem = ({ collectionUid, item, onClose }) => {
   const dispatch = useDispatch();
-
   const collection = useSelector((state) => state.collections.collections?.find((c) => c.uid === collectionUid));
+  const [runnerData, setRunnerData] = useState(get(collection, 'runnerConfiguration.runnerData', null));
+  const [csvState, setCsvState] = useState({ isParsing: false, hasError: false, rowCount: 0 });
   const isCollectionRunInProgress = collection?.runnerResult?.info?.status && (collection?.runnerResult?.info?.status !== 'ended');
 
   // tags for the collection run
@@ -24,7 +25,12 @@ const RunCollectionItem = ({ collectionUid, item, onClose }) => {
   // have tags been enabled for the collection run
   const tagsEnabled = get(collection, 'runnerTagsEnabled', false);
 
+  useEffect(() => {
+    setRunnerData(get(collection, 'runnerConfiguration.runnerData', null));
+  }, [collection]);
+
   const onSubmit = (recursive) => {
+    dispatch(updateRunnerConfiguration(collection.uid, [], [], 0, runnerData));
     dispatch(
       addTab({
         uid: uuid(),
@@ -33,7 +39,7 @@ const RunCollectionItem = ({ collectionUid, item, onClose }) => {
       })
     );
     if (!isCollectionRunInProgress) {
-      dispatch(runCollectionFolder(collection.uid, item ? item.uid : null, recursive, 0, tagsEnabled && tags));
+      dispatch(runCollectionFolder(collection.uid, item ? item.uid : null, recursive, 0, tagsEnabled && tags, undefined, runnerData));
     }
     onClose();
   };
@@ -59,6 +65,7 @@ const RunCollectionItem = ({ collectionUid, item, onClose }) => {
   const requestItemsForFolderRun = getRequestItemsForCollectionRun({ recursive: false, tags, items: item ? item.items : collection.items });
   const totalRequestItemsCountForFolderRun = requestItemsForFolderRun.length;
   const shouldDisableFolderRun = totalRequestItemsCountForFolderRun <= 0;
+  const shouldDisableForCsv = csvState.isParsing || csvState.hasError || (runnerData && csvState.rowCount === 0);
 
   return (
     <StyledWrapper>
@@ -80,6 +87,8 @@ const RunCollectionItem = ({ collectionUid, item, onClose }) => {
           {/* Tags for the collection run */}
           <RunnerTags collectionUid={collection.uid} className="mb-6" />
 
+          <RunnerCsvInput initialValue={runnerData} onChange={setRunnerData} onStateChange={setCsvState} />
+
           <div className="flex justify-end bruno-modal-footer">
             <Button type="button" color="secondary" variant="ghost" onClick={onClose} className="mr-3">
               Cancel
@@ -93,11 +102,11 @@ const RunCollectionItem = ({ collectionUid, item, onClose }) => {
                   )
                 : (
                     <>
-                      <Button type="submit" disabled={shouldDisableRecursiveFolderRun} onClick={() => onSubmit(true)} className="mr-3">
-                        Recursive Run
+                      <Button type="submit" disabled={shouldDisableRecursiveFolderRun || shouldDisableForCsv} onClick={() => onSubmit(true)} className="mr-3">
+                        {runnerData?.rowCount ? `Recursive Run (${runnerData.rowCount} iterations)` : 'Recursive Run'}
                       </Button>
-                      <Button type="submit" disabled={shouldDisableFolderRun} onClick={() => onSubmit(false)}>
-                        Run
+                      <Button type="submit" disabled={shouldDisableFolderRun || shouldDisableForCsv} onClick={() => onSubmit(false)}>
+                        {runnerData?.rowCount ? `Run (${runnerData.rowCount} iterations)` : 'Run'}
                       </Button>
                     </>
                   )

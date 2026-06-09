@@ -2,6 +2,29 @@ const interpolateVars = require('../../src/ipc/network/interpolate-vars');
 
 describe('interpolate-vars: interpolateVars', () => {
   describe('Interpolates string', () => {
+    it('keeps request variables above CSV-backed env variables', async () => {
+      const request = {
+        method: 'GET',
+        url: '{{baseUrl}}/{{resource}}',
+        requestVariables: { resource: 'requests-win' },
+        folderVariables: { resource: 'folder-value' },
+        collectionVariables: { resource: 'collection-value' },
+        globalEnvironmentVariables: { baseUrl: 'https://global.example.com' }
+      };
+
+      const result = interpolateVars(
+        request,
+        {
+          baseUrl: 'https://csv.example.com',
+          resource: 'csv-value'
+        },
+        null,
+        null
+      );
+
+      expect(result.url).toBe('https://csv.example.com/requests-win');
+    });
+
     describe('With environment variables', () => {
       it('If there\'s a var with only alphanumeric characters in its name', async () => {
         const request = { method: 'GET', url: '{{testUrl1}}' };
