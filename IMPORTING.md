@@ -48,8 +48,8 @@ Use the Import Workspace Menu when you want ColdBru to create a workspace from a
 
 - Export your Postman collections using [this guideline](https://learning.postman.com/docs/getting-started/importing-and-exporting/exporting-data).
 - Import Postman collections into ColdBru by using the [Import Collection Menu](#import-collection-menu).
-- Export your full Postman workspace as a ZIP if you want to bring collections and environments together, then import it from the [Import Workspace Menu](#import-workspace-menu).
 - Import Postman environments from the environment import flow in ColdBru. Global environments can be imported from the workspace environment screen, and collection environments can be imported from the collection environment UI.
+- You can also export your full Postman workspace as Zip by going to `Settings -> Account Settings -> Export your data` if you want to bring collections and environments together, then import it from the [Import Workspace Menu](#import-workspace-menu).
 
 ### Insomnia
 
