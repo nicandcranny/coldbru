@@ -86,11 +86,40 @@ describe('collections reducer', () => {
       iterationCount: 2
     }));
 
-    const completed = reducer(queuedSecond, runFolderEvent({
+    const firstRequest = {
+      method: 'GET',
+      url: 'https://api.example.com/users?page=1'
+    };
+
+    const secondRequest = {
+      method: 'GET',
+      url: 'https://api.example.com/users?page=2'
+    };
+
+    const firstSent = reducer(queuedSecond, runFolderEvent({
+      type: 'request-sent',
+      collectionUid: 'collection-1',
+      itemUid: 'request-1',
+      runnerItemUid: 'run-1',
+      request: firstRequest,
+      requestSent: { method: 'GET', url: 'https://api.example.com/users?page=1', timestamp: 1000 }
+    }));
+
+    const secondSent = reducer(firstSent, runFolderEvent({
+      type: 'request-sent',
+      collectionUid: 'collection-1',
+      itemUid: 'request-1',
+      runnerItemUid: 'run-2',
+      request: secondRequest,
+      requestSent: { method: 'GET', url: 'https://api.example.com/users?page=2', timestamp: 2000 }
+    }));
+
+    const completed = reducer(secondSent, runFolderEvent({
       type: 'response-received',
       collectionUid: 'collection-1',
       itemUid: 'request-1',
       runnerItemUid: 'run-2',
+      request: secondRequest,
       responseReceived: { status: 200, statusText: 'OK' }
     }));
 
@@ -98,13 +127,73 @@ describe('collections reducer', () => {
       expect.objectContaining({
         uid: 'request-1',
         runnerItemUid: 'run-1',
-        status: 'queued'
+        status: 'running',
+        request: firstRequest,
+        requestSent: { method: 'GET', url: 'https://api.example.com/users?page=1', timestamp: 1000 }
       }),
       expect.objectContaining({
         uid: 'request-1',
         runnerItemUid: 'run-2',
         status: 'completed',
+        request: secondRequest,
+        requestSent: { method: 'GET', url: 'https://api.example.com/users?page=2', timestamp: 2000 },
         responseReceived: { status: 200, statusText: 'OK' }
+      })
+    ]);
+  });
+
+  it('stores runner request snapshots for skipped requests when provided', () => {
+    const initialState = {
+      collections: [{
+        uid: 'collection-1',
+        pathname: '/tmp/account-service',
+        items: [{
+          uid: 'request-1',
+          type: 'http-request',
+          name: 'Get users',
+          pathname: '/tmp/account-service/get-users.bru'
+        }]
+      }],
+      collectionSortOrder: 'default',
+      activeConnections: [],
+      tempDirectories: {},
+      saveTransientRequestModals: []
+    };
+
+    const queued = reducer(initialState, runFolderEvent({
+      type: 'request-queued',
+      collectionUid: 'collection-1',
+      itemUid: 'request-1',
+      runnerItemUid: 'run-1'
+    }));
+
+    const runnerRequest = {
+      method: 'GET',
+      url: 'https://api.example.com/users?prompt={{token}}'
+    };
+
+    const skipped = reducer(queued, runFolderEvent({
+      type: 'runner-request-skipped',
+      collectionUid: 'collection-1',
+      itemUid: 'request-1',
+      runnerItemUid: 'run-1',
+      request: runnerRequest,
+      responseReceived: {
+        status: 'skipped',
+        statusText: 'Prompt variables detected'
+      }
+    }));
+
+    expect(skipped.collections[0].runnerResult.items).toEqual([
+      expect.objectContaining({
+        uid: 'request-1',
+        runnerItemUid: 'run-1',
+        status: 'skipped',
+        request: runnerRequest,
+        responseReceived: {
+          status: 'skipped',
+          statusText: 'Prompt variables detected'
+        }
       })
     ]);
   });

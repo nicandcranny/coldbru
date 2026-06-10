@@ -82,6 +82,24 @@ const buildRunnerEventData = ({ collectionUid, folderUid, itemUid, iteration, ru
   csvFileName: runnerData?.fileName || null
 });
 
+const sanitizeRunnerRequest = (request) => {
+  const runnerRequest = cloneDeep(request);
+
+  delete runnerRequest.signal;
+  delete runnerRequest.responseType;
+  delete runnerRequest.certsAndProxyConfig;
+  delete runnerRequest.collectionPath;
+  delete runnerRequest.__bruno__executionMode;
+  delete runnerRequest.__brunoDisableParsingResponseJson;
+
+  if (runnerRequest._originalMultipartData) {
+    runnerRequest.data = runnerRequest._originalMultipartData;
+    delete runnerRequest._originalMultipartData;
+  }
+
+  return runnerRequest;
+};
+
 const promisifyStream = async (stream, abortController, closeOnFirst) => {
   const chunks = [];
 
@@ -1415,6 +1433,7 @@ const registerNetworkIpc = (mainWindow) => {
               mainWindow.webContents.send('main:run-folder-event', {
                 type: 'runner-request-skipped',
                 error: 'Request has been skipped due to containing prompt variables',
+                request: sanitizeRunnerRequest(request),
                 responseReceived: {
                   status: 'skipped',
                   statusText: `Prompt variables detected in request. Runner execution is not supported for requests with prompt variables. \n Promps: ${promptVars.join(', ')}`,
@@ -1501,6 +1520,7 @@ const registerNetworkIpc = (mainWindow) => {
                 mainWindow.webContents.send('main:run-folder-event', {
                   type: 'runner-request-skipped',
                   error: 'Request has been skipped from pre-request script',
+                  request: sanitizeRunnerRequest(request),
                   responseReceived: {
                     status: 'skipped',
                     statusText: 'request skipped via pre-request script',
@@ -1533,6 +1553,7 @@ const registerNetworkIpc = (mainWindow) => {
 
               mainWindow.webContents.send('main:run-folder-event', {
                 type: 'request-sent',
+                request: sanitizeRunnerRequest(request),
                 requestSent,
                 ...eventData
               });
@@ -1606,6 +1627,7 @@ const registerNetworkIpc = (mainWindow) => {
 
                 mainWindow.webContents.send('main:run-folder-event', {
                   type: 'response-received',
+                  request: sanitizeRunnerRequest(request),
                   responseReceived: {
                     status: response.status,
                     statusText: response.statusText,
@@ -1649,6 +1671,7 @@ const registerNetworkIpc = (mainWindow) => {
                   mainWindow.webContents.send('main:run-folder-event', {
                     type: 'response-received',
                     error: error ? error.message : 'An error occurred while running the request',
+                    request: sanitizeRunnerRequest(request),
                     responseReceived: response,
                     ...eventData
                   });
@@ -1808,6 +1831,7 @@ const registerNetworkIpc = (mainWindow) => {
               mainWindow.webContents.send('main:run-folder-event', {
                 type: 'error',
                 error: error ? error.message : 'An error occurred while running the request',
+                request: sanitizeRunnerRequest(request),
                 responseReceived: {},
                 ...eventData
               });

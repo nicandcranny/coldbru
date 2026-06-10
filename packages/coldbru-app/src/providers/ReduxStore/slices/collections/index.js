@@ -3095,12 +3095,16 @@ export const collectionsSlice = createSlice({
         if (type === 'request-sent') {
           const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.status = 'running';
+          item.request = action.payload.request;
           item.requestSent = action.payload.requestSent;
         }
 
         if (type === 'response-received') {
           const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.status = 'completed';
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.responseReceived = action.payload.responseReceived;
         }
 
@@ -3126,6 +3130,9 @@ export const collectionsSlice = createSlice({
 
         if (type === 'error') {
           const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.error = action.payload.error;
           item.responseReceived = action.payload.responseReceived;
           item.status = 'error';
@@ -3133,6 +3140,9 @@ export const collectionsSlice = createSlice({
 
         if (type === 'runner-request-skipped') {
           const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.status = 'skipped';
           item.responseReceived = action.payload.responseReceived;
         }
