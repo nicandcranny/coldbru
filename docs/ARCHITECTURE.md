@@ -166,6 +166,33 @@ promptVariables > runtimeVariables > oauth2CredentialVariables > requestVariable
 
 **Auth precedence**: if request auth mode is `inherit`, collection root auth is used. Auth is applied in three stages: (1) structurally in `prepareRequest`, (2) credentials interpolated in `interpolateVars`, (3) protocol-specific interceptors in `configureRequest`.
 
+### 1.5 Collection Runner and CSV Iterations
+
+Collection and folder runs go through `renderer:run-collection-folder` in `ipc/network/index.js`. The renderer can now pass optional `runnerData` for CSV-backed runs:
+
+```js
+{
+  type: 'csv',
+  fileName,
+  headers,
+  rows: [{ iterationIndex, values, variables }]
+}
+```
+
+Main process behavior:
+- Builds request list exactly as before: recursive/non-recursive, tag filtering, optional configured request subset/order.
+- If `runnerData.rows` exists, wraps the request loop in an outer iteration loop. Each CSV row becomes one full runner pass.
+- Merges row variables into `envVars` for that iteration only. This means CSV values override global, collection, and selected environment variables, but request/folder/runtime/prompt variables still win.
+- Reuses that iteration-scoped `envVars` for nested `bru.runRequest()` calls from scripts so manual jumps and scripted sub-requests see the same CSV row.
+
+Runner event payloads sent over `main:run-folder-event` now include:
+- `runnerItemUid` — unique per request execution, required because same request UID can run many times across CSV iterations.
+- `iterationIndex`, `iterationCount`, `iterationVariables`, `csvFileName` — used by renderer to group and label results.
+
+Renderer behavior:
+- `slices/collections.runFolderEvent` keys updates by `runnerItemUid` when present, falling back to request UID for older events.
+- `RunnerResults` shows iteration dividers and can safely display repeated request executions without later events overwriting earlier rows.
+
 ### 2. Opening a Collection & File Watching
 
 Collections are plain-text files on disk. The UI collection tree is always a reflection of disk state.

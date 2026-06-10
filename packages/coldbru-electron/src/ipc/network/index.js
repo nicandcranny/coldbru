@@ -71,6 +71,35 @@ const hasStreamHeaders = (headers) => {
   return headerSplit.indexOf('text/event-stream') > -1;
 };
 
+const buildRunnerEventData = ({ collectionUid, folderUid, itemUid, iteration, runnerData }) => ({
+  collectionUid,
+  folderUid,
+  itemUid,
+  runnerItemUid: uuid(),
+  iterationIndex: iteration?.iterationIndex,
+  iterationCount: runnerData?.rows?.length || 0,
+  iterationVariables: iteration?.variables,
+  csvFileName: runnerData?.fileName || null
+});
+
+const sanitizeRunnerRequest = (request) => {
+  const runnerRequest = cloneDeep(request);
+
+  delete runnerRequest.signal;
+  delete runnerRequest.responseType;
+  delete runnerRequest.certsAndProxyConfig;
+  delete runnerRequest.collectionPath;
+  delete runnerRequest.__bruno__executionMode;
+  delete runnerRequest.__brunoDisableParsingResponseJson;
+
+  if (runnerRequest._originalMultipartData) {
+    runnerRequest.data = runnerRequest._originalMultipartData;
+    delete runnerRequest._originalMultipartData;
+  }
+
+  return runnerRequest;
+};
+
 const promisifyStream = async (stream, abortController, closeOnFirst) => {
   const chunks = [];
 
@@ -1243,7 +1272,7 @@ const registerNetworkIpc = (mainWindow) => {
   ipcMain.handle('fetch-gql-schema', fetchGqlSchemaHandler);
 
   ipcMain.handle(
-    'renderer:run-collection-folder', async (event, folder, collection, environment, runtimeVariables, recursive, delay, tags, selectedRequestUids) => {
+    'renderer:run-collection-folder', async (event, folder, collection, environment, runtimeVariables, recursive, delay, tags, selectedRequestUids, runnerData) => {
       const collectionUid = collection.uid;
       const collectionPath = collection.pathname;
       const folderUid = folder ? folder.uid : null;
@@ -1251,7 +1280,8 @@ const registerNetworkIpc = (mainWindow) => {
       const brunoConfig = getBrunoConfig(collectionUid, collection);
       const scriptingConfig = get(brunoConfig, 'scripts', {});
       scriptingConfig.runtime = getJsSandboxRuntime(collection);
-      const envVars = getEnvVars(environment);
+      const baseEnvVars = getEnvVars(environment);
+      let activeEnvVars = cloneDeep(baseEnvVars);
       const processEnvVars = getProcessEnvVars(collectionUid);
       let stopRunnerExecution = false;
       let currentAbortController;
@@ -1274,7 +1304,7 @@ const registerNetworkIpc = (mainWindow) => {
           }
           const _item = cloneDeep(findItemInCollectionByPathname(collection, itemPathname));
           if (_item) {
-            const res = await runRequest({ item: _item, collection, envVars, processEnvVars, runtimeVariables, runInBackground: true });
+            const res = await runRequest({ item: _item, collection, envVars: activeEnvVars, processEnvVars, runtimeVariables, runInBackground: true });
             resolve(res);
           }
           reject(`bru.runRequest: invalid request path - ${itemPathname}`);
@@ -1290,7 +1320,10 @@ const registerNetworkIpc = (mainWindow) => {
         isRecursive: recursive,
         collectionUid,
         folderUid,
-        cancelTokenUid
+        cancelTokenUid,
+        runnerData: runnerData || null,
+        csvFileName: runnerData?.fileName || null,
+        iterationCount: runnerData?.rows?.length || 0
       });
 
       try {
@@ -1301,17 +1334,14 @@ const registerNetworkIpc = (mainWindow) => {
           folderRequests = getAllRequestsInFolderRecursively(sortedFolder);
         } else {
           each(folder.items, (item) => {
-            // Skip transient requests
             if (item.request && !item.isTransient) {
               folderRequests.push(item);
             }
           });
 
-          // sort requests by seq property
           folderRequests = sortByNameThenSequence(folderRequests);
         }
 
-        // Filter requests based on tags
         if (tags && tags.include && tags.exclude) {
           const includeTags = tags.include ? tags.include : [];
           const excludeTags = tags.exclude ? tags.exclude : [];
@@ -1321,7 +1351,6 @@ const registerNetworkIpc = (mainWindow) => {
           });
         }
 
-        // Filter requests based on selectedRequestUids (for "Configure requests to run")
         if (selectedRequestUids && selectedRequestUids.length > 0) {
           const uidIndexMap = new Map();
           selectedRequestUids.forEach((uid, index) => {
@@ -1330,164 +1359,54 @@ const registerNetworkIpc = (mainWindow) => {
 
           folderRequests = folderRequests
             .filter((request) => uidIndexMap.has(request.uid))
-            .sort((a, b) => {
-              const indexA = uidIndexMap.get(a.uid);
-              const indexB = uidIndexMap.get(b.uid);
-              return indexA - indexB;
-            });
+            .sort((a, b) => uidIndexMap.get(a.uid) - uidIndexMap.get(b.uid));
         }
 
-        let currentRequestIndex = 0;
-        let nJumps = 0; // count the number of jumps to avoid infinite loops
-        while (currentRequestIndex < folderRequests.length) {
-          // user requested to cancel runner
-          if (abortController.signal.aborted) {
-            let error = new Error('Runner execution cancelled');
-            error.isCancel = true;
-            throw error;
-          }
+        const iterations = runnerData?.rows?.length ? runnerData.rows : [null];
 
-          stopRunnerExecution = false;
-
-          const item = cloneDeep(folderRequests[currentRequestIndex]);
-          let nextRequestName;
-          const itemUid = item.uid;
-          const eventData = {
-            collectionUid,
-            folderUid,
-            itemUid
-          };
-
-          let timeStart;
-          let timeEnd;
-
-          mainWindow.webContents.send('main:run-folder-event', {
-            type: 'request-queued',
-            ...eventData
+        for (const iteration of iterations) {
+          activeEnvVars = cloneDeep({
+            ...baseEnvVars,
+            ...(iteration?.variables || {})
           });
 
-          // Skip gRPC requests
-          if (item.type === 'grpc-request') {
-            mainWindow.webContents.send('main:run-folder-event', {
-              type: 'runner-request-skipped',
-              error: 'gRPC requests are skipped in folder/collection runs',
-              responseReceived: {
-                status: 'skipped',
-                statusText: 'gRPC request skipped',
-                data: null,
-                responseTime: 0,
-                headers: null
-              },
-              ...eventData
-            });
-            currentRequestIndex++;
-            continue;
-          }
+          let currentRequestIndex = 0;
+          let nJumps = 0;
 
-          const request = await prepareRequest(item, collection, abortController);
-          request.__bruno__executionMode = 'runner';
+          while (currentRequestIndex < folderRequests.length) {
+            if (abortController.signal.aborted) {
+              let error = new Error('Runner execution cancelled');
+              error.isCancel = true;
+              throw error;
+            }
 
-          const requestUid = uuid();
+            stopRunnerExecution = false;
 
-          const promptVars = await extractPromptVariablesForRequest({ request, collection, envVars, runtimeVariables, processEnvVars });
-
-          if (promptVars.length > 0) {
-            mainWindow.webContents.send('main:run-folder-event', {
-              type: 'runner-request-skipped',
-              error: 'Request has been skipped due to containing prompt variables',
-              responseReceived: {
-                status: 'skipped',
-                statusText: `Prompt variables detected in request. Runner execution is not supported for requests with prompt variables. \n Promps: ${promptVars.join(', ')}`,
-                data: null,
-                responseTime: 0,
-                headers: null
-              },
-              ...eventData
-            });
-
-            currentRequestIndex++;
-
-            continue;
-          }
-
-          try {
-            // Build certsAndProxyConfig for bru.sendRequest
-            const certsAndProxyConfig = await buildCertsAndProxyConfig({
+            const item = cloneDeep(folderRequests[currentRequestIndex]);
+            let nextRequestName;
+            const eventData = buildRunnerEventData({
               collectionUid,
-              collection,
-              collectionPath,
-              envVars,
-              runtimeVariables,
-              processEnvVars,
-              request
+              folderUid,
+              itemUid: item.uid,
+              iteration,
+              runnerData
             });
 
-            // Add certsAndProxyConfig to request object for bru.sendRequest
-            request.certsAndProxyConfig = certsAndProxyConfig;
+            let timeStart;
+            let timeEnd;
 
-            let preRequestScriptResult;
-            let preRequestError = null;
-            try {
-              preRequestScriptResult = await runPreRequest(
-                request,
-                requestUid,
-                envVars,
-                collectionPath,
-                collection,
-                collectionUid,
-                runtimeVariables,
-                processEnvVars,
-                scriptingConfig,
-                runRequestByItemPathname
-              );
-            } catch (error) {
-              console.error('Pre-request script error:', error);
-              preRequestError = error;
-            }
-
-            if (preRequestError?.partialResults) {
-              preRequestScriptResult = preRequestError.partialResults;
-            }
-
-            preRequestScriptResult = appendScriptErrorResult('pre-request', preRequestScriptResult, preRequestError);
-
-            if (preRequestScriptResult?.results) {
-              mainWindow.webContents.send('main:run-folder-event', {
-                type: 'test-results-pre-request',
-                preRequestTestResults: preRequestScriptResult.results,
-                ...eventData
-              });
-            }
-
-            notifyScriptExecution({
-              channel: 'main:run-folder-event',
-              basePayload: eventData,
-              scriptType: 'pre-request',
-              error: preRequestError
+            mainWindow.webContents.send('main:run-folder-event', {
+              type: 'request-queued',
+              ...eventData
             });
 
-            const domainsWithCookiesPreRequest = await getDomainsWithCookies();
-            mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesPreRequest)));
-
-            if (preRequestError) {
-              throw preRequestError;
-            }
-
-            if (preRequestScriptResult?.nextRequestName !== undefined) {
-              nextRequestName = preRequestScriptResult.nextRequestName;
-            }
-
-            if (preRequestScriptResult?.stopExecution) {
-              stopRunnerExecution = true;
-            }
-
-            if (preRequestScriptResult?.skipRequest) {
+            if (item.type === 'grpc-request') {
               mainWindow.webContents.send('main:run-folder-event', {
                 type: 'runner-request-skipped',
-                error: 'Request has been skipped from pre-request script',
+                error: 'gRPC requests are skipped in folder/collection runs',
                 responseReceived: {
                   status: 'skipped',
-                  statusText: 'request skipped via pre-request script',
+                  statusText: 'gRPC request skipped',
                   data: null,
                   responseTime: 0,
                   headers: null
@@ -1498,355 +1417,461 @@ const registerNetworkIpc = (mainWindow) => {
               continue;
             }
 
-            const { data: requestData, dataBuffer: requestDataBuffer } = parseDataFromRequest(request);
+            const request = await prepareRequest(item, collection, abortController);
+            request.__bruno__executionMode = 'runner';
 
-            // Remove false Content-Type header (used to stop axios from auto-setting it); no Content-Type was actually set or sent.
-            const headersSent = { ...request.headers };
-            Object.keys(headersSent).forEach((key) => {
-              if (key.toLowerCase() === 'content-type' && headersSent[key] === false) {
-                delete headersSent[key];
-              }
-            });
-
-            let requestSent = {
-              url: request.url,
-              method: request.method,
-              headers: headersSent,
-              data: requestData,
-              dataBuffer: requestDataBuffer,
-              timestamp: Date.now()
-            };
-
-            // todo:
-            // i have no clue why electron can't send the request object
-            // without safeParseJSON(safeStringifyJSON(request.data))
-            mainWindow.webContents.send('main:run-folder-event', {
-              type: 'request-sent',
-              requestSent,
-              ...eventData
-            });
-
-            currentAbortController = new AbortController();
-            request.signal = currentAbortController.signal;
-            request.responseType = 'stream';
-            const axiosInstance = await configureRequest(
-              collectionUid,
-              collection,
+            const requestUid = uuid();
+            const promptVars = await extractPromptVariablesForRequest({
               request,
-              envVars,
+              collection,
+              envVars: activeEnvVars,
               runtimeVariables,
-              processEnvVars,
-              collectionPath,
-              collection.globalEnvironmentVariables
-            );
+              processEnvVars
+            });
 
-            if (request.oauth2Credentials?.credentials && request.oauth2Credentials?.credentialsId) {
-              mainWindow.webContents.send('main:credentials-update', {
-                credentials: request?.oauth2Credentials?.credentials,
-                url: request?.oauth2Credentials?.url,
-                collectionUid,
-                credentialsId: request?.oauth2Credentials?.credentialsId,
-                ...(request?.oauth2Credentials?.folderUid ? { folderUid: request.oauth2Credentials.folderUid } : { itemUid: item.uid }),
-                debugInfo: request?.oauth2Credentials?.debugInfo
-              });
-
-              const { credentialsId, credentials } = request.oauth2Credentials;
-              request.oauth2CredentialVariables = request.oauth2CredentialVariables || {};
-              Object.entries(credentials).forEach(([key, value]) => {
-                request.oauth2CredentialVariables[`$oauth2.${credentialsId}.${key}`] = value;
-              });
-
-              collection.oauth2Credentials = updateCollectionOauth2Credentials({
-                itemUid: item.uid,
-                collectionUid,
-                collectionOauth2Credentials: collection.oauth2Credentials,
-                requestOauth2Credentials: request.oauth2Credentials
-              });
-            }
-
-            timeStart = Date.now();
-            let response, responseTime;
-            try {
-              if (delay && !Number.isNaN(delay) && delay > 0) {
-                const delayPromise = new Promise((resolve) => setTimeout(resolve, delay));
-
-                const cancellationPromise = new Promise((_, reject) => {
-                  abortController.signal.addEventListener('abort', () => {
-                    reject(new Error('Cancelled'));
-                  });
-                });
-
-                await Promise.race([delayPromise, cancellationPromise]);
-              }
-
-              /** @type {import('axios').AxiosResponse} */
-              response = await axiosInstance(request);
-              response.data = await promisifyStream(response.data, currentAbortController, false);
-              timeEnd = Date.now();
-
-              const { data, dataBuffer } = parseDataFromResponse(response, request.__brunoDisableParsingResponseJson);
-              response.data = data;
-              response.dataBuffer = dataBuffer;
-              response.responseTime = response.headers.get('request-duration');
-              response.headers.delete('request-duration');
-
-              // save cookies
-              if (preferencesUtil.shouldStoreCookies()) {
-                saveCookies(request.url, response.headers);
-              }
-
-              // send domain cookies to renderer
-              const domainsWithCookies = await getDomainsWithCookies();
-
-              mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookies)));
-
+            if (promptVars.length > 0) {
               mainWindow.webContents.send('main:run-folder-event', {
-                type: 'response-received',
+                type: 'runner-request-skipped',
+                error: 'Request has been skipped due to containing prompt variables',
+                request: sanitizeRunnerRequest(request),
                 responseReceived: {
-                  status: response.status,
-                  statusText: response.statusText,
-                  headers: response.headers,
-                  duration: timeEnd - timeStart,
-                  dataBuffer: dataBuffer.toString('base64'),
-                  size: Buffer.byteLength(dataBuffer),
-                  data: response.data,
-                  responseTime: response.responseTime,
-                  timeline: response.timeline,
-                  url: response.request ? response.request.protocol + '//' + response.request.host + response.request.path : null
+                  status: 'skipped',
+                  statusText: `Prompt variables detected in request. Runner execution is not supported for requests with prompt variables. \n Promps: ${promptVars.join(', ')}`,
+                  data: null,
+                  responseTime: 0,
+                  headers: null
                 },
                 ...eventData
               });
-            } catch (error) {
-              // Skip further processing if request was cancelled
-              if (axios.isCancel(error)) {
-                throw error;
-              }
-
-              if (error?.response) {
-                error.response.data = await promisifyStream(error.response.data, currentAbortController, false);
-                const { data, dataBuffer } = parseDataFromResponse(error.response);
-                error.response.responseTime = error.response.headers.get('request-duration');
-                error.response.headers.delete('request-duration');
-                error.response.data = data;
-                error.response.dataBuffer = dataBuffer;
-
-                timeEnd = Date.now();
-                response = {
-                  status: error.response.status,
-                  statusText: error.response.statusText,
-                  headers: error.response.headers,
-                  duration: timeEnd - timeStart,
-                  dataBuffer: dataBuffer.toString('base64'),
-                  size: Buffer.byteLength(dataBuffer),
-                  data: error.response.data,
-                  responseTime: error.response.responseTime,
-                  timeline: error.response.timeline
-                };
-
-                // if we get a response from the server, we consider it as a success
-                mainWindow.webContents.send('main:run-folder-event', {
-                  type: 'response-received',
-                  error: error ? error.message : 'An error occurred while running the request',
-                  responseReceived: response,
-                  ...eventData
-                });
-              } else {
-                await executeRequestOnFailHandler(request, error);
-
-                // if it's not a network error, don't continue
-                throw error;
-              }
+              currentRequestIndex++;
+              continue;
             }
 
-            let postResponseScriptResult;
-            let postResponseError = null;
             try {
-              postResponseScriptResult = await runPostResponse(
-                request,
-                response,
-                requestUid,
-                envVars,
-                collectionPath,
-                collection,
+              const certsAndProxyConfig = await buildCertsAndProxyConfig({
                 collectionUid,
+                collection,
+                collectionPath,
+                envVars: activeEnvVars,
                 runtimeVariables,
                 processEnvVars,
-                scriptingConfig,
-                runRequestByItemPathname
-              );
-            } catch (error) {
-              console.error('Post-response script error:', error);
-              postResponseError = error;
-            }
-
-            // Extract partial results from error if available
-            // (e.g., if 2 tests pass then script throws, we still want to show those 2 passing tests)
-            if (postResponseError?.partialResults) {
-              postResponseScriptResult = postResponseError.partialResults;
-            }
-
-            postResponseScriptResult = appendScriptErrorResult('post-response', postResponseScriptResult, postResponseError);
-
-            notifyScriptExecution({
-              channel: 'main:run-folder-event',
-              basePayload: eventData,
-              scriptType: 'post-response',
-              error: postResponseError
-            });
-
-            const domainsWithCookiesPostResponse = await getDomainsWithCookies();
-            mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesPostResponse)));
-
-            if (postResponseScriptResult?.nextRequestName !== undefined) {
-              nextRequestName = postResponseScriptResult.nextRequestName;
-            }
-
-            if (postResponseScriptResult?.stopExecution) {
-              stopRunnerExecution = true;
-            }
-
-            // Send post-response test results if available
-            if (postResponseScriptResult?.results) {
-              mainWindow.webContents.send('main:run-folder-event', {
-                type: 'test-results-post-response',
-                postResponseTestResults: postResponseScriptResult.results,
-                ...eventData
+                request
               });
-            }
 
-            // run assertions
-            const assertions = get(item, 'request.assertions');
-            if (assertions) {
-              const assertRuntime = new AssertRuntime({ runtime: scriptingConfig?.runtime });
-              const results = assertRuntime.runAssertions(
-                assertions,
-                request,
-                response,
-                envVars,
-                runtimeVariables,
-                processEnvVars
-              );
+              request.certsAndProxyConfig = certsAndProxyConfig;
 
-              mainWindow.webContents.send('main:run-folder-event', {
-                type: 'assertion-results',
-                assertionResults: results,
-                itemUid: item.uid,
-                collectionUid
-              });
-            }
-
-            const testFile = get(request, 'tests');
-            const collectionName = collection?.name;
-            if (typeof testFile === 'string') {
-              let testResults = null;
-              let testError = null;
-
+              let preRequestScriptResult;
+              let preRequestError = null;
               try {
-                const testRuntime = new TestRuntime({ runtime: scriptingConfig?.runtime });
-                testResults = await testRuntime.runTests(
-                  decomment(testFile, { space: true }),
+                preRequestScriptResult = await runPreRequest(
                   request,
-                  response,
-                  envVars,
-                  runtimeVariables,
+                  requestUid,
+                  activeEnvVars,
                   collectionPath,
-                  onConsoleLog,
+                  collection,
+                  collectionUid,
+                  runtimeVariables,
                   processEnvVars,
                   scriptingConfig,
-                  runRequestByItemPathname,
-                  collectionName
+                  runRequestByItemPathname
                 );
               } catch (error) {
-                testError = error;
-
-                if (error.partialResults) {
-                  testResults = error.partialResults;
-                } else {
-                  testResults = {
-                    request,
-                    envVariables: envVars,
-                    runtimeVariables,
-                    globalEnvironmentVariables: request?.globalEnvironmentVariables || {},
-                    results: [],
-                    nextRequestName: null
-                  };
-                }
+                console.error('Pre-request script error:', error);
+                preRequestError = error;
               }
 
-              testResults = appendScriptErrorResult('test', testResults, testError);
-
-              if (testResults?.nextRequestName !== undefined) {
-                nextRequestName = testResults.nextRequestName;
+              if (preRequestError?.partialResults) {
+                preRequestScriptResult = preRequestError.partialResults;
               }
 
-              mainWindow.webContents.send('main:run-folder-event', {
-                type: 'test-results',
-                testResults: testResults.results,
-                ...eventData
-              });
+              preRequestScriptResult = appendScriptErrorResult('pre-request', preRequestScriptResult, preRequestError);
 
-              mainWindow.webContents.send('main:script-environment-update', {
-                envVariables: testResults.envVariables,
-                runtimeVariables: testResults.runtimeVariables,
-                collectionUid
-              });
-
-              mainWindow.webContents.send('main:global-environment-variables-update', {
-                globalEnvironmentVariables: testResults.globalEnvironmentVariables
-              });
-
-              collection.globalEnvironmentVariables = testResults.globalEnvironmentVariables;
-
-              resetOauth2Credentials({ oauth2CredentialsToReset: testResults.oauth2CredentialsToReset, request, collectionUid });
+              if (preRequestScriptResult?.results) {
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'test-results-pre-request',
+                  preRequestTestResults: preRequestScriptResult.results,
+                  ...eventData
+                });
+              }
 
               notifyScriptExecution({
                 channel: 'main:run-folder-event',
                 basePayload: eventData,
-                scriptType: 'test',
-                error: testError
+                scriptType: 'pre-request',
+                error: preRequestError
               });
 
-              const domainsWithCookiesTest = await getDomainsWithCookies();
-              mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesTest)));
+              const domainsWithCookiesPreRequest = await getDomainsWithCookies();
+              mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesPreRequest)));
+
+              if (preRequestError) {
+                throw preRequestError;
+              }
+
+              if (preRequestScriptResult?.nextRequestName !== undefined) {
+                nextRequestName = preRequestScriptResult.nextRequestName;
+              }
+
+              if (preRequestScriptResult?.stopExecution) {
+                stopRunnerExecution = true;
+              }
+
+              if (preRequestScriptResult?.skipRequest) {
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'runner-request-skipped',
+                  error: 'Request has been skipped from pre-request script',
+                  request: sanitizeRunnerRequest(request),
+                  responseReceived: {
+                    status: 'skipped',
+                    statusText: 'request skipped via pre-request script',
+                    data: null,
+                    responseTime: 0,
+                    headers: null
+                  },
+                  ...eventData
+                });
+                currentRequestIndex++;
+                continue;
+              }
+
+              const { data: requestData, dataBuffer: requestDataBuffer } = parseDataFromRequest(request);
+              const headersSent = { ...request.headers };
+              Object.keys(headersSent).forEach((key) => {
+                if (key.toLowerCase() === 'content-type' && headersSent[key] === false) {
+                  delete headersSent[key];
+                }
+              });
+
+              let requestSent = {
+                url: request.url,
+                method: request.method,
+                headers: headersSent,
+                data: requestData,
+                dataBuffer: requestDataBuffer,
+                timestamp: Date.now()
+              };
+
+              mainWindow.webContents.send('main:run-folder-event', {
+                type: 'request-sent',
+                request: sanitizeRunnerRequest(request),
+                requestSent,
+                ...eventData
+              });
+
+              currentAbortController = new AbortController();
+              request.signal = currentAbortController.signal;
+              request.responseType = 'stream';
+              const axiosInstance = await configureRequest(
+                collectionUid,
+                collection,
+                request,
+                activeEnvVars,
+                runtimeVariables,
+                processEnvVars,
+                collectionPath,
+                collection.globalEnvironmentVariables
+              );
+
+              if (request.oauth2Credentials?.credentials && request.oauth2Credentials?.credentialsId) {
+                mainWindow.webContents.send('main:credentials-update', {
+                  credentials: request?.oauth2Credentials?.credentials,
+                  url: request?.oauth2Credentials?.url,
+                  collectionUid,
+                  credentialsId: request?.oauth2Credentials?.credentialsId,
+                  ...(request?.oauth2Credentials?.folderUid ? { folderUid: request.oauth2Credentials.folderUid } : { itemUid: item.uid }),
+                  debugInfo: request?.oauth2Credentials?.debugInfo
+                });
+
+                const { credentialsId, credentials } = request.oauth2Credentials;
+                request.oauth2CredentialVariables = request.oauth2CredentialVariables || {};
+                Object.entries(credentials).forEach(([key, value]) => {
+                  request.oauth2CredentialVariables[`$oauth2.${credentialsId}.${key}`] = value;
+                });
+
+                collection.oauth2Credentials = updateCollectionOauth2Credentials({
+                  itemUid: item.uid,
+                  collectionUid,
+                  collectionOauth2Credentials: collection.oauth2Credentials,
+                  requestOauth2Credentials: request.oauth2Credentials
+                });
+              }
+
+              timeStart = Date.now();
+              let response;
+              try {
+                if (delay && !Number.isNaN(delay) && delay > 0) {
+                  const delayPromise = new Promise((resolve) => setTimeout(resolve, delay));
+                  const cancellationPromise = new Promise((_, reject) => {
+                    abortController.signal.addEventListener('abort', () => reject(new Error('Cancelled')));
+                  });
+
+                  await Promise.race([delayPromise, cancellationPromise]);
+                }
+
+                response = await axiosInstance(request);
+                response.data = await promisifyStream(response.data, currentAbortController, false);
+                timeEnd = Date.now();
+
+                const { data, dataBuffer } = parseDataFromResponse(response, request.__brunoDisableParsingResponseJson);
+                response.data = data;
+                response.dataBuffer = dataBuffer;
+                response.responseTime = response.headers.get('request-duration');
+                response.headers.delete('request-duration');
+
+                if (preferencesUtil.shouldStoreCookies()) {
+                  saveCookies(request.url, response.headers);
+                }
+
+                const domainsWithCookies = await getDomainsWithCookies();
+                mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookies)));
+
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'response-received',
+                  request: sanitizeRunnerRequest(request),
+                  responseReceived: {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers,
+                    duration: timeEnd - timeStart,
+                    dataBuffer: dataBuffer.toString('base64'),
+                    size: Buffer.byteLength(dataBuffer),
+                    data: response.data,
+                    responseTime: response.responseTime,
+                    timeline: response.timeline,
+                    url: response.request ? response.request.protocol + '//' + response.request.host + response.request.path : null
+                  },
+                  ...eventData
+                });
+              } catch (error) {
+                if (axios.isCancel(error)) {
+                  throw error;
+                }
+
+                if (error?.response) {
+                  error.response.data = await promisifyStream(error.response.data, currentAbortController, false);
+                  const { data, dataBuffer } = parseDataFromResponse(error.response);
+                  error.response.responseTime = error.response.headers.get('request-duration');
+                  error.response.headers.delete('request-duration');
+                  error.response.data = data;
+                  error.response.dataBuffer = dataBuffer;
+
+                  timeEnd = Date.now();
+                  response = {
+                    status: error.response.status,
+                    statusText: error.response.statusText,
+                    headers: error.response.headers,
+                    duration: timeEnd - timeStart,
+                    dataBuffer: dataBuffer.toString('base64'),
+                    size: Buffer.byteLength(dataBuffer),
+                    data: error.response.data,
+                    responseTime: error.response.responseTime,
+                    timeline: error.response.timeline
+                  };
+
+                  mainWindow.webContents.send('main:run-folder-event', {
+                    type: 'response-received',
+                    error: error ? error.message : 'An error occurred while running the request',
+                    request: sanitizeRunnerRequest(request),
+                    responseReceived: response,
+                    ...eventData
+                  });
+                } else {
+                  await executeRequestOnFailHandler(request, error);
+                  throw error;
+                }
+              }
+
+              let postResponseScriptResult;
+              let postResponseError = null;
+              try {
+                postResponseScriptResult = await runPostResponse(
+                  request,
+                  response,
+                  requestUid,
+                  activeEnvVars,
+                  collectionPath,
+                  collection,
+                  collectionUid,
+                  runtimeVariables,
+                  processEnvVars,
+                  scriptingConfig,
+                  runRequestByItemPathname
+                );
+              } catch (error) {
+                console.error('Post-response script error:', error);
+                postResponseError = error;
+              }
+
+              if (postResponseError?.partialResults) {
+                postResponseScriptResult = postResponseError.partialResults;
+              }
+
+              postResponseScriptResult = appendScriptErrorResult('post-response', postResponseScriptResult, postResponseError);
+
+              notifyScriptExecution({
+                channel: 'main:run-folder-event',
+                basePayload: eventData,
+                scriptType: 'post-response',
+                error: postResponseError
+              });
+
+              const domainsWithCookiesPostResponse = await getDomainsWithCookies();
+              mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesPostResponse)));
+
+              if (postResponseScriptResult?.nextRequestName !== undefined) {
+                nextRequestName = postResponseScriptResult.nextRequestName;
+              }
+
+              if (postResponseScriptResult?.stopExecution) {
+                stopRunnerExecution = true;
+              }
+
+              if (postResponseScriptResult?.results) {
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'test-results-post-response',
+                  postResponseTestResults: postResponseScriptResult.results,
+                  ...eventData
+                });
+              }
+
+              const assertions = get(item, 'request.assertions');
+              if (assertions) {
+                const assertRuntime = new AssertRuntime({ runtime: scriptingConfig?.runtime });
+                const results = assertRuntime.runAssertions(
+                  assertions,
+                  request,
+                  response,
+                  activeEnvVars,
+                  runtimeVariables,
+                  processEnvVars
+                );
+
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'assertion-results',
+                  assertionResults: results,
+                  ...eventData
+                });
+              }
+
+              const testFile = get(request, 'tests');
+              const collectionName = collection?.name;
+              if (typeof testFile === 'string') {
+                let testResults = null;
+                let testError = null;
+
+                try {
+                  const testRuntime = new TestRuntime({ runtime: scriptingConfig?.runtime });
+                  testResults = await testRuntime.runTests(
+                    decomment(testFile, { space: true }),
+                    request,
+                    response,
+                    activeEnvVars,
+                    runtimeVariables,
+                    collectionPath,
+                    onConsoleLog,
+                    processEnvVars,
+                    scriptingConfig,
+                    runRequestByItemPathname,
+                    collectionName
+                  );
+                } catch (error) {
+                  testError = error;
+
+                  if (error.partialResults) {
+                    testResults = error.partialResults;
+                  } else {
+                    testResults = {
+                      request,
+                      envVariables: activeEnvVars,
+                      runtimeVariables,
+                      globalEnvironmentVariables: request?.globalEnvironmentVariables || {},
+                      results: [],
+                      nextRequestName: null
+                    };
+                  }
+                }
+
+                testResults = appendScriptErrorResult('test', testResults, testError);
+
+                if (testResults?.nextRequestName !== undefined) {
+                  nextRequestName = testResults.nextRequestName;
+                }
+
+                mainWindow.webContents.send('main:run-folder-event', {
+                  type: 'test-results',
+                  testResults: testResults.results,
+                  ...eventData
+                });
+
+                mainWindow.webContents.send('main:script-environment-update', {
+                  envVariables: testResults.envVariables,
+                  runtimeVariables: testResults.runtimeVariables,
+                  collectionUid
+                });
+
+                mainWindow.webContents.send('main:global-environment-variables-update', {
+                  globalEnvironmentVariables: testResults.globalEnvironmentVariables
+                });
+
+                collection.globalEnvironmentVariables = testResults.globalEnvironmentVariables;
+
+                resetOauth2Credentials({ oauth2CredentialsToReset: testResults.oauth2CredentialsToReset, request, collectionUid });
+
+                notifyScriptExecution({
+                  channel: 'main:run-folder-event',
+                  basePayload: eventData,
+                  scriptType: 'test',
+                  error: testError
+                });
+
+                const domainsWithCookiesTest = await getDomainsWithCookies();
+                mainWindow.webContents.send('main:cookies-update', safeParseJSON(safeStringifyJSON(domainsWithCookiesTest)));
+              }
+            } catch (error) {
+              mainWindow.webContents.send('main:run-folder-event', {
+                type: 'error',
+                error: error ? error.message : 'An error occurred while running the request',
+                request: sanitizeRunnerRequest(request),
+                responseReceived: {},
+                ...eventData
+              });
             }
-          } catch (error) {
-            mainWindow.webContents.send('main:run-folder-event', {
-              type: 'error',
-              error: error ? error.message : 'An error occurred while running the request',
-              responseReceived: {},
-              ...eventData
-            });
+
+            if (stopRunnerExecution) {
+              deleteCancelToken(cancelTokenUid);
+              mainWindow.webContents.send('main:run-folder-event', {
+                type: 'testrun-ended',
+                collectionUid,
+                folderUid,
+                statusText: 'collection run was terminated!',
+                runCompletionTime: new Date().toISOString()
+              });
+              break;
+            }
+
+            if (nextRequestName !== undefined) {
+              nJumps++;
+              if (nJumps > 10000) {
+                throw new Error('Too many jumps, possible infinite loop');
+              }
+              if (nextRequestName === null) {
+                break;
+              }
+
+              const nextRequestIdx = folderRequests.findIndex((request) => request.name === nextRequestName);
+              if (nextRequestIdx >= 0) {
+                currentRequestIndex = nextRequestIdx;
+              } else {
+                console.error('Could not find request with name \'' + nextRequestName + '\'');
+                currentRequestIndex++;
+              }
+            } else {
+              currentRequestIndex++;
+            }
           }
 
           if (stopRunnerExecution) {
-            deleteCancelToken(cancelTokenUid);
-            mainWindow.webContents.send('main:run-folder-event', {
-              type: 'testrun-ended',
-              collectionUid,
-              folderUid,
-              statusText: 'collection run was terminated!',
-              runCompletionTime: new Date().toISOString()
-            });
             break;
-          }
-
-          if (nextRequestName !== undefined) {
-            nJumps++;
-            if (nJumps > 10000) {
-              throw new Error('Too many jumps, possible infinite loop');
-            }
-            if (nextRequestName === null) {
-              break;
-            }
-            const nextRequestIdx = folderRequests.findIndex((request) => request.name === nextRequestName);
-            if (nextRequestIdx >= 0) {
-              currentRequestIndex = nextRequestIdx;
-            } else {
-              console.error('Could not find request with name \'' + nextRequestName + '\'');
-              currentRequestIndex++;
-            }
-          } else {
-            currentRequestIndex++;
           }
         }
 

@@ -13,12 +13,14 @@ import SkippedRequest from 'components/ResponsePane/SkippedRequest';
 import RunnerTimeline from 'components/ResponsePane/RunnerTimeline';
 import ScriptError from 'components/ResponsePane/ScriptError';
 import ScriptErrorIcon from 'components/ResponsePane/ScriptErrorIcon';
+import Request from 'components/ResponsePane/Timeline/TimelineItem/Request';
 
 const ResponsePane = ({ rightPaneWidth, item, collection }) => {
   const [selectedTab, setSelectedTab] = useState('response');
   const [showScriptErrorCard, setShowScriptErrorCard] = useState(false);
 
-  const { requestSent, responseReceived, testResults, assertionResults, preRequestTestResults, postResponseTestResults, error } = item;
+  const { request, requestSent, responseReceived, testResults, assertionResults, preRequestTestResults, postResponseTestResults, error } = item;
+  const requestDetails = request || requestSent || {};
 
   useEffect(() => {
     if (item?.preRequestScriptErrorMessage || item?.postResponseScriptErrorMessage || item?.testScriptErrorMessage) {
@@ -55,10 +57,13 @@ const ResponsePane = ({ rightPaneWidth, item, collection }) => {
       case 'headers': {
         return <ResponseHeaders headers={headers} />;
       }
+      case 'request': {
+        return <Request request={requestDetails} item={item} collection={collection} />;
+      }
       case 'timeline': {
         return (
           <RunnerTimeline
-            request={requestSent}
+            request={requestDetails}
             response={responseReceived}
             item={item}
             collection={collection}
@@ -99,6 +104,9 @@ const ResponsePane = ({ rightPaneWidth, item, collection }) => {
   return (
     <StyledWrapper className="flex flex-col h-full relative overflow-auto">
       <div className="flex items-center tabs overflow-visible" role="tablist">
+        <div className={getTabClassname('request')} role="tab" onClick={() => selectTab('request')}>
+          Request
+        </div>
         <div className={getTabClassname('response')} role="tab" onClick={() => selectTab('response')}>
           Response
         </div>

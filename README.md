@@ -137,7 +137,4 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
-- Improvement for hotkey:
-  - No need to click the request screen to run send request hotkey
-  - Allow hotkey to be pressed when we are on the text field
 - CSV runner

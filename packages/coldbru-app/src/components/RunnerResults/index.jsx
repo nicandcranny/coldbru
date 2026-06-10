@@ -11,6 +11,7 @@ import StyledWrapper from './StyledWrapper';
 import RunnerTags from './RunnerTags/index';
 import RunConfigurationPanel from './RunConfigurationPanel';
 import Button from 'ui/Button/index';
+import RunnerCsvInput from 'components/Sidebar/Collections/Collection/CollectionItem/RunCollectionItem/RunnerCsvInput';
 
 const getDisplayName = (fullPath, pathname, name = '') => {
   let relativePath = path.relative(fullPath, pathname);
@@ -82,6 +83,8 @@ export default function RunnerResults({ collection }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [selectedRequestItems, setSelectedRequestItems] = useState([]);
   const [configureMode, setConfigureMode] = useState(false);
+  const [runnerData, setRunnerData] = useState(get(collection, 'runnerConfiguration.runnerData', null));
+  const [csvState, setCsvState] = useState({ isParsing: false, hasError: false, rowCount: 0 });
   // ref for the runner output body
   const runnerBodyRef = useRef();
 
@@ -180,8 +183,13 @@ export default function RunnerResults({ collection }) {
       if (savedConfiguration.delay !== undefined && delay === null) {
         setDelay(savedConfiguration.delay);
       }
+      return;
     }
   }, [collection.runnerConfiguration, configureMode, delay]);
+
+  useEffect(() => {
+    setRunnerData(get(collection, 'runnerConfiguration.runnerData', null));
+  }, [collection.uid]);
 
   const ensureCollectionIsMounted = () => {
     if (collection.mountStatus === 'mounted') {
@@ -195,12 +203,14 @@ export default function RunnerResults({ collection }) {
   };
 
   const runCollection = () => {
+    const savedRunnerData = runnerData;
+
     if (configureMode && selectedRequestItems.length > 0) {
-      dispatch(updateRunnerConfiguration(collection.uid, selectedRequestItems, selectedRequestItems, delay));
-      dispatch(runCollectionFolder(collection.uid, null, true, Number(delay), tagsEnabled && tags, selectedRequestItems));
+      dispatch(updateRunnerConfiguration(collection.uid, selectedRequestItems, selectedRequestItems, delay, savedRunnerData));
+      dispatch(runCollectionFolder(collection.uid, null, true, Number(delay), tagsEnabled && tags, selectedRequestItems, savedRunnerData));
     } else {
-      dispatch(updateRunnerConfiguration(collection.uid, [], [], delay));
-      dispatch(runCollectionFolder(collection.uid, null, true, Number(delay), tagsEnabled && tags));
+      dispatch(updateRunnerConfiguration(collection.uid, [], [], delay, savedRunnerData));
+      dispatch(runCollectionFolder(collection.uid, null, true, Number(delay), tagsEnabled && tags, undefined, savedRunnerData));
     }
   };
 
@@ -217,7 +227,8 @@ export default function RunnerResults({ collection }) {
         true,
         Number(savedDelay),
         tagsEnabled && tags,
-        savedSelectedItems
+        savedSelectedItems,
+        savedConfiguration?.runnerData || null
       )
     );
   };
@@ -231,6 +242,18 @@ export default function RunnerResults({ collection }) {
     setSelectedRequestItems([]);
     setConfigureMode(false);
     setDelay(null);
+    setRunnerData(null);
+  };
+
+  const handleRunnerDataChange = (nextRunnerData) => {
+    setRunnerData(nextRunnerData);
+    dispatch(updateRunnerConfiguration(
+      collection.uid,
+      selectedRequestItems,
+      selectedRequestItems,
+      delay,
+      nextRunnerData
+    ));
   };
 
   const cancelExecution = () => {
@@ -255,6 +278,8 @@ export default function RunnerResults({ collection }) {
     failed: items.filter(anyTestFailed).length,
     skipped: items.filter((i) => i.status === 'skipped').length
   };
+  let lastRenderedIterationIndex = null;
+  const shouldDisableForCsv = csvState.isParsing || csvState.hasError || (runnerData && csvState.rowCount === 0);
 
   let isCollectionLoading = areItemsLoading(collection);
   if (!items || !items.length) {
@@ -288,6 +313,9 @@ export default function RunnerResults({ collection }) {
                 onChange={(e) => setDelay(e.target.value)}
               />
             </div>
+            <div className="runner-section-divider mt-6 mb-6" />
+
+            <div className="font-medium mb-4">Select requests to run</div>
 
             {/* Tags for the collection run */}
             <RunnerTags collectionUid={collection.uid} className="mb-6" />
@@ -307,10 +335,16 @@ export default function RunnerResults({ collection }) {
               </div>
             </div>
 
+            <RunnerCsvInput
+              initialValue={runnerData}
+              onChange={handleRunnerDataChange}
+              onStateChange={setCsvState}
+            />
+
             <div className="flex flex-row gap-2">
               <Button
                 type="submit"
-                disabled={shouldDisableCollectionRun || (configureMode && selectedRequestItems.length === 0) || isCollectionLoading}
+                disabled={shouldDisableCollectionRun || (configureMode && selectedRequestItems.length === 0) || isCollectionLoading || shouldDisableForCsv}
                 onClick={runCollection}
               >
                 {configureMode && selectedRequestItems.length > 0
@@ -423,8 +457,25 @@ export default function RunnerResults({ collection }) {
           {/* Items list */}
           <div className="overflow-y-auto flex-1 " ref={runnerBodyRef}>
             {filteredItems.map((item) => {
+              const shouldRenderIterationHeader
+                = runnerInfo?.iterationCount > 0
+                  && item.iterationIndex !== undefined
+                  && item.iterationIndex !== lastRenderedIterationIndex;
+
+              if (item.iterationIndex !== undefined) {
+                lastRenderedIterationIndex = item.iterationIndex;
+              }
+
               return (
-                <div key={item.uid}>
+                <div key={item.runnerItemUid || item.uid}>
+                  {shouldRenderIterationHeader ? (
+                    <div className="iteration-header mt-4">
+                      <div className="font-medium">
+                        Iteration {item.iterationIndex + 1} of {item.iterationCount || runnerInfo.iterationCount}
+                      </div>
+                      {item.csvFileName ? <div className="text-xs text-muted mt-1">{item.csvFileName}</div> : null}
+                    </div>
+                  ) : null}
                   <div className="item-path mt-2">
                     <div className="flex items-center">
                       <span>

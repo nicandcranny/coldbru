@@ -111,6 +111,17 @@ const mergeRequestWithPreservedUids = (existingRequest, newRequest) =>
 const mergeRootWithPreservedUids = (existingRoot, newRoot) =>
   preserveUidsAtPaths(existingRoot, newRoot, ROOT_UID_PATHS);
 
+const getRunnerResultItem = (items = [], payload = {}) => {
+  const runnerItemUid = payload.runnerItemUid;
+
+  if (runnerItemUid) {
+    return items.findLast((item) => item.runnerItemUid === runnerItemUid);
+  }
+
+  const itemUid = payload.itemUid;
+  return items.findLast((item) => item.uid === itemUid);
+};
+
 const initialState = {
   collections: [],
   collectionSortOrder: 'default',
@@ -3053,6 +3064,9 @@ export const collectionsSlice = createSlice({
           info.isRecursive = isRecursive;
           info.cancelTokenUid = cancelTokenUid;
           info.status = 'started';
+          info.runnerData = action.payload.runnerData || null;
+          info.csvFileName = action.payload.csvFileName || null;
+          info.iterationCount = action.payload.iterationCount || 0;
         }
 
         if (type === 'testrun-ended') {
@@ -3069,67 +3083,82 @@ export const collectionsSlice = createSlice({
         if (type === 'request-queued') {
           collection.runnerResult.items.push({
             uid: request.uid,
+            runnerItemUid: action.payload.runnerItemUid,
+            iterationIndex: action.payload.iterationIndex,
+            iterationCount: action.payload.iterationCount,
+            iterationVariables: action.payload.iterationVariables,
+            csvFileName: action.payload.csvFileName,
             status: 'queued'
           });
         }
 
         if (type === 'request-sent') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.status = 'running';
+          item.request = action.payload.request;
           item.requestSent = action.payload.requestSent;
         }
 
         if (type === 'response-received') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.status = 'completed';
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.responseReceived = action.payload.responseReceived;
         }
 
         if (type === 'test-results') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.testResults = action.payload.testResults;
         }
 
         if (type === 'test-results-pre-request') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.preRequestTestResults = action.payload.preRequestTestResults;
         }
 
         if (type === 'test-results-post-response') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.postResponseTestResults = action.payload.postResponseTestResults;
         }
 
         if (type === 'assertion-results') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.assertionResults = action.payload.assertionResults;
         }
 
         if (type === 'error') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.error = action.payload.error;
           item.responseReceived = action.payload.responseReceived;
           item.status = 'error';
         }
 
         if (type === 'runner-request-skipped') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
+          if (action.payload.request) {
+            item.request = action.payload.request;
+          }
           item.status = 'skipped';
           item.responseReceived = action.payload.responseReceived;
         }
 
         if (type === 'post-response-script-execution') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.postResponseScriptErrorMessage = action.payload.errorMessage;
         }
 
         if (type === 'test-script-execution') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.testScriptErrorMessage = action.payload.errorMessage;
         }
 
         if (type === 'pre-request-script-execution') {
-          const item = collection.runnerResult.items.findLast((i) => i.uid === request.uid);
+          const item = getRunnerResultItem(collection.runnerResult.items, action.payload);
           item.preRequestScriptErrorMessage = action.payload.errorMessage;
         }
       }
@@ -3158,13 +3187,16 @@ export const collectionsSlice = createSlice({
       }
     },
     updateRunnerConfiguration: (state, action) => {
-      const { collectionUid, selectedRequestItems, requestItemsOrder, delay } = action.payload;
+      const { collectionUid, selectedRequestItems, requestItemsOrder, delay, runnerData } = action.payload;
       const collection = findCollectionByUid(state.collections, collectionUid);
       if (collection) {
         collection.runnerConfiguration = {
           selectedRequestItems: selectedRequestItems || [],
           requestItemsOrder: requestItemsOrder || [],
-          delay: delay
+          delay: delay,
+          runnerData: typeof runnerData === 'undefined'
+            ? collection.runnerConfiguration?.runnerData || null
+            : runnerData
         };
       }
     },
