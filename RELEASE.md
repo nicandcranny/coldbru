@@ -1,98 +1,280 @@
 # Release
 
-## Steps
+## Goal
 
-1. Start from the exact release commit.
-   - Do not release from a random feature branch.
-   - Make sure `git status` is clean before building.
-2. Bump the version in:
-   - [packages/coldbru-app/package.json](/Users/xen.nicholas/Code/coldbru/packages/coldbru-app/package.json)
-   - [packages/coldbru-electron/package.json](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/package.json)
-   - workspace entries in [package-lock.json](/Users/xen.nicholas/Code/coldbru/package-lock.json)
-3. Install dependencies:
-   - `npm i --legacy-peer-deps`
-4. Build every required artifact:
-   - macOS: `npm run build:electron:mac`
-   - Windows x64: `npm run build:electron:win -- --x64`
-   - Linux x64:
-     - on Linux host: `npm run build:electron:linux -- --x64`
-     - on macOS with Docker Desktop: `npm run build:electron:linux:docker`
-5. Confirm each build copied its public artifact into `build/v<version>/`.
-6. Assemble checksums and verify the final bundle:
-   - `npm run release:assemble`
-7. Confirm `build/v<version>/` contains exactly:
-   - `coldbru_<version>_arm64_mac.dmg`
-   - `coldbru_<version>_x64_mac.dmg`
-   - `coldbru_<version>_x64_win.exe`
-   - `coldbru_<version>_x86_64_linux.AppImage`
-   - `SHA256SUMS.txt`
-8. Smoke test on macOS.
-9. Commit the release changes, create tag `v<version>`, and push:
-   - `git add .`
-   - `git commit -m "release: v<version>"`
-   - `git tag v<version>`
-   - `git push origin <branch>`
-   - `git push origin v<version>`
-10. Create or update the GitHub release and upload everything from `build/v<version>/`.
-    - Create:
-      - `gh release create v<version> build/v<version>/* --title "ColdBru v<version>" --notes ""`
-    - Update:
-      - `gh release upload v<version> build/v<version>/* --clobber`
+Build one verified release bundle in `build/v<version>/` containing:
 
-## Build Strategy
+- `coldbru_<version>_arm64_mac.dmg`
+- `coldbru_<version>_x64_mac.dmg`
+- `coldbru_<version>_x64_win.exe`
+- `coldbru_<version>_x86_64_linux.AppImage`
+- `SHA256SUMS.txt`
 
-- Final release artifacts live in `build/v<version>/`.
-- There is no staging directory.
-- Each platform build can be run independently and in any order.
-- Release scripts live under `scripts/release/`.
-- `npm run release:assemble` is the final verification step. It expects all release artifacts to already exist in `build/v<version>/` and then writes `SHA256SUMS.txt`.
-- Build from the release commit or release tag, not from an arbitrary feature branch.
-- On macOS, Windows x64 can be built locally and Linux x64 should be built through Docker to avoid native-module cross-compilation failures from macOS to Linux.
+## Release Scripts
 
-## Smoke Test
+- `npm run release:version -- <version>`
+  - Bumps:
+    - [packages/coldbru-app/package.json](/Users/xen.nicholas/Code/coldbru/packages/coldbru-app/package.json)
+    - [packages/coldbru-electron/package.json](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/package.json)
+    - workspace entries in [package-lock.json](/Users/xen.nicholas/Code/coldbru/package-lock.json)
+- `npm run release:build:mac`
+  - Builds both mac DMGs and copies them into `build/v<version>/`
+- `npm run release:build:win`
+  - Builds Windows x64 installer and copies it into `build/v<version>/`
+- `npm run release:build:linux`
+  - Builds Linux x64 AppImage on a Linux host and copies it into `build/v<version>/`
+- `npm run release:build:linux:docker`
+  - Builds Linux x64 AppImage inside Docker from macOS and copies it into `build/v<version>/`
+- `npm run release:assemble`
+  - Regenerates `SHA256SUMS.txt` from artifacts already in `build/v<version>/`
+- `npm run release:verify`
+  - Verifies exact expected filenames and SHA256 values
+- `npm run release:build:bundle`
+  - Human-friendly wrapper:
+    - installs dependencies
+    - builds host-appropriate targets
+    - assembles checksums
+    - verifies final bundle
 
-For step 8, only macOS smoke testing is required locally. Windows and Linux artifacts should still be built for the release, but they do not need local smoke testing if only a Mac is available.
+## Normal Flow
 
-### macOS
+### 1. Start from release commit
 
-1. Verify packaged app contains expected runtime files:
-   - `app.asar` exists
-   - required module paths exist inside `app.asar`
-   - sample resource files expected by app are present
-2. Launch packaged `.app` directly on macOS and watch for immediate crash:
-   - confirm process starts
-   - confirm no startup `Cannot find module` or similar uncaught exception
-3. Check Electron packaging basics:
-   - app bundle exists under `packages/coldbru-electron/out/mac*`
-   - expected mac artifact files exist in `packages/coldbru-electron/out`
-   - signing/ad-hoc signing step completed in build logs
-4. Inspect packaged output for obvious regressions:
-   - `app.asar` not missing major dependency folders
-   - no accidental inclusion of `dist/`, `out/`, or other builder junk if package size jumps unexpectedly
-5. Open app once and confirm basic startup behavior:
-   - app window opens
-   - no blank screen on first launch
-   - main process stays alive after startup
+- Switch to release branch or exact commit
+- Make sure `git status` is clean before building
+- Do not release from random feature branch
 
-## Notes
+### 2. Bump version
 
-- `npm run build:electron:<target>` runs the wrapper in `scripts/release/build-electron.sh`, clears `packages/coldbru-electron/out` before rebuilding that target, then copies the public release artifact into `build/v<version>/`.
-- `npm run build:electron:linux:docker` runs the Linux x64 build inside a local `linux/amd64` Docker container and still writes the final artifact back into `build/v<version>/`.
-- `npm run release:assemble` generates `SHA256SUMS.txt`.
+```bash
+npm run release:version -- 1.1.0
+```
 
-## Troubleshooting
+### 3. Build release bundle
 
-- If package size suddenly huge, inspect packaged `app.asar`. Bad pack rules can include `dist/`, `out/`, tests, or builder-only files.
-- If you are building all platforms across multiple machines, make sure each machine contributes artifacts for the same version into `build/v<version>/` before running `npm run release:assemble`.
+On macOS:
 
-### macOS
+```bash
+npm run release:build:bundle
+```
 
-- `build-electron.sh` now does a more defensive cleanup of `packages/coldbru-electron/out` and `packages/coldbru-electron/web` before rebuilding.
-- If `npm run build:electron:linux -- --x64` fails on macOS with `node-gyp does not support cross-compiling native modules from source`, use `npm run build:electron:linux:docker` instead.
-- If packaged app crashes but `npm run dev` works, problem usually signing or entitlements, not app code.
-- Keep [packages/coldbru-electron/resources/entitlements.mac.plist](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/resources/entitlements.mac.plist) including:
+This runs:
+
+- `npm i --legacy-peer-deps`
+- `npm run release:build:mac`
+- `npm run release:build:win`
+- `npm run release:build:linux:docker`
+- `npm run release:assemble`
+- `npm run release:verify`
+
+On Linux:
+
+```bash
+npm run release:build:bundle -- --skip-mac --skip-win
+```
+
+### 4. Smoke test mac app
+
+Run this before you do any later rebuild that clears `packages/coldbru-electron/out/`.
+
+Check:
+
+- packaged app exists under `packages/coldbru-electron/out/mac` and `packages/coldbru-electron/out/mac-arm64`
+- app launches without blank screen
+- no immediate `Cannot find module` or startup crash
+- main process stays alive after first launch
+
+### 5. Commit, tag, push
+
+```bash
+git add packages/coldbru-app/package.json packages/coldbru-electron/package.json package-lock.json build/v1.1.0
+git commit -m "release: v1.1.0"
+git tag v1.1.0
+git push origin main
+git push origin v1.1.0
+```
+
+### 6. Publish GitHub release
+
+Create:
+
+```bash
+gh release create v1.1.0 build/v1.1.0/* --title "ColdBru v1.1.0" --notes ""
+```
+
+Update existing release:
+
+```bash
+gh release upload v1.1.0 build/v1.1.0/* --clobber
+```
+
+## macOS Signing
+
+### Local unsigned or internal release
+
+If no real Apple signing identity is configured, `scripts/release/build-electron.sh` falls back to:
+
+- Electron Builder ad-hoc signing during packaging
+- explicit post-build ad-hoc re-signing of every `.app` bundle under `packages/coldbru-electron/out`
+
+This matters because mismatched ad-hoc signatures across helper apps can crash on other Macs with a "different Team IDs" style failure.
+
+No extra setup needed for this fallback.
+
+### Public signed mac release
+
+Set one of:
+
+- `CSC_NAME`
+- `CSC_LINK` and matching key password env vars
+
+Then build mac release:
+
+```bash
+npm run release:build:mac
+```
+
+Current repo behavior:
+
+- real signing works when `CSC_NAME` or `CSC_LINK` is configured
+- ad-hoc fallback runs only when neither is configured
+- [packages/coldbru-electron/resources/entitlements.mac.plist](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/resources/entitlements.mac.plist) must keep:
   - `com.apple.security.cs.allow-jit`
   - `com.apple.security.cs.allow-unsigned-executable-memory`
   - `com.apple.security.cs.disable-library-validation`
-- Local build can use ad-hoc signing when no real Apple cert exists.
-- Public mac release should use valid Apple signing identity and notarization.
+
+### Notarization
+
+Repo already has [packages/coldbru-electron/notarize.js](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/notarize.js), but current [packages/coldbru-electron/electron-builder-config.js](/Users/xen.nicholas/Code/coldbru/packages/coldbru-electron/electron-builder-config.js) sets:
+
+- `mac.notarize = false`
+
+So current release flow signs mac builds, but does not rely on Electron Builder notarization.
+
+If notarization is re-enabled later, current helper expects:
+
+- `APPLE_ID`
+- `APPLE_ID_PASSWORD`
+
+and uses hardcoded `ascProvider`.
+
+## Platform Notes
+
+### macOS host
+
+Use:
+
+- `npm run release:build:mac`
+- `npm run release:build:win`
+- `npm run release:build:linux:docker`
+
+### Linux host
+
+Use:
+
+- `npm run release:build:linux`
+
+### Build order
+
+Recommended order on macOS:
+
+1. mac
+2. smoke test mac app from `packages/coldbru-electron/out/`
+3. win
+4. linux docker
+5. assemble
+6. verify
+
+Reason:
+
+- every target rebuild clears `packages/coldbru-electron/out`
+- if you need to inspect packaged `.app`, do it immediately after mac build
+
+## Troubleshooting
+
+### `EPERM` under `~/Library/Caches/electron-builder`
+
+Symptom:
+
+- mac build fails creating lock or cache files in `~/Library/Caches/electron-builder`
+
+Cause:
+
+- sandbox or local permissions block Electron Builder cache writes
+
+Fix:
+
+- rerun mac build with permission to write that cache location
+
+### `wineserver: bind: Operation not permitted`
+
+Symptom:
+
+- Windows build fails while running `rcedit` through Wine on macOS
+
+Cause:
+
+- sandbox or local restrictions block Wine helper process
+
+Fix:
+
+- rerun Windows build with permission to run Wine helper processes
+
+### Linux build fails on macOS with native module cross-compile errors
+
+Fix:
+
+```bash
+npm run release:build:linux:docker
+```
+
+### `build/v<version>/` exists but missing one artifact
+
+Run:
+
+```bash
+npm run release:assemble
+npm run release:verify
+```
+
+If still missing, rerun only missing platform build.
+
+### Wrong files changed in `package-lock.json`
+
+Do not hand-edit broad `1.0.x` strings. Use:
+
+```bash
+npm run release:version -- <version>
+```
+
+That script updates only workspace package version entries.
+
+## Script Details
+
+### `scripts/release/build-electron.sh`
+
+- builds web app
+- refreshes packaged `web/` directory
+- rewrites static asset paths for Electron
+- deletes sourcemaps
+- runs target Electron build
+- copies target artifact into `build/v<version>/`
+- applies consistent ad-hoc re-signing for mac `.app` bundles when no real signing identity is configured
+
+### `scripts/release/build-electron-linux-docker.sh`
+
+- creates clean Linux build environment in Docker
+- installs Linux-native rspack binding
+- builds Linux AppImage
+- copies `build/v<version>/` artifacts back to host
+
+### `scripts/release/assemble-release.js`
+
+- expects artifacts already present in `build/v<version>/`
+- normalizes Linux filename if needed
+- generates `SHA256SUMS.txt`
+
+### `scripts/release/verify-release.js`
+
+- checks exact expected artifact filenames
+- checks `SHA256SUMS.txt` matches real file hashes

@@ -137,4 +137,3 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
-- CSV runner
