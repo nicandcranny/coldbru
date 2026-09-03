@@ -135,5 +135,15 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 ## Future Improvements
 
+### Feature Addition
+
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
+- Add back and forward button like browser
+- Permanent history feature
+- Show cursor on the uneditable field (e.g. response) to show that we can use arrow to navigate
+
+### Bug Fixes
+
+- Fix git revert feature doesn't work on the global environment
+- Fix clicking configure on the global environment changes the view filter to home
