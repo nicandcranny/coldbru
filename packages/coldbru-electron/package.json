@@ -42,7 +42,7 @@
     "@usebruno/requests": "0.16.0",
     "@usebruno/schema": "0.24.0",
     "about-window": "^1.15.2",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.0",
     "archiver": "^7.0.1",
     "aws4-axios": "^3.3.0",
     "axios": "^1.8.3",
@@ -57,8 +57,7 @@
     "electron-notarize": "^1.2.2",
     "electron-store": "^8.1.0",
     "electron-util": "^0.17.2",
-    "extract-zip": "^2.0.1",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.6",
     "fs-extra": "^10.1.0",
     "graphql": "^16.6.0",
     "hexy": "^0.3.5",
@@ -66,22 +65,22 @@
     "https-proxy-agent": "^7.0.2",
     "iconv-lite": "^0.6.3",
     "is-valid-path": "^0.1.1",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.3.2",
     "lodash": "^4.17.21",
     "mime-types": "^2.1.35",
-    "nanoid": "3.3.8",
+    "nanoid": "3.3.18",
     "qs": "^6.14.1",
     "simple-git": "^3.36.0",
     "socks-proxy-agent": "^8.0.2",
     "tough-cookie": "^6.0.0",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.1",
     "yup": "^0.32.11"
   },
   "optionalDependencies": {
     "dmg-license": "^1.0.11"
   },
   "devDependencies": {
-    "electron": "41.2.1",
+    "electron": "41.10.7",
     "electron-builder": "^26.8.1",
     "electron-devtools-installer": "^4.0.0"
   }

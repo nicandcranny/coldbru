@@ -1,12 +1,24 @@
 import { buildHarRequest } from 'utils/codegenerator/har';
 import { getAuthHeaders } from 'utils/codegenerator/auth';
-import { getAllVariables, getTreePathFromCollectionToItem, mergeHeaders } from 'utils/collections/index';
+import {
+  getAllVariables,
+  getTreePathFromCollectionToItem,
+  mergeHeaders
+} from 'utils/collections/index';
 import { resolveInheritedAuth } from 'utils/auth';
 import { get } from 'lodash';
-import { interpolateAuth, interpolateHeaders, interpolateBody, interpolateParams } from './interpolation';
-import { encodeUrl as encodeUrlCommon, stripOrigin } from '@usebruno/common/utils';
+import {
+  interpolateAuth,
+  interpolateHeaders,
+  interpolateBody,
+  interpolateParams
+} from './interpolation';
+import {
+  encodeUrl as encodeUrlCommon,
+  stripOrigin
+} from '@usebruno/common/utils';
 import { parse } from 'url';
-import { stringify } from 'query-string';
+import queryString from 'query-string';
 
 const addCurlAuthFlags = (curlCommand, auth) => {
   if (!auth || !curlCommand) return curlCommand;
@@ -32,7 +44,12 @@ const addCurlAuthFlags = (curlCommand, auth) => {
   return curlCommand;
 };
 
-const generateSnippet = ({ language, item, collection, shouldInterpolate = false }) => {
+const generateSnippet = ({
+  language,
+  item,
+  collection,
+  shouldInterpolate = false
+}) => {
   try {
     // Get HTTPSnippet dynamically so mocks can be applied in tests
     const { HTTPSnippet } = require('httpsnippet');
@@ -85,11 +102,15 @@ const generateSnippet = ({ language, item, collection, shouldInterpolate = false
     // Respect encodeUrl setting: when not explicitly true, replace HTTPSnippet's encoded path+query with the raw version.
     // Replacing the path portion works for all targets since it's a substring of the full URL.
     // encodeUrl defaults to false in the UI when undefined/null
-    const settings = item.draft ? get(item, 'draft.settings') : get(item, 'settings');
+    const settings = item.draft
+      ? get(item, 'draft.settings')
+      : get(item, 'settings');
     const rawUrl = item.rawUrl || request.url;
     const parsed = parse(request.url, true, true);
-    const search = stringify(parsed.query);
-    const httpSnippetPath = search ? `${parsed.pathname}?${search}` : parsed.pathname;
+    const search = queryString.stringify(parsed.query);
+    const httpSnippetPath = search
+      ? `${parsed.pathname}?${search}`
+      : parsed.pathname;
 
     let desiredPath;
     if (settings?.encodeUrl === true) {
@@ -121,6 +142,4 @@ const generateSnippet = ({ language, item, collection, shouldInterpolate = false
   }
 };
 
-export {
-  generateSnippet
-};
+export { generateSnippet };

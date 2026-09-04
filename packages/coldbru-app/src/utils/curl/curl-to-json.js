@@ -7,13 +7,15 @@
  */
 
 import parseCurlCommand from './parse-curl';
-import * as querystring from 'query-string';
+import queryString from 'query-string';
 import * as jsesc from 'jsesc';
 import { buildQueryString } from '@usebruno/common/utils';
 import { isStructuredContentType } from './content-type';
 
 function getContentType(headers = {}) {
-  const contentType = Object.keys(headers).find((key) => key.toLowerCase() === 'content-type');
+  const contentType = Object.keys(headers).find(
+    (key) => key.toLowerCase() === 'content-type'
+  );
 
   return contentType ? headers[contentType] : null;
 }
@@ -39,7 +41,7 @@ function getDataString(request) {
     return { data: request.data };
   }
 
-  const parsedQueryString = querystring.parse(request.data, { sort: false });
+  const parsedQueryString = queryString.parse(request.data, { sort: false });
   // if missing `=`, `query-string` will set value as `null`. Reset value as empty string ('') here.
   // https://github.com/sindresorhus/query-string/blob/3d8fbf2328220c06e45f166cdf58e70617c7ee68/base.js#L364-L366
   Object.keys(parsedQueryString).forEach((key) => {
@@ -48,7 +50,8 @@ function getDataString(request) {
     }
   });
   const keyCount = Object.keys(parsedQueryString).length;
-  const singleKeyOnly = keyCount === 1 && !parsedQueryString[Object.keys(parsedQueryString)[0]];
+  const singleKeyOnly
+    = keyCount === 1 && !parsedQueryString[Object.keys(parsedQueryString)[0]];
   const singularData = request.isDataBinary || singleKeyOnly;
   if (singularData) {
     const data = {};
@@ -164,7 +167,10 @@ const curlToJson = (curlCommand) => {
   }
 
   if (request.queries) {
-    requestJson.url = requestJson.url + '?' + buildQueryString(request.queries, { encode: false });
+    requestJson.url
+      = requestJson.url
+        + '?'
+        + buildQueryString(request.queries, { encode: false });
   }
 
   if (request.multipartUploads) {
@@ -173,9 +179,16 @@ const curlToJson = (curlCommand) => {
       requestJson.headers = {};
     }
     requestJson.headers['Content-Type'] = 'multipart/form-data';
-  } else if (request.isDataBinary && (typeof request.data === 'string' && request.data.startsWith('@'))) {
+  } else if (
+    request.isDataBinary
+    && typeof request.data === 'string'
+    && request.data.startsWith('@')
+  ) {
     Object.assign(requestJson, getFilesString(request)); // file case
-  } else if (typeof request.data === 'string' || typeof request.data === 'number') {
+  } else if (
+    typeof request.data === 'string'
+    || typeof request.data === 'number'
+  ) {
     Object.assign(requestJson, getDataString(request));
   }
 

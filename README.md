@@ -142,7 +142,3 @@ ColdBru is released under the [MIT License](LICENSE.md).
 - Add back and forward button like browser
 - Permanent history feature
 - Show cursor on the uneditable field (e.g. response) to show that we can use arrow to navigate
-
-### Bug Fixes
-
-- Fix 
