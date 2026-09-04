@@ -53,6 +53,8 @@ Every feature maps to an IPC file, a Redux slice, and a set of components:
 | Notifications | `ipc/notifications.js` (1 handler) | `slices/notifications.js` | Notifications/ |
 | System Monitor | `ipc/system-monitor.js` (3 handlers) | `slices/performance.js` | — |
 
+Workspace global-environment files are watched by `app/workspace-watcher.js`. It emits `main:global-environment-added`, `main:global-environment-changed`, and `main:global-environment-deleted`; `providers/App/useIpcEvents.js` handles these events by reloading the active workspace through `renderer:get-global-environments`.
+
 ## Redux Middleware Pipeline
 
 Middleware runs in this order:

@@ -145,5 +145,4 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 ### Bug Fixes
 
-- Fix git revert feature doesn't work on the global environment
-- Fix clicking configure on the global environment changes the view filter to home
+- Fix 
