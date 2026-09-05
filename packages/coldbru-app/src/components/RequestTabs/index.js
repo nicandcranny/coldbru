@@ -1,9 +1,19 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import find from 'lodash/find';
 import classnames from 'classnames';
-import { IconChevronRight, IconChevronLeft } from '@tabler/icons';
+import {
+  IconArrowLeft,
+  IconArrowRight,
+  IconChevronRight,
+  IconChevronLeft
+} from '@tabler/icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { focusTab, reorderTabs } from 'providers/ReduxStore/slices/tabs';
+import {
+  focusTab,
+  navigateBack,
+  navigateForward,
+  reorderTabs
+} from 'providers/ReduxStore/slices/tabs';
 import CollectionHeader from './CollectionHeader';
 import RequestTab from './RequestTab';
 import StyledWrapper from './StyledWrapper';
@@ -21,6 +31,12 @@ const RequestTabs = () => {
   const [showChevrons, setShowChevrons] = React.useState(false);
   const tabs = useSelector((state) => state.tabs.tabs);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
+  const canNavigateBack = useSelector((state) =>
+    Boolean(state.tabs.tabHistory?.back.length)
+  );
+  const canNavigateForward = useSelector((state) =>
+    Boolean(state.tabs.tabHistory?.forward.length)
+  );
   const collections = useSelector((state) => state.collections.collections);
   const leftSidebarWidth = useSelector((state) => state.app.leftSidebarWidth);
   const sidebarCollapsed = useSelector((state) => state.app.sidebarCollapsed);
@@ -42,13 +58,12 @@ const RequestTabs = () => {
   }, []);
 
   const activeTab = find(tabs, (t) => t.uid === activeTabUid);
-  const activeCollection = find(collections, (c) => c?.uid === activeTab?.collectionUid);
-  const {
-    mode,
-    selectedCollection,
-    visibleTabs,
-    scratchCollectionUid
-  } = resolvedRequestTabView;
+  const activeCollection = find(
+    collections,
+    (c) => c?.uid === activeTab?.collectionUid
+  );
+  const { mode, selectedCollection, visibleTabs, scratchCollectionUid }
+    = resolvedRequestTabView;
   const shouldRenderEmptyTabChrome = mode === 'all';
 
   useEffect(() => {
@@ -56,7 +71,9 @@ const RequestTabs = () => {
 
     const checkOverflow = () => {
       if (tabsRef.current && scrollContainerRef.current) {
-        const hasOverflow = tabsRef.current.scrollWidth > scrollContainerRef.current.clientWidth + 1;
+        const hasOverflow
+          = tabsRef.current.scrollWidth
+            > scrollContainerRef.current.clientWidth + 1;
         setShowChevrons(hasOverflow);
       }
     };
@@ -68,12 +85,20 @@ const RequestTabs = () => {
     }
 
     return () => resizeObserver.disconnect();
-  }, [activeTabUid, activeTab, visibleTabs.length, screenWidth, leftSidebarWidth, sidebarCollapsed]);
+  }, [
+    activeTabUid,
+    activeTab,
+    visibleTabs.length,
+    screenWidth,
+    leftSidebarWidth,
+    sidebarCollapsed
+  ]);
 
   const getTabClassname = (tab, index) => {
     return classnames('request-tab select-none', {
       'active': tab.uid === activeTabUid,
-      'last-tab': visibleTabs && visibleTabs.length && index === visibleTabs.length - 1,
+      'last-tab':
+        visibleTabs && visibleTabs.length && index === visibleTabs.length - 1,
       'has-overflow': tabOverflowStates[tab.uid]
     });
   };
@@ -118,8 +143,41 @@ const RequestTabs = () => {
             viewMode={mode}
           />
           <div className="flex items-center gap-2 pl-2" ref={collectionTabsRef}>
-            <div className={classnames('scroll-chevrons', { hidden: !showChevrons })}>
-              <ActionIcon size="lg" onClick={leftSlide} aria-label="Left Chevron" style={{ marginBottom: '3px' }}>
+            <div className="flex items-center">
+              <ActionIcon
+                size="lg"
+                disabled={!canNavigateBack}
+                onClick={() => dispatch(navigateBack())}
+                label="Go Back (Ctrl+-)"
+                aria-label="Go Back"
+                data-testid="tab-history-back"
+                style={{ marginBottom: '3px' }}
+              >
+                <IconArrowLeft size={18} strokeWidth={1.5} />
+              </ActionIcon>
+              <ActionIcon
+                size="lg"
+                disabled={!canNavigateForward}
+                onClick={() => dispatch(navigateForward())}
+                label="Go Forward (Ctrl+Shift+-)"
+                aria-label="Go Forward"
+                data-testid="tab-history-forward"
+                style={{ marginBottom: '3px' }}
+              >
+                <IconArrowRight size={18} strokeWidth={1.5} />
+              </ActionIcon>
+            </div>
+            <div
+              className={classnames('scroll-chevrons', {
+                hidden: !showChevrons
+              })}
+            >
+              <ActionIcon
+                size="lg"
+                onClick={leftSlide}
+                aria-label="Left Chevron"
+                style={{ marginBottom: '3px' }}
+              >
                 <IconChevronLeft size={18} strokeWidth={1.5} />
               </ActionIcon>
             </div>
@@ -129,21 +187,30 @@ const RequestTabs = () => {
                 <IconHome2 size={18} strokeWidth={1.5}/>
               </div>
             </li> */}
-            <div className="tabs-scroll-container" style={{ maxWidth: maxTablistWidth }} ref={scrollContainerRef}>
+            <div
+              className="tabs-scroll-container"
+              style={{ maxWidth: maxTablistWidth }}
+              ref={scrollContainerRef}
+            >
               <ul role="tablist" ref={tabsRef}>
                 {visibleTabs && visibleTabs.length
                   ? visibleTabs.map((tab, index) => {
-                      const tabCollection = find(collections, (collection) => collection?.uid === tab.collectionUid);
+                      const tabCollection = find(
+                        collections,
+                        (collection) => collection?.uid === tab.collectionUid
+                      );
                       return (
                         <DraggableTab
                           key={tab.uid}
                           id={tab.uid}
                           index={index}
                           onMoveTab={(source, target) => {
-                            dispatch(reorderTabs({
-                              sourceUid: source,
-                              targetUid: target
-                            }));
+                            dispatch(
+                              reorderTabs({
+                                sourceUid: source,
+                                targetUid: target
+                              })
+                            );
                           }}
                           className={getTabClassname(tab, index)}
                           onClick={() => handleClick(tab)}
@@ -167,11 +234,26 @@ const RequestTabs = () => {
             </div>
 
             {mode !== 'home' && (
-              <CreateTransientRequest collectionUid={mode === 'all' ? scratchCollectionUid : selectedCollection?.uid} />
+              <CreateTransientRequest
+                collectionUid={
+                  mode === 'all'
+                    ? scratchCollectionUid
+                    : selectedCollection?.uid
+                }
+              />
             )}
 
-            <div className={classnames('scroll-chevrons', { hidden: !showChevrons })}>
-              <ActionIcon size="lg" onClick={rightSlide} aria-label="Right Chevron" style={{ marginBottom: '3px' }}>
+            <div
+              className={classnames('scroll-chevrons', {
+                hidden: !showChevrons
+              })}
+            >
+              <ActionIcon
+                size="lg"
+                onClick={rightSlide}
+                aria-label="Right Chevron"
+                style={{ marginBottom: '3px' }}
+              >
                 <IconChevronRight size={18} strokeWidth={1.5} />
               </ActionIcon>
             </div>

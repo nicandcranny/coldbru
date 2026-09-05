@@ -87,7 +87,7 @@ Gotcha: new requests open as preview tabs by default. Tasks are removed from the
 
 Listener middleware. Keeps the request tab view mode in sync with the active tab.
 
-Triggers on `addTab` and `focusTab`. If the view is `home` and a workspace tab is focused, switches to `all`. If the view is `collection` and the focused tab belongs to a different collection, switches to that collection.
+Triggers on `addTab`, `focusTab`, `navigateBack`, and `navigateForward`. If the view is `home` and a workspace tab is focused, switches to `all`. If the view is `collection` and the focused tab belongs to a different collection, switches to that collection. History navigation reads the active tab after the tabs reducer runs so browser-style back/forward navigation can cross collection and workspace-home views.
 
 ### Draft Detect
 

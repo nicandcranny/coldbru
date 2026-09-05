@@ -139,5 +139,8 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
-- Add back and forward button like browser
 - Permanent history feature
+
+### Bug Fixes
+
+- The undo redo is wonky

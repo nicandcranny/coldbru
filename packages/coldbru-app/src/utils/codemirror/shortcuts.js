@@ -1,11 +1,35 @@
 import { getKeyBindingsForActionAllOS } from 'providers/Hotkeys/keyMappings';
 import store from 'providers/ReduxStore/index';
-import { reorderTabs, switchTab } from 'providers/ReduxStore/slices/tabs';
-import { savePreferences, toggleSidebarCollapse } from 'providers/ReduxStore/slices/app';
+import {
+  navigateBack,
+  navigateForward,
+  reorderTabs,
+  switchTab
+} from 'providers/ReduxStore/slices/tabs';
+import {
+  savePreferences,
+  toggleSidebarCollapse
+} from 'providers/ReduxStore/slices/app';
 
 const CodeMirror = require('codemirror');
 
 const KEYBINDING_ACTIONS = [
+  {
+    actionName: 'navigateBack',
+    handler: () => {
+      if (store.getState().tabs.tabHistory?.back.length)
+        store.dispatch(navigateBack());
+      return true;
+    }
+  },
+  {
+    actionName: 'navigateForward',
+    handler: () => {
+      if (store.getState().tabs.tabHistory?.forward.length)
+        store.dispatch(navigateForward());
+      return true;
+    }
+  },
   {
     actionName: 'closeTab',
     handler: () => {
@@ -53,8 +77,10 @@ const KEYBINDING_ACTIONS = [
     handler: () => {
       const state = store.getState();
       const preferences = state.app.preferences;
-      const currentOrientation = preferences?.layout?.responsePaneOrientation || 'horizontal';
-      const newOrientation = currentOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+      const currentOrientation
+        = preferences?.layout?.responsePaneOrientation || 'horizontal';
+      const newOrientation
+        = currentOrientation === 'horizontal' ? 'vertical' : 'horizontal';
       const updatedPreferences = {
         ...preferences,
         layout: {
@@ -95,15 +121,20 @@ const KEYBINDING_ACTIONS = [
 function convertToCodeMirrorFormat(combo) {
   if (!combo || typeof combo !== 'string') return null;
 
-  const normalized = combo
-    .replace(/-/g, '+')
+  const hasMinusKey = combo.endsWith('+-');
+  const normalized = (
+    hasMinusKey ? `${combo.slice(0, -1)}minus` : combo.replace(/-/g, '+')
+  )
     .split('+')
     .map((p) => p.trim())
     .filter(Boolean)
     .filter((p) => p.toLowerCase() !== 'bind')
     .join('+');
 
-  const parts = normalized.split('+').map((p) => p.trim()).filter(Boolean);
+  const parts = normalized
+    .split('+')
+    .map((p) => p.trim())
+    .filter(Boolean);
 
   const out = parts.map((key) => {
     const lower = key.toLowerCase();
@@ -124,9 +155,20 @@ function convertToCodeMirrorFormat(combo) {
     if (lower === 'down') return 'Down';
     if (lower === 'left') return 'Left';
     if (lower === 'right') return 'Right';
+    if (lower === 'minus') return '-';
 
     if (key.length === 1) return key.toUpperCase();
     return key.charAt(0).toUpperCase() + key.slice(1);
+  });
+
+  const modifierOrder = ['Shift', 'Cmd', 'Ctrl', 'Alt', 'Mod'];
+  out.sort((a, b) => {
+    const aIndex = modifierOrder.indexOf(a);
+    const bIndex = modifierOrder.indexOf(b);
+    return (
+      (aIndex < 0 ? modifierOrder.length : aIndex)
+      - (bIndex < 0 ? modifierOrder.length : bIndex)
+    );
   });
 
   return out.join('-');
@@ -143,7 +185,7 @@ function buildKeymap(context) {
   try {
     const reduxState = store.getState();
     state = reduxState;
-  } catch (e) {
+  } catch {
     state = { app: { preferences: {} } };
   }
 
@@ -160,7 +202,8 @@ function buildKeymap(context) {
 
   // Build keymap entries for each configured action
   KEYBINDING_ACTIONS.forEach(({ actionName, handler }) => {
-    const combos = getKeyBindingsForActionAllOS(actionName, userKeyBindings) || [];
+    const combos
+      = getKeyBindingsForActionAllOS(actionName, userKeyBindings) || [];
     const cmCombos = combos
       .map((k) => convertToCodeMirrorFormat(k))
       .filter(Boolean);
@@ -185,7 +228,7 @@ function buildKeymap(context) {
  */
 function setupShortcuts(editor, context = {}, storeInstance = store) {
   if (!editor) {
-    return () => { };
+    return () => {};
   }
 
   let currentKeyMap = null;
@@ -218,7 +261,8 @@ function setupShortcuts(editor, context = {}, storeInstance = store) {
 
   // Subscribe to store changes to rebuild keymap when preferences change
   unsubscribeStore = storeInstance.subscribe(() => {
-    const nextKeyBindings = storeInstance.getState()?.app?.preferences?.keyBindings;
+    const nextKeyBindings
+      = storeInstance.getState()?.app?.preferences?.keyBindings;
     if (nextKeyBindings === previousKeyBindings) {
       return;
     }
@@ -249,4 +293,9 @@ function setupShortcuts(editor, context = {}, storeInstance = store) {
   return cleanup;
 }
 
-export { setupShortcuts, buildKeymap, convertToCodeMirrorFormat, KEYBINDING_ACTIONS };
+export {
+  setupShortcuts,
+  buildKeymap,
+  convertToCodeMirrorFormat,
+  KEYBINDING_ACTIONS
+};

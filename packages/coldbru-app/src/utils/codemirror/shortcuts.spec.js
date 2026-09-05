@@ -1,4 +1,10 @@
-const { describe, it, expect, beforeEach, afterEach } = require('@jest/globals');
+const {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach
+} = require('@jest/globals');
 
 jest.mock('codemirror', () => ({
   Pass: 'CodeMirror.Pass'
@@ -19,17 +25,24 @@ jest.mock('providers/ReduxStore/index', () => ({
 }));
 
 jest.mock('providers/ReduxStore/slices/tabs', () => ({
+  navigateBack: jest.fn(() => ({ type: 'tabs/navigateBack' })),
+  navigateForward: jest.fn(() => ({ type: 'tabs/navigateForward' })),
   reorderTabs: jest.fn((payload) => ({ type: 'tabs/reorderTabs', payload })),
   switchTab: jest.fn((payload) => ({ type: 'tabs/switchTab', payload }))
 }));
 
 jest.mock('providers/ReduxStore/slices/app', () => ({
-  savePreferences: jest.fn((payload) => ({ type: 'app/savePreferences', payload })),
+  savePreferences: jest.fn((payload) => ({
+    type: 'app/savePreferences',
+    payload
+  })),
   toggleSidebarCollapse: jest.fn(() => ({ type: 'app/toggleSidebarCollapse' }))
 }));
 
 const { setupShortcuts } = require('./shortcuts');
-const { getKeyBindingsForActionAllOS } = require('providers/Hotkeys/keyMappings');
+const {
+  getKeyBindingsForActionAllOS
+} = require('providers/Hotkeys/keyMappings');
 
 describe('setupShortcuts', () => {
   let editor;
@@ -102,6 +115,20 @@ describe('setupShortcuts', () => {
 
     expect(editor.removeKeyMap).toHaveBeenCalledTimes(1);
     expect(editor.addKeyMap).toHaveBeenCalledTimes(2);
+  });
+
+  it('maps tab history shortcuts containing minus into CodeMirror', () => {
+    getKeyBindingsForActionAllOS.mockImplementation((action) => {
+      if (action === 'navigateBack') return ['ctrl+-'];
+      if (action === 'navigateForward') return ['ctrl+shift+-'];
+      return [];
+    });
+
+    setupShortcuts(editor, {}, mockStore);
+
+    const keyMap = editor.addKeyMap.mock.calls[0][0];
+    expect(typeof keyMap['Ctrl--']).toBe('function');
+    expect(typeof keyMap['Shift-Ctrl--']).toBe('function');
   });
 
   it('calls onPrettify when format json shortcut fires', () => {

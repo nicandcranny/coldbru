@@ -2,7 +2,12 @@ import { configureStore } from '@reduxjs/toolkit';
 import collectionsReducer from 'providers/ReduxStore/slices/collections';
 import requestTabViewMiddleware from './middleware';
 import requestTabViewReducer from 'providers/ReduxStore/slices/requestTabView';
-import tabsReducer, { addTab, focusTab } from 'providers/ReduxStore/slices/tabs';
+import tabsReducer, {
+  addTab,
+  focusTab,
+  navigateBack,
+  navigateForward
+} from 'providers/ReduxStore/slices/tabs';
 import workspacesReducer from 'providers/ReduxStore/slices/workspaces';
 
 const makeStore = (preloadedState) =>
@@ -58,9 +63,7 @@ describe('requestTabView middleware', () => {
   it('keeps home mode when opening a home tab', () => {
     const store = makeStore({
       collections: {
-        collections: [
-          { uid: 'scratch-1', pathname: '/workspace/.scratch' }
-        ]
+        collections: [{ uid: 'scratch-1', pathname: '/workspace/.scratch' }]
       },
       requestTabView: {
         mode: 'home',
@@ -82,7 +85,13 @@ describe('requestTabView middleware', () => {
       }
     });
 
-    store.dispatch(addTab({ uid: 'scratch-1-overview', collectionUid: 'scratch-1', type: 'workspaceOverview' }));
+    store.dispatch(
+      addTab({
+        uid: 'scratch-1-overview',
+        collectionUid: 'scratch-1',
+        type: 'workspaceOverview'
+      })
+    );
 
     expect(store.getState().requestTabView).toEqual({
       mode: 'home',
@@ -127,6 +136,72 @@ describe('requestTabView middleware', () => {
     expect(store.getState().requestTabView).toEqual({
       mode: 'collection',
       collectionUid: 'collection-2'
+    });
+  });
+
+  it('switches collection mode during tab history navigation', () => {
+    const store = makeStore({
+      collections: {
+        collections: [
+          { uid: 'scratch-1', pathname: '/workspace/.scratch' },
+          { uid: 'collection-1', pathname: '/workspace/collection-1' },
+          { uid: 'collection-2', pathname: '/workspace/collection-2' }
+        ]
+      },
+      requestTabView: {
+        mode: 'collection',
+        collectionUid: 'collection-2'
+      },
+      tabs: {
+        activeTabUid: 'request-2',
+        tabs: [
+          {
+            uid: 'scratch-1-overview',
+            collectionUid: 'scratch-1',
+            type: 'workspaceOverview'
+          },
+          { uid: 'request-1', collectionUid: 'collection-1' },
+          { uid: 'request-2', collectionUid: 'collection-2' }
+        ],
+        tabHistory: {
+          back: ['scratch-1-overview', 'request-1'],
+          forward: []
+        }
+      },
+      workspaces: {
+        activeWorkspaceUid: 'workspace-1',
+        workspaces: [
+          {
+            uid: 'workspace-1',
+            scratchCollectionUid: 'scratch-1',
+            collections: [
+              { path: '/workspace/collection-1' },
+              { path: '/workspace/collection-2' }
+            ]
+          }
+        ]
+      }
+    });
+
+    store.dispatch(navigateBack());
+    expect(store.getState().requestTabView.collectionUid).toBe('collection-1');
+
+    store.dispatch(navigateBack());
+    expect(store.getState().requestTabView).toEqual({
+      mode: 'home',
+      collectionUid: null
+    });
+
+    store.dispatch(navigateForward());
+    expect(store.getState().requestTabView).toEqual({
+      mode: 'all',
+      collectionUid: null
+    });
+
+    store.dispatch(navigateForward());
+    expect(store.getState().requestTabView).toEqual({
+      mode: 'all',
+      collectionUid: null
     });
   });
 

@@ -7,11 +7,65 @@ import last from 'lodash/last';
 
 const initialState = {
   tabs: [],
-  activeTabUid: null
+  activeTabUid: null,
+  tabHistory: {
+    back: [],
+    forward: []
+  }
 };
 
 const tabTypeAlreadyExists = (tabs, collectionUid, type) => {
-  return find(tabs, (tab) => tab.collectionUid === collectionUid && tab.type === type);
+  return find(
+    tabs,
+    (tab) => tab.collectionUid === collectionUid && tab.type === type
+  );
+};
+
+const getTabHistory = (state) => {
+  if (!state.tabHistory) {
+    state.tabHistory = { back: [], forward: [] };
+  }
+
+  return state.tabHistory;
+};
+
+const cleanTabHistory = (state) => {
+  const history = getTabHistory(state);
+  const openTabUids = new Set(state.tabs.map((tab) => tab.uid));
+
+  history.back = history.back.filter((uid) => openTabUids.has(uid));
+  history.forward = history.forward.filter((uid) => openTabUids.has(uid));
+
+  while (history.back.at(-1) === state.activeTabUid) history.back.pop();
+  while (history.forward.at(-1) === state.activeTabUid) history.forward.pop();
+};
+
+const activateTab = (state, uid) => {
+  if (!uid || uid === state.activeTabUid) return;
+
+  const history = getTabHistory(state);
+  if (state.activeTabUid) history.back.push(state.activeTabUid);
+  history.forward = [];
+  state.activeTabUid = uid;
+  cleanTabHistory(state);
+};
+
+const navigateTabHistory = (state, direction) => {
+  const history = getTabHistory(state);
+  const source = history[direction];
+  const destination = direction === 'back' ? history.forward : history.back;
+
+  while (source.length) {
+    const uid = source.pop();
+    if (
+      uid !== state.activeTabUid
+      && state.tabs.some((tab) => tab.uid === uid)
+    ) {
+      if (state.activeTabUid) destination.push(state.activeTabUid);
+      state.activeTabUid = uid;
+      return;
+    }
+  }
 };
 
 export const tabsSlice = createSlice({
@@ -51,14 +105,18 @@ export const tabsSlice = createSlice({
 
       const existingTab = find(state.tabs, (tab) => tab.uid === uid);
       if (existingTab) {
-        state.activeTabUid = existingTab.uid;
+        activateTab(state, existingTab.uid);
         return;
       }
 
       if (nonReplaceableTabTypes.includes(type)) {
-        const existingTab = tabTypeAlreadyExists(state.tabs, collectionUid, type);
+        const existingTab = tabTypeAlreadyExists(
+          state.tabs,
+          collectionUid,
+          type
+        );
         if (existingTab) {
-          state.activeTabUid = existingTab.uid;
+          activateTab(state, existingTab.uid);
           return;
         }
       }
@@ -83,9 +141,10 @@ export const tabsSlice = createSlice({
           responseViewTab: null,
           scriptPaneTab: null,
           type: type || 'request',
-          preview: preview !== undefined
-            ? preview
-            : !nonReplaceableTabTypes.includes(type),
+          preview:
+            preview === undefined
+              ? !nonReplaceableTabTypes.includes(type)
+              : preview,
           ...(environmentUid ? { environmentUid } : {}),
           ...(tabName ? { tabName } : {}),
           ...(filePath ? { filePath } : {}),
@@ -99,7 +158,7 @@ export const tabsSlice = createSlice({
           ...(itemUid ? { itemUid } : {})
         };
 
-        state.activeTabUid = uid;
+        activateTab(state, uid);
         return;
       }
 
@@ -115,9 +174,10 @@ export const tabsSlice = createSlice({
         scriptPaneTab: null,
         type: type || 'request',
         ...(uid ? { folderUid: uid } : {}),
-        preview: preview !== undefined
-          ? preview
-          : !nonReplaceableTabTypes.includes(type),
+        preview:
+          preview === undefined
+            ? !nonReplaceableTabTypes.includes(type)
+            : preview,
         ...(environmentUid ? { environmentUid } : {}),
         ...(tabName ? { tabName } : {}),
         ...(filePath ? { filePath } : {}),
@@ -129,7 +189,7 @@ export const tabsSlice = createSlice({
         ...(exampleUid ? { exampleUid } : {}),
         ...(itemUid ? { itemUid } : {})
       });
-      state.activeTabUid = uid;
+      activateTab(state, uid);
     },
     updateTab: (state, action) => {
       const { uid, ...updates } = action.payload;
@@ -142,8 +202,14 @@ export const tabsSlice = createSlice({
       const { uid } = action.payload;
       const tabExists = state.tabs.some((t) => t.uid === uid);
       if (tabExists) {
-        state.activeTabUid = uid;
+        activateTab(state, uid);
       }
+    },
+    navigateBack: (state) => {
+      navigateTabHistory(state, 'back');
+    },
+    navigateForward: (state) => {
+      navigateTabHistory(state, 'forward');
     },
     switchTab: (state, action) => {
       if (!state.tabs || !state.tabs.length) {
@@ -153,17 +219,20 @@ export const tabsSlice = createSlice({
 
       const direction = action.payload.direction;
 
-      const activeTabIndex = state.tabs.findIndex((t) => t.uid === state.activeTabUid);
+      const activeTabIndex = state.tabs.findIndex(
+        (t) => t.uid === state.activeTabUid
+      );
 
       let toBeActivatedTabIndex = 0;
 
       if (direction == 'pageup') {
-        toBeActivatedTabIndex = (activeTabIndex - 1 + state.tabs.length) % state.tabs.length;
+        toBeActivatedTabIndex
+          = (activeTabIndex - 1 + state.tabs.length) % state.tabs.length;
       } else if (direction == 'pagedown') {
         toBeActivatedTabIndex = (activeTabIndex + 1) % state.tabs.length;
       }
 
-      state.activeTabUid = state.tabs[toBeActivatedTabIndex].uid;
+      activateTab(state, state.tabs[toBeActivatedTabIndex].uid);
     },
     updateRequestPaneTabWidth: (state, action) => {
       const tab = find(state.tabs, (t) => t.uid === action.payload.uid);
@@ -233,19 +302,26 @@ export const tabsSlice = createSlice({
       const tabUids = action.payload.tabUids || [];
 
       const nonClosableTypes = ['workspaceOverview', 'workspaceEnvironments'];
-      state.tabs = filter(state.tabs, (t) =>
-        !tabUids.includes(t.uid) || nonClosableTypes.includes(t.type)
+      state.tabs = filter(
+        state.tabs,
+        (t) => !tabUids.includes(t.uid) || nonClosableTypes.includes(t.type)
       );
 
       if (activeTab && state.tabs.length) {
         const { collectionUid } = activeTab;
-        const activeTabStillExists = find(state.tabs, (t) => t.uid === state.activeTabUid);
+        const activeTabStillExists = find(
+          state.tabs,
+          (t) => t.uid === state.activeTabUid
+        );
 
         // if the active tab no longer exists, set the active tab to the last tab in the list
         // this implies that the active tab was closed
         if (!activeTabStillExists) {
           // load sibling tabs of the current collection
-          const siblingTabs = filter(state.tabs, (t) => t.collectionUid === collectionUid);
+          const siblingTabs = filter(
+            state.tabs,
+            (t) => t.collectionUid === collectionUid
+          );
 
           // if there are sibling tabs, set the active tab to the last sibling tab
           // otherwise, set the active tab to the last tab in the list
@@ -260,16 +336,23 @@ export const tabsSlice = createSlice({
       if (!state.tabs || !state.tabs.length) {
         state.activeTabUid = null;
       }
+
+      cleanTabHistory(state);
     },
     closeAllCollectionTabs: (state, action) => {
       const { collectionUid } = action.payload;
       const prevActiveTabUid = state.activeTabUid;
       state.tabs = filter(state.tabs, (t) => t.collectionUid !== collectionUid);
 
-      const activeTabStillExists = state.tabs.some((t) => t.uid === prevActiveTabUid);
+      const activeTabStillExists = state.tabs.some(
+        (t) => t.uid === prevActiveTabUid
+      );
       if (!activeTabStillExists) {
-        state.activeTabUid = state.tabs.length > 0 ? last(state.tabs).uid : null;
+        state.activeTabUid
+          = state.tabs.length > 0 ? last(state.tabs).uid : null;
       }
+
+      cleanTabHistory(state);
     },
     makeTabPermanent: (state, action) => {
       const { uid } = action.payload;
@@ -314,6 +397,8 @@ export const {
   addTab,
   updateTab,
   focusTab,
+  navigateBack,
+  navigateForward,
   switchTab,
   updateRequestPaneTabWidth,
   updateRequestPaneTabHeight,

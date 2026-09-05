@@ -1,4 +1,10 @@
-import React, { createContext, useEffect, useContext, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useEffect,
+  useContext,
+  useRef,
+  useState
+} from 'react';
 import find from 'lodash/find';
 import Mousetrap from 'mousetrap';
 import toast from 'react-hot-toast';
@@ -22,8 +28,18 @@ import {
   pasteItem
 } from 'providers/ReduxStore/slices/collections/actions';
 import { findCollectionByUid, findItemInCollection } from 'utils/collections';
-import { addTab, reorderTabs, switchTab } from 'providers/ReduxStore/slices/tabs';
-import { savePreferences, toggleSidebarCollapse, copyRequest } from 'providers/ReduxStore/slices/app';
+import {
+  addTab,
+  navigateBack,
+  navigateForward,
+  reorderTabs,
+  switchTab
+} from 'providers/ReduxStore/slices/tabs';
+import {
+  savePreferences,
+  toggleSidebarCollapse,
+  copyRequest
+} from 'providers/ReduxStore/slices/app';
 import { getKeyBindingsForActionAllOS } from './keyMappings';
 
 export const HotkeysContext = createContext(null);
@@ -37,6 +53,8 @@ const BOUND_ACTIONS = [
   'newRequest',
   'globalSearch',
   'closeTab',
+  'navigateBack',
+  'navigateForward',
   'switchToPreviousTab',
   'switchToNextTab',
   'closeAllTabs',
@@ -64,7 +82,9 @@ function hasActiveCopySelection() {
   const selection = window.getSelection?.();
 
   if (activeElement) {
-    const isTextInput = activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement;
+    const isTextInput
+      = activeElement instanceof HTMLInputElement
+        || activeElement instanceof HTMLTextAreaElement;
     if (isTextInput) {
       const start = activeElement.selectionStart ?? 0;
       const end = activeElement.selectionEnd ?? 0;
@@ -73,21 +93,32 @@ function hasActiveCopySelection() {
       }
     }
 
-    if (activeElement.isContentEditable && selection && !selection.isCollapsed) {
+    if (
+      activeElement.isContentEditable
+      && selection
+      && !selection.isCollapsed
+    ) {
       return true;
     }
   }
 
-  return Boolean(selection && !selection.isCollapsed && selection.toString().length > 0);
+  return Boolean(
+    selection && !selection.isCollapsed && selection.toString().length > 0
+  );
 }
 
 function getInputEnabledCombos(userKeyBindings) {
   return new Set(
-    INPUT_ENABLED_ACTIONS.flatMap((action) => getKeyBindingsForActionAllOS(action, userKeyBindings) || [])
+    INPUT_ENABLED_ACTIONS.flatMap(
+      (action) => getKeyBindingsForActionAllOS(action, userKeyBindings) || []
+    )
   );
 }
 
-export function createHotkeyStopCallback(userKeyBindings, defaultStopCallback = Mousetrap.prototype.stopCallback) {
+export function createHotkeyStopCallback(
+  userKeyBindings,
+  defaultStopCallback = Mousetrap.prototype.stopCallback
+) {
   const inputEnabledCombos = getInputEnabledCombos(userKeyBindings);
 
   return (e, element, combo) => {
@@ -141,216 +172,354 @@ function bindAllHotkeys(userKeyBindings) {
   const { dispatch, getState } = store;
 
   // SAVE
-  bindHotkey('commandPalette', () => {
-    window.dispatchEvent(new CustomEvent('command-palette-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'commandPalette',
+    () => {
+      window.dispatchEvent(new CustomEvent('command-palette-open'));
+    },
+    userKeyBindings
+  );
 
   // SAVE
-  bindHotkey('save', () => {
-    const state = getState();
-    const tabs = state.tabs.tabs;
-    const collections = state.collections.collections;
-    const activeTabUid = state.tabs.activeTabUid;
+  bindHotkey(
+    'save',
+    () => {
+      const state = getState();
+      const tabs = state.tabs.tabs;
+      const collections = state.collections.collections;
+      const activeTabUid = state.tabs.activeTabUid;
 
-    const activeTab = find(tabs, (t) => t.uid === activeTabUid);
-    if (!activeTab) return;
+      const activeTab = find(tabs, (t) => t.uid === activeTabUid);
+      if (!activeTab) return;
 
-    if (activeTab.type === 'environment-settings' || activeTab.type === 'global-environment-settings') {
-      window.dispatchEvent(new CustomEvent('environment-save'));
-      return;
-    }
-
-    const collection = findCollectionByUid(collections, activeTab.collectionUid);
-    if (!collection) return;
-
-    const item = findItemInCollection(collection, activeTab.uid);
-
-    if (item?.uid) {
-      if (activeTab.type === 'folder-settings') {
-        dispatch(saveFolderRoot(collection.uid, item.uid));
-      } else {
-        dispatch(saveRequest(activeTab.uid, activeTab.collectionUid));
+      if (
+        activeTab.type === 'environment-settings'
+        || activeTab.type === 'global-environment-settings'
+      ) {
+        window.dispatchEvent(new CustomEvent('environment-save'));
+        return;
       }
-    } else if (activeTab.type === 'collection-settings') {
-      dispatch(saveCollectionSettings(collection.uid));
-    }
-  }, userKeyBindings);
+
+      const collection = findCollectionByUid(
+        collections,
+        activeTab.collectionUid
+      );
+      if (!collection) return;
+
+      const item = findItemInCollection(collection, activeTab.uid);
+
+      if (item?.uid) {
+        if (activeTab.type === 'folder-settings') {
+          dispatch(saveFolderRoot(collection.uid, item.uid));
+        } else {
+          dispatch(saveRequest(activeTab.uid, activeTab.collectionUid));
+        }
+      } else if (activeTab.type === 'collection-settings') {
+        dispatch(saveCollectionSettings(collection.uid));
+      }
+    },
+    userKeyBindings
+  );
 
   // SEND REQUEST
-  bindHotkey('sendRequest', () => {
-    const state = getState();
-    const tabs = state.tabs.tabs;
-    const collections = state.collections.collections;
-    const activeTabUid = state.tabs.activeTabUid;
+  bindHotkey(
+    'sendRequest',
+    () => {
+      const state = getState();
+      const tabs = state.tabs.tabs;
+      const collections = state.collections.collections;
+      const activeTabUid = state.tabs.activeTabUid;
 
-    const activeTab = find(tabs, (t) => t.uid === activeTabUid);
-    if (!activeTab) return;
+      const activeTab = find(tabs, (t) => t.uid === activeTabUid);
+      if (!activeTab) return;
 
-    const collection = findCollectionByUid(collections, activeTab.collectionUid);
-    if (!collection) return;
+      const collection = findCollectionByUid(
+        collections,
+        activeTab.collectionUid
+      );
+      if (!collection) return;
 
-    const item = findItemInCollection(collection, activeTab.uid);
-    if (!item) return;
+      const item = findItemInCollection(collection, activeTab.uid);
+      if (!item) return;
 
-    if (item.type === 'grpc-request') {
-      const request = item.draft ? item.draft.request : item.request;
-      if (!request.url) return toast.error('Please enter a valid gRPC server URL');
-      if (!request.method) return toast.error('Please select a gRPC method');
-    }
+      if (item.type === 'grpc-request') {
+        const request = item.draft ? item.draft.request : item.request;
+        if (!request.url)
+          return toast.error('Please enter a valid gRPC server URL');
+        if (!request.method) return toast.error('Please select a gRPC method');
+      }
 
-    dispatch(sendRequest(item, collection.uid)).catch(() =>
-      toast.custom((t) => <NetworkError onClose={() => toast.dismiss(t.id)} />, { duration: 5000 })
-    );
-  }, userKeyBindings);
+      dispatch(sendRequest(item, collection.uid)).catch(() =>
+        toast.custom(
+          (t) => <NetworkError onClose={() => toast.dismiss(t.id)} />,
+          { duration: 5000 }
+        )
+      );
+    },
+    userKeyBindings
+  );
 
   // EDIT ENV
-  bindHotkey('editEnvironment', () => {
-    const state = getState();
-    const tabs = state.tabs.tabs;
-    const collections = state.collections.collections;
-    const activeTabUid = state.tabs.activeTabUid;
+  bindHotkey(
+    'editEnvironment',
+    () => {
+      const state = getState();
+      const tabs = state.tabs.tabs;
+      const collections = state.collections.collections;
+      const activeTabUid = state.tabs.activeTabUid;
 
-    const activeTab = find(tabs, (t) => t.uid === activeTabUid);
-    if (!activeTab) return;
+      const activeTab = find(tabs, (t) => t.uid === activeTabUid);
+      if (!activeTab) return;
 
-    const collection = findCollectionByUid(collections, activeTab.collectionUid);
-    if (!collection) return;
+      const collection = findCollectionByUid(
+        collections,
+        activeTab.collectionUid
+      );
+      if (!collection) return;
 
-    dispatch(
-      addTab({
-        uid: `${collection.uid}-environment-settings`,
-        collectionUid: collection.uid,
-        type: 'environment-settings'
-      })
-    );
-  }, userKeyBindings);
+      dispatch(
+        addTab({
+          uid: `${collection.uid}-environment-settings`,
+          collectionUid: collection.uid,
+          type: 'environment-settings'
+        })
+      );
+    },
+    userKeyBindings
+  );
 
   // NEW REQUEST -> trigger via event so the provider can open the modal
-  bindHotkey('newRequest', () => {
-    window.dispatchEvent(new CustomEvent('new-request-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'newRequest',
+    () => {
+      window.dispatchEvent(new CustomEvent('new-request-open'));
+    },
+    userKeyBindings
+  );
 
   // GLOBAL SEARCH -> trigger via event so the provider can open the modal
-  bindHotkey('globalSearch', () => {
-    window.dispatchEvent(new CustomEvent('global-search-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'globalSearch',
+    () => {
+      window.dispatchEvent(new CustomEvent('global-search-open'));
+    },
+    userKeyBindings
+  );
 
   // CLOSE TAB
-  bindHotkey('closeTab', () => {
-    window.dispatchEvent(new CustomEvent('close-active-tab'));
-  }, userKeyBindings);
+  bindHotkey(
+    'closeTab',
+    () => {
+      window.dispatchEvent(new CustomEvent('close-active-tab'));
+    },
+    userKeyBindings
+  );
+
+  // NAVIGATE TAB HISTORY
+  bindHotkey(
+    'navigateBack',
+    () => {
+      if (getState().tabs.tabHistory?.back.length) dispatch(navigateBack());
+    },
+    userKeyBindings
+  );
+
+  bindHotkey(
+    'navigateForward',
+    () => {
+      if (getState().tabs.tabHistory?.forward.length)
+        dispatch(navigateForward());
+    },
+    userKeyBindings
+  );
 
   // SWITCH PREV TAB
-  bindHotkey('switchToPreviousTab', () => {
-    dispatch(switchTab({ direction: 'pageup' }));
-  }, userKeyBindings);
+  bindHotkey(
+    'switchToPreviousTab',
+    () => {
+      dispatch(switchTab({ direction: 'pageup' }));
+    },
+    userKeyBindings
+  );
 
   // SWITCH NEXT TAB
-  bindHotkey('switchToNextTab', () => {
-    dispatch(switchTab({ direction: 'pagedown' }));
-  }, userKeyBindings);
+  bindHotkey(
+    'switchToNextTab',
+    () => {
+      dispatch(switchTab({ direction: 'pagedown' }));
+    },
+    userKeyBindings
+  );
 
   // CLOSE ALL TABS
-  bindHotkey('closeAllTabs', () => {
-    window.dispatchEvent(new CustomEvent('close-active-tab'));
-  }, userKeyBindings);
+  bindHotkey(
+    'closeAllTabs',
+    () => {
+      window.dispatchEvent(new CustomEvent('close-active-tab'));
+    },
+    userKeyBindings
+  );
 
   // COLLAPSE SIDEBAR
-  bindHotkey('collapseSidebar', () => {
-    dispatch(toggleSidebarCollapse());
-  }, userKeyBindings);
+  bindHotkey(
+    'collapseSidebar',
+    () => {
+      dispatch(toggleSidebarCollapse());
+    },
+    userKeyBindings
+  );
 
   // MOVE TAB LEFT
-  bindHotkey('moveTabLeft', () => {
-    dispatch(reorderTabs({ direction: -1 }));
-  }, userKeyBindings);
+  bindHotkey(
+    'moveTabLeft',
+    () => {
+      dispatch(reorderTabs({ direction: -1 }));
+    },
+    userKeyBindings
+  );
 
   // MOVE TAB RIGHT
-  bindHotkey('moveTabRight', () => {
-    dispatch(reorderTabs({ direction: 1 }));
-  }, userKeyBindings);
+  bindHotkey(
+    'moveTabRight',
+    () => {
+      dispatch(reorderTabs({ direction: 1 }));
+    },
+    userKeyBindings
+  );
 
   // CHANGE LAYOUT -> toggle response pane orientation
-  bindHotkey('changeLayout', () => {
-    const state = getState();
-    const preferences = state.app.preferences;
-    const currentOrientation = preferences?.layout?.responsePaneOrientation || 'horizontal';
-    const newOrientation = currentOrientation === 'horizontal' ? 'vertical' : 'horizontal';
-    const updatedPreferences = {
-      ...preferences,
-      layout: {
-        ...preferences.layout,
-        responsePaneOrientation: newOrientation
-      }
-    };
-    dispatch(savePreferences(updatedPreferences));
-  }, userKeyBindings);
+  bindHotkey(
+    'changeLayout',
+    () => {
+      const state = getState();
+      const preferences = state.app.preferences;
+      const currentOrientation
+        = preferences?.layout?.responsePaneOrientation || 'horizontal';
+      const newOrientation
+        = currentOrientation === 'horizontal' ? 'vertical' : 'horizontal';
+      const updatedPreferences = {
+        ...preferences,
+        layout: {
+          ...preferences.layout,
+          responsePaneOrientation: newOrientation
+        }
+      };
+      dispatch(savePreferences(updatedPreferences));
+    },
+    userKeyBindings
+  );
 
   // CLOSE BRUNO -> send IPC to close the window
-  bindHotkey('closeBruno', () => {
-    window.ipcRenderer?.send('renderer:window-close');
-  }, userKeyBindings);
+  bindHotkey(
+    'closeBruno',
+    () => {
+      window.ipcRenderer?.send('renderer:window-close');
+    },
+    userKeyBindings
+  );
 
   // OPEN PREFERENCES -> open preferences tab
-  bindHotkey('openPreferences', () => {
-    const state = getState();
-    const tabs = state.tabs.tabs;
-    const activeTabUid = state.tabs.activeTabUid;
-    const activeTab = tabs.find((t) => t.uid === activeTabUid);
+  bindHotkey(
+    'openPreferences',
+    () => {
+      const state = getState();
+      const tabs = state.tabs.tabs;
+      const activeTabUid = state.tabs.activeTabUid;
+      const activeTab = tabs.find((t) => t.uid === activeTabUid);
 
-    dispatch(
-      addTab({
-        type: 'preferences',
-        uid: activeTab?.collectionUid ? `${activeTab.collectionUid}-preferences` : 'preferences',
-        collectionUid: activeTab?.collectionUid
-      })
-    );
-  }, userKeyBindings);
+      dispatch(
+        addTab({
+          type: 'preferences',
+          uid: activeTab?.collectionUid
+            ? `${activeTab.collectionUid}-preferences`
+            : 'preferences',
+          collectionUid: activeTab?.collectionUid
+        })
+      );
+    },
+    userKeyBindings
+  );
 
   // IMPORT COLLECTION -> trigger event to open import modal
-  bindHotkey('importCollection', () => {
-    window.dispatchEvent(new CustomEvent('import-collection-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'importCollection',
+    () => {
+      window.dispatchEvent(new CustomEvent('import-collection-open'));
+    },
+    userKeyBindings
+  );
 
   // SIDEBAR SEARCH -> trigger event to focus sidebar search
-  bindHotkey('sidebarSearch', () => {
-    window.dispatchEvent(new CustomEvent('sidebar-search-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'sidebarSearch',
+    () => {
+      window.dispatchEvent(new CustomEvent('sidebar-search-open'));
+    },
+    userKeyBindings
+  );
 
   // ZOOM IN
-  bindHotkey('zoomIn', () => {
-    window.ipcRenderer?.invoke('renderer:zoom-in');
-  }, userKeyBindings);
+  bindHotkey(
+    'zoomIn',
+    () => {
+      window.ipcRenderer?.invoke('renderer:zoom-in');
+    },
+    userKeyBindings
+  );
 
   // ZOOM OUT
-  bindHotkey('zoomOut', () => {
-    window.ipcRenderer?.invoke('renderer:zoom-out');
-  }, userKeyBindings);
+  bindHotkey(
+    'zoomOut',
+    () => {
+      window.ipcRenderer?.invoke('renderer:zoom-out');
+    },
+    userKeyBindings
+  );
 
   // RESET ZOOM
-  bindHotkey('resetZoom', () => {
-    window.ipcRenderer?.invoke('renderer:reset-zoom');
-  }, userKeyBindings);
+  bindHotkey(
+    'resetZoom',
+    () => {
+      window.ipcRenderer?.invoke('renderer:reset-zoom');
+    },
+    userKeyBindings
+  );
 
   // CLONE ITEM -> trigger event so the sidebar can handle opening the clone modal
-  bindHotkey('cloneItem', () => {
-    window.dispatchEvent(new CustomEvent('clone-item-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'cloneItem',
+    () => {
+      window.dispatchEvent(new CustomEvent('clone-item-open'));
+    },
+    userKeyBindings
+  );
 
   // COPY ITEM -> copy currently selected item to clipboard
-  bindHotkey('copyItem', () => {
-    window.dispatchEvent(new CustomEvent('copy-item-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'copyItem',
+    () => {
+      window.dispatchEvent(new CustomEvent('copy-item-open'));
+    },
+    userKeyBindings
+  );
 
   // PASTE ITEM -> paste from clipboard to current location
-  bindHotkey('pasteItem', () => {
-    window.dispatchEvent(new CustomEvent('paste-item-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'pasteItem',
+    () => {
+      window.dispatchEvent(new CustomEvent('paste-item-open'));
+    },
+    userKeyBindings
+  );
 
   // RENAME ITEM -> trigger event so the sidebar can handle opening the rename modal
-  bindHotkey('renameItem', () => {
-    window.dispatchEvent(new CustomEvent('rename-item-open'));
-  }, userKeyBindings);
+  bindHotkey(
+    'renameItem',
+    () => {
+      window.dispatchEvent(new CustomEvent('rename-item-open'));
+    },
+    userKeyBindings
+  );
 }
 
 // -----------------------
@@ -360,11 +529,14 @@ export const HotkeysProvider = (props) => {
   const tabs = useSelector((state) => state.tabs.tabs);
   const collections = useSelector((state) => state.collections.collections);
   const activeTabUid = useSelector((state) => state.tabs.activeTabUid);
-  const userKeyBindings = useSelector((state) => state.app.preferences?.keyBindings);
+  const userKeyBindings = useSelector(
+    (state) => state.app.preferences?.keyBindings
+  );
 
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [showGlobalSearchModal, setShowGlobalSearchModal] = useState(false);
-  const [showImportCollectionModal, setShowImportCollectionModal] = useState(false);
+  const [showImportCollectionModal, setShowImportCollectionModal]
+    = useState(false);
   const [showCommandPaletteModal, setShowCommandPaletteModal] = useState(false);
 
   // Keep a ref to the previous userKeyBindings so we can unbind old combos
@@ -400,7 +572,10 @@ export const HotkeysProvider = (props) => {
 
   useEffect(() => {
     const defaultStopCallback = Mousetrap.prototype.stopCallback;
-    const stopCallback = createHotkeyStopCallback(userKeyBindings, defaultStopCallback);
+    const stopCallback = createHotkeyStopCallback(
+      userKeyBindings,
+      defaultStopCallback
+    );
 
     Mousetrap.stopCallback = stopCallback;
     Mousetrap.prototype.stopCallback = stopCallback;
@@ -426,7 +601,10 @@ export const HotkeysProvider = (props) => {
     return () => {
       window.removeEventListener('new-request-open', openNewRequest);
       window.removeEventListener('global-search-open', openGlobalSearch);
-      window.removeEventListener('import-collection-open', openImportCollection);
+      window.removeEventListener(
+        'import-collection-open',
+        openImportCollection
+      );
       window.removeEventListener('command-palette-open', openCommandPalette);
     };
   }, []);
@@ -434,16 +612,25 @@ export const HotkeysProvider = (props) => {
   return (
     <HotkeysContext.Provider {...props} value="hotkey">
       {showNewRequestModal && (
-        <NewRequest collectionUid={currentCollection?.uid} onClose={() => setShowNewRequestModal(false)} />
+        <NewRequest
+          collectionUid={currentCollection?.uid}
+          onClose={() => setShowNewRequestModal(false)}
+        />
       )}
       {showGlobalSearchModal && (
-        <GlobalSearchModal isOpen={showGlobalSearchModal} onClose={() => setShowGlobalSearchModal(false)} />
+        <GlobalSearchModal
+          isOpen={showGlobalSearchModal}
+          onClose={() => setShowGlobalSearchModal(false)}
+        />
       )}
       {showImportCollectionModal && (
         <ImportCollection onClose={() => setShowImportCollectionModal(false)} />
       )}
       {showCommandPaletteModal && (
-        <CommandPaletteModal isOpen={showCommandPaletteModal} onClose={() => setShowCommandPaletteModal(false)} />
+        <CommandPaletteModal
+          isOpen={showCommandPaletteModal}
+          onClose={() => setShowCommandPaletteModal(false)}
+        />
       )}
       <div>{props.children}</div>
     </HotkeysContext.Provider>
