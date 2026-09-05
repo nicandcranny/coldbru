@@ -47,12 +47,12 @@ const maybeSyncRequestTabViewWithActiveTab = (listenerApi, tabUid) => {
     collectionUid: null
   };
 
+  if (tabState.tab.type === 'global-environment-settings') {
+    return;
+  }
+
   if (tabState.tab.collectionUid === tabState.scratchCollectionUid) {
-    const mode = ['workspaceOverview', 'global-environment-settings'].includes(
-      tabState.tab.type
-    )
-      ? 'home'
-      : 'all';
+    const mode = tabState.tab.type === 'workspaceOverview' ? 'home' : 'all';
     if (requestTabView.mode !== mode) {
       listenerApi.dispatch(setRequestTabView({ mode, collectionUid: null }));
     }

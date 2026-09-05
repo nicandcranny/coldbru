@@ -87,7 +87,7 @@ Gotcha: new requests open as preview tabs by default. Tasks are removed from the
 
 Listener middleware. Keeps the request tab view mode in sync with the active tab.
 
-Triggers on `addTab`, `focusTab`, `navigateBack`, and `navigateForward`. If the view is `home` and a workspace tab is focused, switches to `all`. If the view is `collection` and the focused tab belongs to a different collection, switches to that collection. History navigation reads the active tab after the tabs reducer runs so browser-style back/forward navigation can cross collection and workspace-home views.
+Triggers on `addTab`, `focusTab`, `navigateBack`, and `navigateForward`. If the view is `home` and a workspace tab is focused, switches to `all`. If the view is `collection` and the focused tab belongs to a different collection, switches to that collection. History navigation reads the active tab after the tabs reducer runs so browser-style back/forward navigation can cross collection and workspace-home views. Global-environment settings preserve the current request-tab filter because they can be opened from any view.
 
 ### Draft Detect
 
@@ -394,6 +394,7 @@ Unlike HTTP (fire-and-forget), these maintain persistent connections:
 - Editing the request, or double-clicking, promotes it to a permanent tab.
 - The Draft Detect middleware handles promotion — any of ~70 edit actions triggers it.
 - The Tasks middleware opens new requests as preview tabs by default.
+- Back/forward history stores snapshots of replaced preview tabs so navigation can restore them even after the single preview-tab slot is reused.
 
 ### OpenAPI Sync
 

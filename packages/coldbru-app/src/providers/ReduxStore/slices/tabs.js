@@ -29,25 +29,59 @@ const getTabHistory = (state) => {
   return state.tabHistory;
 };
 
-const cleanTabHistory = (state) => {
-  const history = getTabHistory(state);
-  const openTabUids = new Set(state.tabs.map((tab) => tab.uid));
+const getHistoryEntryUid = (entry) =>
+  typeof entry === 'string' ? entry : entry?.uid;
 
-  history.back = history.back.filter((uid) => openTabUids.has(uid));
-  history.forward = history.forward.filter((uid) => openTabUids.has(uid));
-
-  while (history.back.at(-1) === state.activeTabUid) history.back.pop();
-  while (history.forward.at(-1) === state.activeTabUid) history.forward.pop();
+const createHistoryEntry = (state, uid, replacedTab) => {
+  const tab = replacedTab || state.tabs.find((item) => item.uid === uid);
+  return tab?.preview ? { uid, tab: { ...tab } } : uid;
 };
 
-const activateTab = (state, uid) => {
+const cleanTabHistory = (
+  state,
+  { closedTabUids = new Set(), closedCollectionUid } = {}
+) => {
+  const history = getTabHistory(state);
+  const openTabUids = new Set(state.tabs.map((tab) => tab.uid));
+  const keepEntry = (entry) => {
+    const uid = getHistoryEntryUid(entry);
+    if (openTabUids.has(uid)) return true;
+    if (closedTabUids.has(uid)) return false;
+    if (
+      closedCollectionUid
+      && entry.tab?.collectionUid === closedCollectionUid
+    ) {
+      return false;
+    }
+    return Boolean(entry.tab?.preview);
+  };
+
+  history.back = history.back.filter(keepEntry);
+  history.forward = history.forward.filter(keepEntry);
+
+  while (getHistoryEntryUid(history.back.at(-1)) === state.activeTabUid) {
+    history.back.pop();
+  }
+  while (getHistoryEntryUid(history.forward.at(-1)) === state.activeTabUid) {
+    history.forward.pop();
+  }
+};
+
+const activateTab = (state, uid, replacedTab) => {
   if (!uid || uid === state.activeTabUid) return;
 
   const history = getTabHistory(state);
-  if (state.activeTabUid) history.back.push(state.activeTabUid);
+  if (state.activeTabUid) {
+    history.back.push(
+      createHistoryEntry(
+        state,
+        state.activeTabUid,
+        replacedTab?.uid === state.activeTabUid ? replacedTab : undefined
+      )
+    );
+  }
   history.forward = [];
   state.activeTabUid = uid;
-  cleanTabHistory(state);
 };
 
 const navigateTabHistory = (state, direction) => {
@@ -56,15 +90,32 @@ const navigateTabHistory = (state, direction) => {
   const destination = direction === 'back' ? history.forward : history.back;
 
   while (source.length) {
-    const uid = source.pop();
-    if (
-      uid !== state.activeTabUid
-      && state.tabs.some((tab) => tab.uid === uid)
-    ) {
-      if (state.activeTabUid) destination.push(state.activeTabUid);
-      state.activeTabUid = uid;
-      return;
+    const entry = source.pop();
+    const uid = getHistoryEntryUid(entry);
+    const existingTab = state.tabs.some((tab) => tab.uid === uid);
+    const restorablePreview = !existingTab && entry.tab?.preview;
+
+    if (uid === state.activeTabUid || (!existingTab && !restorablePreview)) {
+      continue;
     }
+
+    if (state.activeTabUid) {
+      destination.push(createHistoryEntry(state, state.activeTabUid));
+    }
+
+    if (restorablePreview) {
+      const activeTabIndex = state.tabs.findIndex(
+        (tab) => tab.uid === state.activeTabUid
+      );
+      if (state.tabs[activeTabIndex]?.preview) {
+        state.tabs[activeTabIndex] = { ...entry.tab };
+      } else {
+        state.tabs.push({ ...entry.tab });
+      }
+    }
+
+    state.activeTabUid = uid;
+    return;
   }
 };
 
@@ -158,7 +209,7 @@ export const tabsSlice = createSlice({
           ...(itemUid ? { itemUid } : {})
         };
 
-        activateTab(state, uid);
+        activateTab(state, uid, lastTab);
         return;
       }
 
@@ -337,7 +388,7 @@ export const tabsSlice = createSlice({
         state.activeTabUid = null;
       }
 
-      cleanTabHistory(state);
+      cleanTabHistory(state, { closedTabUids: new Set(tabUids) });
     },
     closeAllCollectionTabs: (state, action) => {
       const { collectionUid } = action.payload;
@@ -352,7 +403,7 @@ export const tabsSlice = createSlice({
           = state.tabs.length > 0 ? last(state.tabs).uid : null;
       }
 
-      cleanTabHistory(state);
+      cleanTabHistory(state, { closedCollectionUid: collectionUid });
     },
     makeTabPermanent: (state, action) => {
       const { uid } = action.payload;

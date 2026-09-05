@@ -99,6 +99,49 @@ describe('requestTabView middleware', () => {
     });
   });
 
+  it('keeps the current filter when opening global environment settings', () => {
+    const store = makeStore({
+      collections: {
+        collections: [
+          { uid: 'scratch-1', pathname: '/workspace/.scratch' },
+          { uid: 'collection-1', pathname: '/workspace/collection-1' }
+        ]
+      },
+      requestTabView: {
+        mode: 'collection',
+        collectionUid: 'collection-1'
+      },
+      tabs: {
+        activeTabUid: 'request-1',
+        tabs: [{ uid: 'request-1', collectionUid: 'collection-1' }]
+      },
+      workspaces: {
+        activeWorkspaceUid: 'workspace-1',
+        workspaces: [
+          {
+            uid: 'workspace-1',
+            scratchCollectionUid: 'scratch-1',
+            collections: [{ path: '/workspace/collection-1' }]
+          }
+        ]
+      }
+    });
+
+    store.dispatch(
+      addTab({
+        uid: 'global-environment-1',
+        collectionUid: 'scratch-1',
+        type: 'global-environment-settings',
+        preview: false
+      })
+    );
+
+    expect(store.getState().requestTabView).toEqual({
+      mode: 'collection',
+      collectionUid: 'collection-1'
+    });
+  });
+
   it('switches collection mode to the opened collection tab', () => {
     const store = makeStore({
       collections: {
