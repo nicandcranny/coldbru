@@ -46,13 +46,22 @@ const handleWorkspaceFileChange = (win, workspacePath) => {
 
     const workspaceUid = getWorkspaceUid(workspacePath);
 
-    win.webContents.send('main:workspace-config-updated', workspacePath, workspaceUid, workspaceConfig);
+    win.webContents.send(
+      'main:workspace-config-updated',
+      workspacePath,
+      workspaceUid,
+      workspaceConfig
+    );
   } catch (error) {
     console.error('Error handling workspace file change:', error);
   }
 };
 
-const parseGlobalEnvironmentFile = async (pathname, workspacePath, workspaceUid) => {
+const parseGlobalEnvironmentFile = async (
+  pathname,
+  workspacePath,
+  workspaceUid
+) => {
   const basename = path.basename(pathname);
   const environmentName = basename.slice(0, -'.yml'.length);
 
@@ -76,9 +85,15 @@ const parseGlobalEnvironmentFile = async (pathname, workspacePath, workspaceUid)
   });
 
   if (envHasSecrets(file.data)) {
-    const envSecrets = environmentSecretsStore.getEnvSecrets(workspacePath, file.data);
+    const envSecrets = environmentSecretsStore.getEnvSecrets(
+      workspacePath,
+      file.data
+    );
     _.each(envSecrets, (secret) => {
-      const variable = _.find(file.data.variables, (v) => v.name === secret.name);
+      const variable = _.find(
+        file.data.variables,
+        (v) => v.name === secret.name
+      );
       if (variable && secret.value) {
         const decryptionResult = decryptStringSafe(secret.value);
         variable.value = decryptionResult.value;
@@ -89,28 +104,54 @@ const parseGlobalEnvironmentFile = async (pathname, workspacePath, workspaceUid)
   return file;
 };
 
-const handleGlobalEnvironmentFileAdd = async (win, pathname, workspacePath, workspaceUid) => {
+const handleGlobalEnvironmentFileAdd = async (
+  win,
+  pathname,
+  workspacePath,
+  workspaceUid
+) => {
   try {
-    const file = await parseGlobalEnvironmentFile(pathname, workspacePath, workspaceUid);
+    const file = await parseGlobalEnvironmentFile(
+      pathname,
+      workspacePath,
+      workspaceUid
+    );
     win.webContents.send('main:global-environment-added', workspaceUid, file);
   } catch (error) {
     console.error('Error handling global environment file add:', error);
   }
 };
 
-const handleGlobalEnvironmentFileChange = async (win, pathname, workspacePath, workspaceUid) => {
+const handleGlobalEnvironmentFileChange = async (
+  win,
+  pathname,
+  workspacePath,
+  workspaceUid
+) => {
   try {
-    const file = await parseGlobalEnvironmentFile(pathname, workspacePath, workspaceUid);
+    const file = await parseGlobalEnvironmentFile(
+      pathname,
+      workspacePath,
+      workspaceUid
+    );
     win.webContents.send('main:global-environment-changed', workspaceUid, file);
   } catch (error) {
     console.error('Error handling global environment file change:', error);
   }
 };
 
-const handleGlobalEnvironmentFileUnlink = async (win, pathname, workspaceUid) => {
+const handleGlobalEnvironmentFileUnlink = async (
+  win,
+  pathname,
+  workspaceUid
+) => {
   try {
     const environmentUid = generateUidBasedOnHash(pathname);
-    win.webContents.send('main:global-environment-deleted', workspaceUid, environmentUid);
+    win.webContents.send(
+      'main:global-environment-deleted',
+      workspaceUid,
+      environmentUid
+    );
   } catch (error) {
     console.error('Error handling global environment file unlink:', error);
   }
@@ -168,11 +209,21 @@ class WorkspaceWatcher {
         });
 
         envWatcher.on('add', (pathname) => {
-          handleGlobalEnvironmentFileAdd(win, pathname, workspacePath, workspaceUid);
+          handleGlobalEnvironmentFileAdd(
+            win,
+            pathname,
+            workspacePath,
+            workspaceUid
+          );
         });
 
         envWatcher.on('change', (pathname) => {
-          handleGlobalEnvironmentFileChange(win, pathname, workspacePath, workspaceUid);
+          handleGlobalEnvironmentFileChange(
+            win,
+            pathname,
+            workspacePath,
+            workspaceUid
+          );
         });
 
         envWatcher.on('unlink', (pathname) => {
@@ -216,6 +267,16 @@ class WorkspaceWatcher {
 
   hasWatcher(workspacePath) {
     return Boolean(this.watchers[workspacePath]);
+  }
+
+  async closeAll() {
+    const watchers = [
+      ...Object.values(this.watchers),
+      ...Object.values(this.environmentWatchers)
+    ].filter(Boolean);
+    await Promise.all(watchers.map((watcher) => watcher.close()));
+    this.watchers = {};
+    this.environmentWatchers = {};
   }
 }
 

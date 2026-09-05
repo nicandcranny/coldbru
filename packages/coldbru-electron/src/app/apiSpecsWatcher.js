@@ -9,7 +9,9 @@ const { safeParseJSON } = require('../utils/common');
 
 const hasApiSpecExtension = (filename) => {
   if (!filename || typeof filename !== 'string') return false;
-  return ['yaml', 'yml', 'json'].some((ext) => filename.toLowerCase().endsWith(`.${ext}`));
+  return ['yaml', 'yml', 'json'].some((ext) =>
+    filename.toLowerCase().endsWith(`.${ext}`)
+  );
 };
 
 const parseApiSpecContent = (pathname) => {
@@ -102,13 +104,18 @@ class ApiSpecWatcher {
 
           // Check if any path segment matches a default ignore pattern (handles symlinks)
           const pathSegments = relativePath.split(path.sep);
-          if (pathSegments.some((segment) => defaultIgnores.includes(segment))) {
+          if (
+            pathSegments.some((segment) => defaultIgnores.includes(segment))
+          ) {
             return true;
           }
 
           return ignores.some((ignorePattern) => {
             const normalizedIgnorePattern = ignorePattern.replace(/\\/g, '/');
-            return relativePath === normalizedIgnorePattern || relativePath.startsWith(normalizedIgnorePattern);
+            return (
+              relativePath === normalizedIgnorePattern
+              || relativePath.startsWith(normalizedIgnorePattern)
+            );
           });
         },
         persistent: true,
@@ -121,8 +128,12 @@ class ApiSpecWatcher {
       });
 
       watcher
-        .on('add', (pathname) => add(win, pathname, apiSpecUid, watchPath, workspacePath))
-        .on('change', (pathname) => change(win, pathname, apiSpecUid, watchPath, workspacePath));
+        .on('add', (pathname) =>
+          add(win, pathname, apiSpecUid, watchPath, workspacePath)
+        )
+        .on('change', (pathname) =>
+          change(win, pathname, apiSpecUid, watchPath, workspacePath)
+        );
 
       self.watchers[watchPath] = watcher;
     }, 100);
@@ -140,6 +151,16 @@ class ApiSpecWatcher {
     if (this.watcherWorkspaces[watchPath]) {
       delete this.watcherWorkspaces[watchPath];
     }
+  }
+
+  async closeAll() {
+    await Promise.all(
+      Object.values(this.watchers)
+        .filter(Boolean)
+        .map((watcher) => watcher.close())
+    );
+    this.watchers = {};
+    this.watcherWorkspaces = {};
   }
 }
 

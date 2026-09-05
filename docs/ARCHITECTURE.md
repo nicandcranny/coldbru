@@ -29,15 +29,20 @@ ColdBru is a two-process Electron app:
 ```
 
 Two communication patterns:
+
 1. **Request/response** — renderer calls `ipcRenderer.invoke('channel', payload)`, main returns a result.
 2. **Push events** — main sends `webContents.send('event', data)` to renderer (file changes, loading states, import progress).
+
+### Application shutdown
+
+The main window intercepts its close event and asks the renderer to resolve unsaved changes through `main:start-quit-flow`. When the renderer invokes `main:complete-quit-flow`, the main process waits for collection, workspace, API spec, and dotenv chokidar watchers to close before calling `app.exit(0)`. Waiting is required on macOS because exiting while native fsevents watchers are active can deadlock process teardown.
 
 ## Domain Map
 
 Every feature maps to an IPC file, a Redux slice, and a set of components:
 
 | Domain | IPC file | Redux slice | Key components |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Collections | `ipc/collection.js` (71 handlers) | `slices/collections/` | Sidebar, RequestPane, ResponsePane |
 | Workspaces | `ipc/workspace.js` (26 handlers) | `slices/workspaces/` | WorkspaceSidebar, WorkspaceHome |
 | Git | `ipc/git.js` (11 handlers) | `slices/git.js` | Git/ |
@@ -99,6 +104,7 @@ Manual middleware. Runs after the reducer.
 Intercepts the same ~70 action types as Draft Detect (but the lists are maintained separately and can drift). If autosave is enabled in preferences, debounces a save per entity using `setTimeout` keyed by entity type + uid. Dispatches `saveRequest`, `saveFolderRoot`, `saveCollectionSettings`, `saveEnvironment`, or `saveGlobalEnvironment`.
 
 Gotchas:
+
 - `pendingTimers` is module-level state outside Redux — stale timers survive hot reload.
 - When autosave is toggled on, it walks every collection and every item to flush existing drafts — can be slow with large workspaces.
 - Transient requests are skipped.
@@ -161,6 +167,7 @@ Main process:
 ```
 
 **Variable precedence** (highest wins):
+
 ```
 promptVariables > runtimeVariables > oauth2CredentialVariables > requestVariables
 > folderVariables > envVariables > collectionVariables > globalEnvironmentVariables > process.env
@@ -182,16 +189,19 @@ Collection and folder runs go through `renderer:run-collection-folder` in `ipc/n
 ```
 
 Main process behavior:
+
 - Builds request list exactly as before: recursive/non-recursive, tag filtering, optional configured request subset/order.
 - If `runnerData.rows` exists, wraps the request loop in an outer iteration loop. Each CSV row becomes one full runner pass.
 - Merges row variables into `envVars` for that iteration only. This means CSV values override global, collection, and selected environment variables, but request/folder/runtime/prompt variables still win.
 - Reuses that iteration-scoped `envVars` for nested `bru.runRequest()` calls from scripts so manual jumps and scripted sub-requests see the same CSV row.
 
 Runner event payloads sent over `main:run-folder-event` now include:
+
 - `runnerItemUid` — unique per request execution, required because same request UID can run many times across CSV iterations.
 - `iterationIndex`, `iterationCount`, `iterationVariables`, `csvFileName` — used by renderer to group and label results.
 
 Renderer behavior:
+
 - `slices/collections.runFolderEvent` keys updates by `runnerItemUid` when present, falling back to request UID for older events.
 - `RunnerResults` shows iteration dividers and can safely display repeated request executions without later events overwriting earlier rows.
 
@@ -238,6 +248,7 @@ External changes (Git, VS Code, CLI) are automatically detected and synced to th
 ```
 
 **Two collection formats**:
+
 - **BRU** — `coldbru.json` config + `.bru` request files (default)
 - **YAML** — `opencollection.yml` config + `.yml` request files
 
@@ -265,17 +276,20 @@ The most complex auth flow — involves separate browser windows, encrypted toke
 **Supported grant types**: authorization_code, client_credentials, password, implicit.
 
 **Token caching** (`store/oauth2.js`):
+
 - Backed by `electron-store`, encrypted at rest.
 - Keyed by `(collectionUid, url, credentialsId)` — each request can have its own cached token.
 - Expiry check: `created_at + expires_in * 1000 > Date.now()`.
 
 **Automatic token resolution** (when `forceFetch` is false, i.e. during normal request sending):
+
 1. Stored token exists and not expired → use it.
 2. Expired + `autoRefreshToken` on + `refresh_token` exists → attempt refresh. On failure, fall through.
 3. Expired + `autoFetchToken` on → clear cache, fetch new token.
 4. Otherwise → return expired token as-is.
 
 **Authorization code flow**:
+
 ```
 1. Build authorize URL (client_id, redirect_uri, scope, state, PKCE if enabled)
 
@@ -324,12 +338,14 @@ Available operations:
 Unlike HTTP (fire-and-forget), these maintain persistent connections:
 
 **WebSocket**:
+
 - `renderer:ws:start-connection` → opens connection, registers event listeners
 - Messages streamed to renderer via push events
 - `renderer:ws:send-message` / `renderer:ws:close-connection` for interaction
 - Active connections tracked in module-level Map, queryable via `renderer:ws:get-active-connections`
 
 **gRPC**:
+
 - `grpc:start-connection` → creates gRPC client, handles unary/server-stream/client-stream/bidi
 - Methods loaded via reflection (`grpc:load-methods-reflection`) or proto file (`grpc:load-methods-proto`)
 - `grpc:send-message` / `grpc:end-request` / `grpc:cancel-request` for stream control
@@ -382,6 +398,7 @@ Unlike HTTP (fire-and-forget), these maintain persistent connections:
 ### OpenAPI Sync
 
 The largest single IPC file (70K). Handles:
+
 - Fetching remote OpenAPI specs and comparing against local collection
 - Drift detection (local changes vs spec)
 - Applying sync (add new endpoints, remove deleted, reset drifted)

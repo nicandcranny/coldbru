@@ -3173,7 +3173,7 @@ const registerRendererEventHandlers = (mainWindow, watcher) => {
   );
 };
 
-const registerMainEventHandlers = (mainWindow, watcher) => {
+const registerMainEventHandlers = (mainWindow, watcher, completeQuitFlow) => {
   ipcMain.on('main:open-collection', () => {
     if (watcher && mainWindow) {
       openCollectionDialog(mainWindow, watcher);
@@ -3206,9 +3206,10 @@ const registerMainEventHandlers = (mainWindow, watcher) => {
     mainWindow.webContents.send('main:start-quit-flow');
   });
 
+  let quitPromise;
   ipcMain.handle('main:complete-quit-flow', () => {
-    console.log('[quit-flow] Renderer completed quit flow — quitting app');
-    process.exit(0);
+    quitPromise = quitPromise || completeQuitFlow();
+    return quitPromise;
   });
 
   ipcMain.handle('main:force-quit', () => {
@@ -3216,9 +3217,9 @@ const registerMainEventHandlers = (mainWindow, watcher) => {
   });
 };
 
-const registerCollectionsIpc = (mainWindow, watcher) => {
+const registerCollectionsIpc = (mainWindow, watcher, completeQuitFlow) => {
   registerRendererEventHandlers(mainWindow, watcher);
-  registerMainEventHandlers(mainWindow, watcher);
+  registerMainEventHandlers(mainWindow, watcher, completeQuitFlow);
 };
 
 module.exports = registerCollectionsIpc;

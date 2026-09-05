@@ -7,12 +7,22 @@ const { initializeShellEnv } = require('@usebruno/requests');
 const { percentageToZoomLevel } = require('@usebruno/common');
 
 const { format } = require('url');
-const { BrowserWindow, app, session, Menu, globalShortcut, ipcMain, nativeTheme } = require('electron');
+const {
+  BrowserWindow,
+  app,
+  session,
+  Menu,
+  globalShortcut,
+  ipcMain,
+  nativeTheme
+} = require('electron');
 const { setContentSecurityPolicy } = require('electron-util');
 
 if (isDev && process.env.ELECTRON_USER_DATA_PATH) {
-  console.debug('`ELECTRON_USER_DATA_PATH` found, modifying `userData` path: \n'
-    + `\t${app.getPath('userData')} -> ${process.env.ELECTRON_USER_DATA_PATH}`);
+  console.debug(
+    '`ELECTRON_USER_DATA_PATH` found, modifying `userData` path: \n'
+    + `\t${app.getPath('userData')} -> ${process.env.ELECTRON_USER_DATA_PATH}`
+  );
 
   app.setPath('userData', process.env.ELECTRON_USER_DATA_PATH);
 }
@@ -37,10 +47,19 @@ const registerApiSpecIpc = require('./ipc/apiSpec');
 const registerGitIpc = require('./ipc/git');
 const registerOpenAPISyncIpc = require('./ipc/openapi-sync');
 const collectionWatcher = require('./app/collection-watcher');
+const dotEnvWatcher = require('./app/dotenv-watcher');
 const WorkspaceWatcher = require('./app/workspace-watcher');
 const ApiSpecWatcher = require('./app/apiSpecsWatcher');
-const { loadWindowState, saveBounds, saveMaximized } = require('./utils/window');
-const { preferencesUtil, getPreferences, savePreferences } = require('./store/preferences');
+const {
+  loadWindowState,
+  saveBounds,
+  saveMaximized
+} = require('./utils/window');
+const {
+  preferencesUtil,
+  getPreferences,
+  savePreferences
+} = require('./store/preferences');
 const { globalEnvironmentsManager } = require('./store/workspace-environments');
 const registerNotificationsIpc = require('./ipc/notifications');
 const registerGlobalEnvironmentsIpc = require('./ipc/global-environments');
@@ -50,7 +69,10 @@ const { getDomainsWithCookies } = require('./utils/cookies');
 const { cookiesStore } = require('./store/cookies');
 const SystemMonitor = require('./app/system-monitor');
 const { getIsRunningInRosetta } = require('./utils/arch');
-const { handleAppProtocolUrl, getAppProtocolUrlFromArgv } = require('./utils/deeplink');
+const {
+  handleAppProtocolUrl,
+  getAppProtocolUrlFromArgv
+} = require('./utils/deeplink');
 
 const systemMonitor = new SystemMonitor();
 const terminalManager = new TerminalManager();
@@ -135,7 +157,7 @@ if (useSingleInstance && !gotTheLock) {
   if (isLinux) {
     try {
       execSync('xdg-mime default coldbru.desktop x-scheme-handler/coldbru');
-    } catch (err) {}
+    } catch {}
   }
 
   // Handle protocol URLs for MacOS
@@ -155,7 +177,7 @@ if (useSingleInstance && !gotTheLock) {
   }
 
   // Handle second instance attempts - focus primary window on all platforms
-  app.on('second-instance', (event, commandLine) => {
+  app.on('second-instance', (_event, commandLine) => {
     focusMainWindow();
     // Extract and handle protocol URL from the second instance attempt
     const url = getAppProtocolUrlFromArgv(commandLine);
@@ -171,12 +193,21 @@ app.on('ready', async () => {
   await initializeShellEnv();
 
   if (isDev) {
-    const { installExtension, REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS } = require('electron-devtools-installer');
+    const {
+      installExtension,
+      REDUX_DEVTOOLS,
+      REACT_DEVELOPER_TOOLS
+    } = require('electron-devtools-installer');
     try {
-      const extensions = await installExtension([REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS], {
-        loadExtensionOptions: { allowFileAccess: true }
-      });
-      console.log(`Added Extensions:  ${extensions.map((ext) => ext.name).join(', ')}`);
+      const extensions = await installExtension(
+        [REDUX_DEVTOOLS, REACT_DEVELOPER_TOOLS],
+        {
+          loadExtensionOptions: { allowFileAccess: true }
+        }
+      );
+      console.log(
+        `Added Extensions:  ${extensions.map((ext) => ext.name).join(', ')}`
+      );
     } catch (err) {
       console.error('An error occurred while loading extensions: ', err);
     }
@@ -298,7 +329,7 @@ app.on('ready', async () => {
     incrementZoomAndPersist(-10);
   });
 
-  ipcMain.handle('renderer:set-zoom-level', (event, zoomLevel) => {
+  ipcMain.handle('renderer:set-zoom-level', (_event, zoomLevel) => {
     mainWindow.webContents.setZoomLevel(zoomLevel);
   });
 
@@ -321,7 +352,9 @@ app.on('ready', async () => {
       }
     });
     aboutWindow.removeMenu();
-    aboutWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(aboutBruno({ version }))}`);
+    aboutWindow.loadURL(
+      `data:text/html;charset=utf-8,${encodeURIComponent(aboutBruno({ version }))}`
+    );
   });
 
   mainWindow.once('ready-to-show', () => {
@@ -343,7 +376,9 @@ app.on('ready', async () => {
       });
 
   mainWindow.loadURL(url).catch((reason) => {
-    console.error(`Error: Failed to load URL: "${url}" (Electron shows a blank screen because of this).`);
+    console.error(
+      `Error: Failed to load URL: "${url}" (Electron shows a blank screen because of this).`
+    );
     console.error('Original message:', reason);
     if (isDev) {
       console.error(
@@ -398,10 +433,20 @@ app.on('ready', async () => {
     terminalManager.cleanup(mainWindow.webContents);
 
     // Flush cookies before quit since app.exit() skips before-quit
-    try { cookiesStore.saveCookieJar(true); } catch (err) { console.warn('Failed to flush cookies on quit', err); }
+    try {
+      cookiesStore.saveCookieJar(true);
+    } catch (err) {
+      console.warn('Failed to flush cookies on quit', err);
+    }
     systemMonitor.stop();
-    try { terminalManager.killAll(); } catch (err) { console.error('Failed to kill all terminals on quit', err); }
-    if (useSingleInstance && gotTheLock) { app.releaseSingleInstanceLock(); }
+    try {
+      terminalManager.killAll();
+    } catch (err) {
+      console.error('Failed to kill all terminals on quit', err);
+    }
+    if (useSingleInstance && gotTheLock) {
+      app.releaseSingleInstanceLock();
+    }
 
     ipcMain.emit('main:start-quit-flow');
 
@@ -443,10 +488,13 @@ app.on('ready', async () => {
     try {
       let ogSend = mainWindow.webContents.send;
       mainWindow.webContents.send = function (channel, ...args) {
-        return ogSend.apply(this, [channel, ...args.map((_) => {
-          // todo: replace this with @msgpack/msgpack encode/decode
-          return safeParseJSON(safeStringifyJSON(_));
-        })]);
+        return ogSend.apply(this, [
+          channel,
+          ...args.map((_) => {
+            // todo: replace this with @msgpack/msgpack encode/decode
+            return safeParseJSON(safeStringifyJSON(_));
+          })
+        ]);
       };
     } catch (err) {
       console.error('Error wrapping webContents.send:', err);
@@ -469,7 +517,15 @@ app.on('ready', async () => {
   // register all ipc handlers
   registerNetworkIpc(mainWindow);
   registerGlobalEnvironmentsIpc(mainWindow, globalEnvironmentsManager);
-  registerCollectionsIpc(mainWindow, collectionWatcher);
+  registerCollectionsIpc(mainWindow, collectionWatcher, async () => {
+    await Promise.all([
+      collectionWatcher.closeAll(),
+      workspaceWatcher.closeAll(),
+      apiSpecWatcher.closeAll(),
+      dotEnvWatcher.closeAll()
+    ]);
+    app.exit(0);
+  });
   registerPreferencesIpc(mainWindow, collectionWatcher);
   registerWorkspaceIpc(mainWindow, workspaceWatcher);
   registerApiSpecIpc(mainWindow, apiSpecWatcher);
@@ -506,7 +562,7 @@ app.on('before-quit', () => {
 app.on('window-all-closed', app.quit);
 
 // Open collection from Recent menu (#1521)
-app.on('open-file', (event, path) => {
+app.on('open-file', (_event, path) => {
   openCollection(mainWindow, collectionWatcher, path);
 });
 
@@ -520,10 +576,7 @@ app.on('browser-window-blur', () => {
  */
 function incrementZoomAndPersist(inc) {
   const currentPercentage = preferencesUtil.getZoomPercentage();
-  const nextPercentage = Math.min(
-    Math.max(currentPercentage + inc, 50),
-    150
-  );
+  const nextPercentage = Math.min(Math.max(currentPercentage + inc, 50), 150);
   updateZoomLevel(nextPercentage);
 }
 

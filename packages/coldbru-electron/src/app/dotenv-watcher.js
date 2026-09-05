@@ -2,7 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const chokidar = require('chokidar');
 const { parseDotEnv } = require('@usebruno/filestore');
-const { setDotEnvVars, clearDotEnvVars, setWorkspaceDotEnvVars, clearWorkspaceDotEnvVars } = require('../store/process-env');
+const {
+  setDotEnvVars,
+  clearDotEnvVars,
+  setWorkspaceDotEnvVars,
+  clearWorkspaceDotEnvVars
+} = require('../store/process-env');
 
 const isDotEnvFile = (filename) => {
   return filename === '.env' || filename.startsWith('.env.');
@@ -194,15 +199,13 @@ class DotEnvWatcher {
     return this.workspaceWatchers.has(workspacePath);
   }
 
-  closeAll() {
-    for (const [path, watcher] of this.collectionWatchers) {
-      watcher.close();
-    }
+  async closeAll() {
+    const watchers = [
+      ...this.collectionWatchers.values(),
+      ...this.workspaceWatchers.values()
+    ];
+    await Promise.all(watchers.map((watcher) => watcher.close()));
     this.collectionWatchers.clear();
-
-    for (const [path, watcher] of this.workspaceWatchers) {
-      watcher.close();
-    }
     this.workspaceWatchers.clear();
   }
 }
