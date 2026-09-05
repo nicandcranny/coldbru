@@ -8,7 +8,10 @@
 import React, { createRef } from 'react';
 import { isEqual, escapeRegExp } from 'lodash';
 import { defineCodeMirrorBrunoVariablesMode } from 'utils/common/codemirror';
-import { setupAutoComplete, showRootHints } from 'utils/codemirror/autocomplete';
+import {
+  setupAutoComplete,
+  showRootHints
+} from 'utils/codemirror/autocomplete';
 import StyledWrapper from './StyledWrapper';
 import * as jsonlint from '@prantlf/jsonlint';
 import { JSHINT } from 'jshint';
@@ -62,11 +65,14 @@ export default class CodeEditor extends React.Component {
       lineWrapping: this.props.enableLineWrapping ?? true,
       tabSize: TAB_SIZE,
       mode: this.props.mode || 'application/ld+json',
-      coldbruVarInfo: this.props.enableBrunoVarInfo !== false ? {
-        variables,
-        collection: this.props.collection,
-        item: this.props.item
-      } : false,
+      coldbruVarInfo:
+        this.props.enableBrunoVarInfo !== false
+          ? {
+              variables,
+              collection: this.props.collection,
+              item: this.props.item
+            }
+          : false,
       keyMap: 'sublime',
       autoCloseBrackets: true,
       matchBrackets: true,
@@ -111,7 +117,8 @@ export default class CodeEditor extends React.Component {
         'Cmd-H': 'replace',
         'Ctrl-H': 'replace',
         'Tab': function (cm) {
-          cm.getSelection().includes('\n') || editor.getLine(cm.getCursor().line) == cm.getSelection()
+          cm.getSelection().includes('\n')
+          || editor.getLine(cm.getCursor().line) == cm.getSelection()
             ? cm.execCommand('indentMore')
             : cm.replaceSelection('  ', 'end');
         },
@@ -127,15 +134,29 @@ export default class CodeEditor extends React.Component {
         'Ctrl-I': 'unfoldAll',
         'Cmd-I': 'unfoldAll',
         'Ctrl-/': () => {
-          if (['application/ld+json', 'application/json'].includes(this.props.mode)) {
-            this.editor.toggleComment({ lineComment: '//', blockComment: '/*' });
+          if (
+            ['application/ld+json', 'application/json'].includes(
+              this.props.mode
+            )
+          ) {
+            this.editor.toggleComment({
+              lineComment: '//',
+              blockComment: '/*'
+            });
           } else {
             this.editor.toggleComment();
           }
         },
         'Cmd-/': () => {
-          if (['application/ld+json', 'application/json'].includes(this.props.mode)) {
-            this.editor.toggleComment({ lineComment: '//', blockComment: '/*' });
+          if (
+            ['application/ld+json', 'application/json'].includes(
+              this.props.mode
+            )
+          ) {
+            this.editor.toggleComment({
+              lineComment: '//',
+              blockComment: '/*'
+            });
           } else {
             this.editor.toggleComment();
           }
@@ -176,13 +197,19 @@ export default class CodeEditor extends React.Component {
       let found = [];
       if (!window.jsonlint) {
         if (window.console) {
-          window.console.error('Error: window.jsonlint not defined, CodeMirror JSON linting cannot run.');
+          window.console.error(
+            'Error: window.jsonlint not defined, CodeMirror JSON linting cannot run.'
+          );
         }
         return found;
       }
       let jsonlint = window.jsonlint.parser || window.jsonlint;
       try {
-        jsonlint.parse(stripJsonComments(text.replace(/(?<!"[^":{]*){{[^}]*}}(?![^"},]*")/g, '1')));
+        jsonlint.parse(
+          stripJsonComments(
+            text.replace(/(?<!"[^":{]*){{[^}]*}}(?![^"},]*")/g, '1')
+          )
+        );
       } catch (error) {
         const { message, location } = error;
         const line = location?.start?.line;
@@ -199,12 +226,18 @@ export default class CodeEditor extends React.Component {
     });
 
     if (editor) {
-      editor.setOption('lint', this.props.mode && editor.getValue().trim().length > 0 ? this.lintOptions : false);
+      editor.setOption(
+        'lint',
+        this.props.mode && editor.getValue().trim().length > 0
+          ? this.lintOptions
+          : false
+      );
       editor.on('change', this._onEdit);
       editor.scrollTo(null, this.props.initialScroll);
       this.addOverlay();
 
-      const getAllVariablesHandler = () => getAllVariables(this.props.collection, this.props.item);
+      const getAllVariablesHandler = () =>
+        getAllVariables(this.props.collection, this.props.item);
 
       // Setup AutoComplete Helper for all modes
       const autoCompleteOptions = {
@@ -239,13 +272,22 @@ export default class CodeEditor extends React.Component {
       this.editor.options.jump.schema = this.props.schema;
       CodeMirror.signal(this.editor, 'change', this.editor);
     }
-    if (this.props.value !== prevProps.value && this.props.value !== this.cachedValue && this.editor) {
+    if (
+      this.props.value !== prevProps.value
+      && this.props.value !== this.cachedValue
+      && this.editor
+    ) {
       // TODO: temporary fix for keeping cursor state when auto save and new line insertion collide PR#7098
       const nextValue = this.props.value ?? '';
       const currentValue = this.editor.getValue();
       const shouldSyncWhileFocused = Boolean(this.props.syncValueWhileFocused);
       // Skip updating only when focused and editable; read-only editors (e.g. response viewer) must always show new value
-      if (this.editor.hasFocus?.() && currentValue !== nextValue && !this.props.readOnly && !shouldSyncWhileFocused) {
+      if (
+        this.editor.hasFocus?.()
+        && currentValue !== nextValue
+        && !this.props.readOnly
+        && !shouldSyncWhileFocused
+      ) {
         this.cachedValue = currentValue;
       } else {
         const cursor = this.editor.getCursor();
@@ -262,18 +304,31 @@ export default class CodeEditor extends React.Component {
       }
 
       // Update collection and item when they change
-      if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
-        if (!isEqual(this.props.collection, this.editor.options.coldbruVarInfo.collection)) {
+      if (
+        this.props.enableBrunoVarInfo !== false
+        && this.editor.options.coldbruVarInfo
+      ) {
+        if (
+          !isEqual(
+            this.props.collection,
+            this.editor.options.coldbruVarInfo.collection
+          )
+        ) {
           this.editor.options.coldbruVarInfo.collection = this.props.collection;
         }
-        if (!isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)) {
+        if (
+          !isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)
+        ) {
           this.editor.options.coldbruVarInfo.item = this.props.item;
         }
       }
     }
 
     if (this.props.theme !== prevProps.theme && this.editor) {
-      this.editor.setOption('theme', this.props.theme === 'dark' ? 'monokai' : 'default');
+      this.editor.setOption(
+        'theme',
+        this.props.theme === 'dark' ? 'monokai' : 'default'
+      );
     }
 
     if (this.props.initialScroll !== prevProps.initialScroll) {
@@ -326,7 +381,7 @@ export default class CodeEditor extends React.Component {
     }
     return (
       <StyledWrapper
-        className={`h-full w-full flex flex-col relative graphiql-container ${this.props.readOnly ? 'read-only' : ''}`}
+        className="h-full w-full flex flex-col relative graphiql-container"
         aria-label="Code Editor"
         font={this.props.font}
         fontSize={this.props.fontSize}
@@ -342,7 +397,9 @@ export default class CodeEditor extends React.Component {
         />
         <div
           className={`editor-container${this.state.searchBarVisible ? ' search-bar-visible' : ''}`}
-          ref={(node) => { this._node = node; }}
+          ref={(node) => {
+            this._node = node;
+          }}
           style={{ height: '100%', width: '100%' }}
         />
       </StyledWrapper>
@@ -355,17 +412,28 @@ export default class CodeEditor extends React.Component {
     this.variables = variables;
 
     // Update coldbruVarInfo with latest variables
-    if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
+    if (
+      this.props.enableBrunoVarInfo !== false
+      && this.editor.options.coldbruVarInfo
+    ) {
       this.editor.options.coldbruVarInfo.variables = variables;
     }
 
-    defineCodeMirrorBrunoVariablesMode(variables, mode, false, this.props.enableVariableHighlighting);
+    defineCodeMirrorBrunoVariablesMode(
+      variables,
+      mode,
+      false,
+      this.props.enableVariableHighlighting
+    );
     this.editor.setOption('mode', 'brunovariables');
   };
 
   _onEdit = () => {
     if (!this.ignoreChangeEvent && this.editor) {
-      this.editor.setOption('lint', this.editor.getValue().trim().length > 0 ? this.lintOptions : false);
+      this.editor.setOption(
+        'lint',
+        this.editor.getValue().trim().length > 0 ? this.lintOptions : false
+      );
       this.cachedValue = this.editor.getValue();
       if (this.props.onEdit) {
         this.props.onEdit(this.cachedValue);
