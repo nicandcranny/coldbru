@@ -4,13 +4,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useTheme } from 'providers/Theme';
 import { updateRequestBody } from 'providers/ReduxStore/slices/collections';
 import { saveRequest } from 'providers/ReduxStore/slices/collections/actions';
-import { sendGrpcMessage, generateGrpcSampleMessage } from 'utils/network/index';
+import {
+  sendGrpcMessage,
+  generateGrpcSampleMessage
+} from 'utils/network/index';
 import useLocalStorage from 'hooks/useLocalStorage';
 
 import CodeEditor from 'components/CodeEditor/index';
 import Button from 'ui/Button';
 import StyledWrapper from './StyledWrapper';
-import { IconSend, IconRefresh, IconWand, IconPlus, IconTrash } from '@tabler/icons';
+import {
+  IconSend,
+  IconRefresh,
+  IconWand,
+  IconPlus,
+  IconTrash
+} from '@tabler/icons';
 import ToolHint from 'components/ToolHint/index';
 import { toastError } from 'utils/common/error';
 import toast from 'react-hot-toast';
@@ -44,7 +53,10 @@ const MessageToolbar = ({
         </ToolHint>
 
         {canClientStream && (
-          <ToolHint text={isConnectionActive ? 'Send message' : 'Connection not active'} toolhintId={`send-msg-${index}`}>
+          <ToolHint
+            text={isConnectionActive ? 'Send message' : 'Connection not active'}
+            toolhintId={`send-msg-${index}`}
+          >
             <button
               onClick={onSend}
               disabled={!isConnectionActive}
@@ -68,17 +80,31 @@ const MessageToolbar = ({
   );
 };
 
-const SingleGrpcMessage = ({ message, item, collection, index, methodType, handleRun, canClientSendMultipleMessages, isLast }) => {
+const SingleGrpcMessage = ({
+  message,
+  item,
+  collection,
+  index,
+  methodType,
+  handleRun,
+  canClientSendMultipleMessages,
+  isLast
+}) => {
   const dispatch = useDispatch();
   const { displayedTheme } = useTheme();
   const preferences = useSelector((state) => state.app.preferences);
-  const body = item.draft ? get(item, 'draft.request.body') : get(item, 'request.body');
-  const isConnectionActive = useSelector((state) => state.collections.activeConnections.includes(item.uid));
+  const body = item.draft
+    ? get(item, 'draft.request.body')
+    : get(item, 'request.body');
+  const isConnectionActive = useSelector((state) =>
+    state.collections.activeConnections.includes(item.uid)
+  );
 
   const [reflectionCache] = useLocalStorage('bruno.grpc.reflectionCache', {});
   const [protofileCache] = useLocalStorage('bruno.grpc.protofileCache', {});
 
-  const canClientStream = methodType === 'client-streaming' || methodType === 'bidi-streaming';
+  const canClientStream
+    = methodType === 'client-streaming' || methodType === 'bidi-streaming';
   const { name, content } = message;
 
   const onEdit = (value) => {
@@ -87,11 +113,13 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
       name: name ? name : `message ${index + 1}`,
       content: value
     };
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   const onSend = async () => {
@@ -113,19 +141,27 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
       }
 
       const url = item.draft?.request?.url || item.request?.url;
-      const protoPath = item.draft?.request?.protoPath || item.request?.protoPath;
+      const protoPath
+        = item.draft?.request?.protoPath || item.request?.protoPath;
 
       let methodMetadata = null;
       if (protoPath) {
-        const absolutePath = getAbsoluteFilePath(collection.pathname, protoPath);
+        const absolutePath = getAbsoluteFilePath(
+          collection.pathname,
+          protoPath
+        );
         const cachedMethods = protofileCache[absolutePath];
         if (cachedMethods) {
-          methodMetadata = cachedMethods.find((method) => method.path === methodPath);
+          methodMetadata = cachedMethods.find(
+            (method) => method.path === methodPath
+          );
         }
       } else if (url) {
         const cachedMethods = reflectionCache[url];
         if (cachedMethods) {
-          methodMetadata = cachedMethods.find((method) => method.path === methodPath);
+          methodMetadata = cachedMethods.find(
+            (method) => method.path === methodPath
+          );
         }
       }
 
@@ -140,14 +176,18 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
           name: name ? name : `message ${index + 1}`,
           content: result.message
         };
-        dispatch(updateRequestBody({
-          content: currentMessages,
-          itemUid: item.uid,
-          collectionUid: collection.uid
-        }));
+        dispatch(
+          updateRequestBody({
+            content: currentMessages,
+            itemUid: item.uid,
+            collectionUid: collection.uid
+          })
+        );
         toast.success('Sample message generated');
       } else {
-        toastError(new Error(result.error || 'Failed to generate sample message'));
+        toastError(
+          new Error(result.error || 'Failed to generate sample message')
+        );
       }
     } catch (error) {
       console.error('Error generating sample message:', error);
@@ -158,11 +198,13 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
   const onDeleteMessage = () => {
     const currentMessages = [...(body.grpc || [])];
     currentMessages.splice(index, 1);
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   const onPrettify = () => {
@@ -173,20 +215,25 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
         name: name ? name : `message ${index + 1}`,
         content: prettyBodyJson
       };
-      dispatch(updateRequestBody({
-        content: currentMessages,
-        itemUid: item.uid,
-        collectionUid: collection.uid
-      }));
+      dispatch(
+        updateRequestBody({
+          content: currentMessages,
+          itemUid: item.uid,
+          collectionUid: collection.uid
+        })
+      );
     } catch (e) {
       toastError(new Error('Unable to prettify. Invalid JSON format.'));
     }
   };
 
-  const isSingleMessage = !canClientSendMultipleMessages || body.grpc.length === 1;
+  const isSingleMessage
+    = !canClientSendMultipleMessages || body.grpc.length === 1;
 
   return (
-    <div className={`message-container ${isSingleMessage ? 'single' : ''} ${isLast ? 'last' : ''}`}>
+    <div
+      className={`message-container ${isSingleMessage ? 'single' : ''} ${isLast ? 'last' : ''}`}
+    >
       <MessageToolbar
         index={index}
         canClientStream={canClientStream}
@@ -204,6 +251,7 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
           font={get(preferences, 'font.codeFont', 'default')}
           fontSize={get(preferences, 'font.codeFontSize')}
           value={content}
+          historyKey={`${item.uid}:body:grpc:${index}`}
           onEdit={onEdit}
           onRun={handleRun}
           onSave={onSave}
@@ -220,9 +268,14 @@ const SingleGrpcMessage = ({ message, item, collection, index, methodType, handl
 const GrpcBody = ({ item, collection, handleRun }) => {
   const dispatch = useDispatch();
   const messagesContainerRef = useRef(null);
-  const body = item.draft ? get(item, 'draft.request.body') : get(item, 'request.body');
-  const methodType = item.draft ? get(item, 'draft.request.methodType') : get(item, 'request.methodType');
-  const canClientSendMultipleMessages = methodType === 'client-streaming' || methodType === 'bidi-streaming';
+  const body = item.draft
+    ? get(item, 'draft.request.body')
+    : get(item, 'request.body');
+  const methodType = item.draft
+    ? get(item, 'draft.request.methodType')
+    : get(item, 'request.methodType');
+  const canClientSendMultipleMessages
+    = methodType === 'client-streaming' || methodType === 'bidi-streaming';
 
   useEffect(() => {
     if (messagesContainerRef.current && body?.grpc?.length > 0) {
@@ -237,11 +290,13 @@ const GrpcBody = ({ item, collection, handleRun }) => {
       name: `message ${currentMessages.length + 1}`,
       content: '{}'
     });
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   if (!body?.grpc || !Array.isArray(body.grpc)) {
@@ -263,7 +318,9 @@ const GrpcBody = ({ item, collection, handleRun }) => {
     );
   }
 
-  const messagesToShow = body.grpc.filter((_, index) => canClientSendMultipleMessages || index === 0);
+  const messagesToShow = body.grpc.filter(
+    (_, index) => canClientSendMultipleMessages || index === 0
+  );
 
   return (
     <StyledWrapper>

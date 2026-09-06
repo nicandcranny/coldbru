@@ -9,7 +9,10 @@ import {
   setQueryParams
 } from 'providers/ReduxStore/slices/collections';
 import MultiLineEditor from 'components/MultiLineEditor';
-import { saveRequest, sendRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  saveRequest,
+  sendRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
 import BulkEditor from '../../BulkEditor';
@@ -17,7 +20,9 @@ import BulkEditor from '../../BulkEditor';
 const QueryParams = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const params = item.draft ? get(item, 'draft.request.params') : get(item, 'request.params');
+  const params = item.draft
+    ? get(item, 'draft.request.params')
+    : get(item, 'request.params');
   const queryParams = params.filter((param) => param.type === 'query');
   const pathParams = params.filter((param) => param.type === 'path');
 
@@ -26,33 +31,51 @@ const QueryParams = ({ item, collection }) => {
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleQueryParamsChange = useCallback((updatedParams) => {
-    const paramsWithType = updatedParams.map((p) => ({ ...p, type: 'query' }));
-    dispatch(setQueryParams({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      params: paramsWithType
-    }));
-  }, [dispatch, collection.uid, item.uid]);
-
-  const handlePathParamChange = useCallback((rowUid, key, value) => {
-    const pathParam = pathParams.find((p) => p.uid === rowUid);
-    if (pathParam) {
-      dispatch(updatePathParam({
-        pathParam: { ...pathParam, [key]: value },
-        itemUid: item.uid,
-        collectionUid: collection.uid
+  const handleQueryParamsChange = useCallback(
+    (updatedParams) => {
+      const paramsWithType = updatedParams.map((p) => ({
+        ...p,
+        type: 'query'
       }));
-    }
-  }, [dispatch, pathParams, item.uid, collection.uid]);
+      dispatch(
+        setQueryParams({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          params: paramsWithType
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleQueryParamDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveQueryParam({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handlePathParamChange = useCallback(
+    (rowUid, key, value) => {
+      const pathParam = pathParams.find((p) => p.uid === rowUid);
+      if (pathParam) {
+        dispatch(
+          updatePathParam({
+            pathParam: { ...pathParam, [key]: value },
+            itemUid: item.uid,
+            collectionUid: collection.uid
+          })
+        );
+      }
+    },
+    [dispatch, pathParams, item.uid, collection.uid]
+  );
+
+  const handleQueryParamDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveQueryParam({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
   const toggleBulkEditMode = () => {
     setIsBulkEditMode(!isBulkEditMode);
@@ -70,9 +93,10 @@ const QueryParams = ({ item, collection }) => {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <MultiLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
           onChange={onChange}
@@ -98,12 +122,14 @@ const QueryParams = ({ item, collection }) => {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ row, value, onChange }) => (
+      render: ({ row, value, onChange, historyKey }) => (
         <MultiLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
-          onChange={(newValue) => handlePathParamChange(row.uid, 'value', newValue)}
+          onChange={(newValue) =>
+            handlePathParamChange(row.uid, 'value', newValue)}
           onRun={handleRun}
           collection={collection}
           item={item}
@@ -144,9 +170,13 @@ const QueryParams = ({ item, collection }) => {
           defaultRow={defaultQueryRow}
           reorderable={true}
           onReorder={handleQueryParamDrag}
+          historyScope={`${item.uid}:params:query`}
         />
         <div className="flex justify-end mt-2">
-          <button className="btn-action text-link select-none" onClick={toggleBulkEditMode}>
+          <button
+            className="btn-action text-link select-none"
+            onClick={toggleBulkEditMode}
+          >
             Bulk Edit
           </button>
         </div>
@@ -173,6 +203,7 @@ const QueryParams = ({ item, collection }) => {
             showCheckbox={false}
             showDelete={false}
             showAddRow={false}
+            historyScope={`${item.uid}:params:path`}
           />
         ) : (
           <div className="title pr-2 py-3 mt-2 text-xs"></div>

@@ -1,8 +1,16 @@
-import { IconArrowRight, IconDeviceFloppy, IconPlugConnected, IconPlugConnectedX } from '@tabler/icons';
+import {
+  IconArrowRight,
+  IconDeviceFloppy,
+  IconPlugConnected,
+  IconPlugConnectedX
+} from '@tabler/icons';
 import classnames from 'classnames';
 import SingleLineEditor from 'components/SingleLineEditor/index';
 import { requestUrlChanged } from 'providers/ReduxStore/slices/collections';
-import { wsConnectOnly, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  wsConnectOnly,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import { useTheme } from 'providers/Theme';
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
@@ -23,7 +31,9 @@ const CONNECTION_STATUS = {
 };
 
 const useWsConnectionStatus = (requestId) => {
-  const [connectionStatus, setConnectionStatus] = useState(CONNECTION_STATUS.DISCONNECTED);
+  const [connectionStatus, setConnectionStatus] = useState(
+    CONNECTION_STATUS.DISCONNECTED
+  );
   useEffect(() => {
     const checkConnectionStatus = async () => {
       const result = await getWsConnectionStatus(requestId);
@@ -43,8 +53,12 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
   const saveShortcut = isMacOS() ? '⌘S' : 'Ctrl+S';
   const hasChanges = useMemo(() => hasRequestChanges(item), [item]);
 
-  const [connectionStatus, setConnectionStatus] = useWsConnectionStatus(item.uid);
-  const url = item.draft ? get(item, 'draft.request.url', '') : get(item, 'request.url', '');
+  const [connectionStatus, setConnectionStatus] = useWsConnectionStatus(
+    item.uid
+  );
+  const url = item.draft
+    ? get(item, 'draft.request.url', '')
+    : get(item, 'request.url', '');
 
   const allVariables = useMemo(() => {
     return getAllVariables(collection, item);
@@ -105,17 +119,20 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
   const handleUrlChange = (value) => {
     const finalUrl = value?.trim() ?? value;
     console.log('finalUrl: ', finalUrl);
-    dispatch(requestUrlChanged({
-      itemUid: item.uid,
-      collectionUid: collection.uid,
-      url: finalUrl
-    }));
+    dispatch(
+      requestUrlChanged({
+        itemUid: item.uid,
+        collectionUid: collection.uid,
+        url: finalUrl
+      })
+    );
   };
 
   // Detect interpolated URL changes and reconnect if connection is active
   useEffect(() => {
     if (connectionStatus !== 'connected') return;
-    if (previousDeboundedInterpolatedURL.current === debouncedInterpolatedURL) return;
+    if (previousDeboundedInterpolatedURL.current === debouncedInterpolatedURL)
+      return;
     if (debouncedInterpolatedURL === '') return;
     handleReconnect();
   }, [debouncedInterpolatedURL, connectionStatus]);
@@ -129,6 +146,7 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
           </div>
           <SingleLineEditor
             value={url}
+            historyKey={`${item.uid}:url`}
             onSave={(finalValue) => onSave(finalValue)}
             onChange={handleUrlChange}
             placeholder="ws://localhost:8080 or wss://example.com"
@@ -148,7 +166,9 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
               }}
             >
               <IconDeviceFloppy
-                color={hasChanges ? theme.draftColor : theme.requestTabs.icon.color}
+                color={
+                  hasChanges ? theme.draftColor : theme.requestTabs.icon.color
+                }
                 strokeWidth={1.5}
                 size={20}
                 className={`${hasChanges ? 'cursor-pointer' : 'cursor-default'}`}
@@ -160,7 +180,10 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
 
             {connectionStatus === 'connected' && (
               <div className="connection-controls relative flex items-center h-full">
-                <div className="infotip" onClick={(e) => handleDisconnect(e, true)}>
+                <div
+                  className="infotip"
+                  onClick={(e) => handleDisconnect(e, true)}
+                >
                   <IconPlugConnectedX
                     color={theme.colors.text.danger}
                     strokeWidth={1.5}
@@ -177,7 +200,8 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
                 <div className="infotip" onClick={handleConnect}>
                   <IconPlugConnected
                     className={classnames('cursor-pointer', {
-                      'animate-pulse': connectionStatus === CONNECTION_STATUS.CONNECTING
+                      'animate-pulse':
+                        connectionStatus === CONNECTION_STATUS.CONNECTING
                     })}
                     color={theme.colors.text.green}
                     strokeWidth={1.5}
@@ -188,14 +212,24 @@ const WsQueryUrl = ({ item, collection, handleRun }) => {
               </div>
             )}
 
-            <div data-testid="run-button" className="cursor-pointer" onClick={handleRunClick}>
-              <IconArrowRight color={theme.requestTabPanel.url.icon} strokeWidth={1.5} size={20} />
+            <div
+              data-testid="run-button"
+              className="cursor-pointer"
+              onClick={handleRunClick}
+            >
+              <IconArrowRight
+                color={theme.requestTabPanel.url.icon}
+                strokeWidth={1.5}
+                size={20}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {connectionStatus === CONNECTION_STATUS.CONNECTED && <div className="connection-status-strip"></div>}
+      {connectionStatus === CONNECTION_STATUS.CONNECTED && (
+        <div className="connection-status-strip"></div>
+      )}
     </StyledWrapper>
   );
 };

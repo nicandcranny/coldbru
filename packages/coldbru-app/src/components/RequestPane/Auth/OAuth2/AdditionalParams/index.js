@@ -9,18 +9,23 @@ import MultiLineEditor from 'components/MultiLineEditor/index';
 import StyledWrapper from './StyledWrapper';
 import Table from 'components/Table/index';
 
-const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSave }) => {
+const AdditionalParams = ({
+  item = {},
+  request,
+  updateAuth,
+  collection,
+  handleSave
+}) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
 
   const oAuth = get(request, 'auth.oauth2', {});
-  const {
-    grantType,
-    additionalParameters = {}
-  } = oAuth;
+  const { grantType, additionalParameters = {} } = oAuth;
 
   const [activeTab, setActiveTab] = useState(
-    (grantType == 'authorization_code' || grantType == 'implicit') ? 'authorization' : 'token'
+    grantType == 'authorization_code' || grantType == 'implicit'
+      ? 'authorization'
+      : 'token'
   );
 
   const isEmptyParam = (param) => {
@@ -37,14 +42,17 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
 
     Object.keys(filteredParams).forEach((paramType) => {
       if (filteredParams[paramType]?.length) {
-        filteredParams[paramType] = filteredParams[paramType].filter((param) =>
-          param.name.trim() || param.value.trim()
+        filteredParams[paramType] = filteredParams[paramType].filter(
+          (param) => param.name.trim() || param.value.trim()
         );
 
         if (filteredParams[paramType].length === 0) {
           delete filteredParams[paramType];
         }
-      } else if (Array.isArray(filteredParams[paramType]) && filteredParams[paramType].length === 0) {
+      } else if (
+        Array.isArray(filteredParams[paramType])
+        && filteredParams[paramType].length === 0
+      ) {
         // Remove empty arrays
         delete filteredParams[paramType];
       }
@@ -57,13 +65,19 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
         itemUid: item.uid,
         content: {
           ...oAuth,
-          additionalParameters: Object.keys(filteredParams).length > 0 ? filteredParams : undefined
+          additionalParameters:
+            Object.keys(filteredParams).length > 0 ? filteredParams : undefined
         }
       })
     );
   };
 
-  const handleUpdateAdditionalParam = ({ paramType, key, paramIndex, value }) => {
+  const handleUpdateAdditionalParam = ({
+    paramType,
+    key,
+    paramIndex,
+    value
+  }) => {
     const updatedAdditionalParameters = cloneDeep(additionalParameters);
 
     if (!updatedAdditionalParameters[paramType]) {
@@ -89,7 +103,9 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
     const updatedAdditionalParameters = cloneDeep(additionalParameters);
 
     if (updatedAdditionalParameters[paramType]?.length) {
-      updatedAdditionalParameters[paramType] = updatedAdditionalParameters[paramType].filter((_, index) => index !== paramIndex);
+      updatedAdditionalParameters[paramType] = updatedAdditionalParameters[
+        paramType
+      ].filter((_, index) => index !== paramIndex);
 
       // If the array is now empty, ensure we're not sending empty arrays
       if (updatedAdditionalParameters[paramType].length === 0) {
@@ -170,13 +186,12 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
         <div className="flex items-center px-2.5 py-1.5 oauth2-icon-container rounded-md">
           <IconAdjustmentsHorizontal size={14} className="oauth2-icon" />
         </div>
-        <span className="oauth2-section-label">
-          Additional Parameters
-        </span>
+        <span className="oauth2-section-label">Additional Parameters</span>
       </div>
 
       <div className="tabs flex w-full gap-2 my-2">
-        {availableTabs.includes('authorization') && renderTab('authorization', 'Authorization')}
+        {availableTabs.includes('authorization')
+          && renderTab('authorization', 'Authorization')}
         {availableTabs.includes('token') && renderTab('token', 'Token')}
         {availableTabs.includes('refresh') && renderTab('refresh', 'Refresh')}
       </div>
@@ -194,13 +209,15 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
               <td className="flex relative">
                 <SingleLineEditor
                   value={param?.name || ''}
+                  historyKey={`${item.uid}:auth:oauth2:additional:${activeTab}:${index}:name`}
                   theme={storedTheme}
-                  onChange={(value) => handleUpdateAdditionalParam({
-                    paramType: activeTab,
-                    key: 'name',
-                    paramIndex: index,
-                    value
-                  })}
+                  onChange={(value) =>
+                    handleUpdateAdditionalParam({
+                      paramType: activeTab,
+                      key: 'name',
+                      paramIndex: index,
+                      value
+                    })}
                   collection={collection}
                   onSave={handleSave}
                   isCompact
@@ -209,13 +226,15 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
               <td>
                 <MultiLineEditor
                   value={param?.value || ''}
+                  historyKey={`${item.uid}:auth:oauth2:additional:${activeTab}:${index}:value`}
                   theme={storedTheme}
-                  onChange={(value) => handleUpdateAdditionalParam({
-                    paramType: activeTab,
-                    key: 'value',
-                    paramIndex: index,
-                    value
-                  })}
+                  onChange={(value) =>
+                    handleUpdateAdditionalParam({
+                      paramType: activeTab,
+                      key: 'value',
+                      paramIndex: index,
+                      value
+                    })}
                   collection={collection}
                   onSave={handleSave}
                 />
@@ -234,7 +253,9 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
                     }}
                     className="mousetrap bg-transparent"
                   >
-                    {sendInOptionsMap[grantType || 'authorization_code'][activeTab].map((optionValue) => (
+                    {sendInOptionsMap[grantType || 'authorization_code'][
+                      activeTab
+                    ].map((optionValue) => (
                       <option key={optionValue} value={optionValue}>
                         {optionValue}
                       </option>
@@ -272,8 +293,7 @@ const AdditionalParams = ({ item = {}, request, updateAuth, collection, handleSa
                 </div>
               </td>
             </tr>
-          )
-          )}
+          ))}
         </tbody>
       </Table>
       <div

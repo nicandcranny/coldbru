@@ -7,7 +7,10 @@ import MultipartFormParams from 'components/RequestPane/MultipartFormParams';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTheme } from 'providers/Theme';
 import { updateRequestBody } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import { updateRequestBodyScrollPosition } from 'providers/ReduxStore/slices/tabs';
 import StyledWrapper from './StyledWrapper';
 import FileBody from '../FileBody/index';
@@ -16,8 +19,12 @@ import { toastError } from 'utils/common/error';
 
 const RequestBody = ({ item, collection }) => {
   const dispatch = useDispatch();
-  const body = item.draft ? get(item, 'draft.request.body') : get(item, 'request.body');
-  const bodyMode = item.draft ? get(item, 'draft.request.body.mode') : get(item, 'request.body.mode');
+  const body = item.draft
+    ? get(item, 'draft.request.body')
+    : get(item, 'request.body');
+  const bodyMode = item.draft
+    ? get(item, 'draft.request.body.mode')
+    : get(item, 'request.body.mode');
   const { displayedTheme } = useTheme();
   const preferences = useSelector((state) => state.app.preferences);
   const tabs = useSelector((state) => state.tabs.tabs);
@@ -80,6 +87,7 @@ const RequestBody = ({ item, collection }) => {
           font={get(preferences, 'font.codeFont', 'default')}
           fontSize={get(preferences, 'font.codeFontSize')}
           value={bodyContent[bodyMode] || ''}
+          historyKey={`${item.uid}:body:${bodyMode}`}
           onEdit={onEdit}
           onRun={onRun}
           onSave={onSave}

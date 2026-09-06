@@ -2,8 +2,14 @@ import React, { useCallback } from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
 import { useTheme } from 'providers/Theme';
-import { moveAssertion, setRequestAssertions } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  moveAssertion,
+  setRequestAssertions
+} from 'providers/ReduxStore/slices/collections';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import SingleLineEditor from 'components/SingleLineEditor';
 import AssertionOperator from './AssertionOperator';
 import EditableTable from 'components/EditableTable';
@@ -30,9 +36,23 @@ const parseAssertionOperator = (str = '') => {
   }
 
   const operators = [
-    'eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'notIn',
-    'contains', 'notContains', 'length', 'matches', 'notMatches',
-    'startsWith', 'endsWith', 'between', ...unaryOperators
+    'eq',
+    'neq',
+    'gt',
+    'gte',
+    'lt',
+    'lte',
+    'in',
+    'notIn',
+    'contains',
+    'notContains',
+    'length',
+    'matches',
+    'notMatches',
+    'startsWith',
+    'endsWith',
+    'between',
+    ...unaryOperators
   ];
 
   const [operator, ...rest] = str.split(' ');
@@ -54,26 +74,38 @@ const isUnaryOperator = (operator) => unaryOperators.includes(operator);
 const Assertions = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const assertions = item.draft ? get(item, 'draft.request.assertions') : get(item, 'request.assertions');
+  const assertions = item.draft
+    ? get(item, 'draft.request.assertions')
+    : get(item, 'request.assertions');
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleAssertionsChange = useCallback((updatedAssertions) => {
-    dispatch(setRequestAssertions({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      assertions: updatedAssertions
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleAssertionsChange = useCallback(
+    (updatedAssertions) => {
+      dispatch(
+        setRequestAssertions({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          assertions: updatedAssertions
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleAssertionDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveAssertion({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleAssertionDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveAssertion({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
   const columns = [
     {
@@ -94,8 +126,12 @@ const Assertions = ({ item, collection }) => {
 
         const handleOperatorChange = (newOperator) => {
           const currentAssertions = assertions || [];
-          const existingAssertion = currentAssertions.find((a) => a.uid === row.uid);
-          const newValue = isUnaryOperator(newOperator) ? newOperator : `${newOperator} ${assertionValue}`;
+          const existingAssertion = currentAssertions.find(
+            (a) => a.uid === row.uid
+          );
+          const newValue = isUnaryOperator(newOperator)
+            ? newOperator
+            : `${newOperator} ${assertionValue}`;
 
           if (existingAssertion) {
             const updatedAssertions = currentAssertions.map((assertion) => {
@@ -109,7 +145,10 @@ const Assertions = ({ item, collection }) => {
             });
             handleAssertionsChange(updatedAssertions);
           } else {
-            handleAssertionsChange([...currentAssertions, { ...row, value: newValue }]);
+            handleAssertionsChange([
+              ...currentAssertions,
+              { ...row, value: newValue }
+            ]);
           }
         };
 
@@ -125,8 +164,9 @@ const Assertions = ({ item, collection }) => {
       key: 'value',
       name: 'Value',
       width: '30%',
-      render: ({ row, value, onChange }) => {
-        const { operator, value: assertionValue } = parseAssertionOperator(value);
+      render: ({ row, value, onChange, historyKey }) => {
+        const { operator, value: assertionValue }
+          = parseAssertionOperator(value);
 
         if (isUnaryOperator(operator)) {
           return <input type="text" className="cursor-default" disabled />;
@@ -135,6 +175,7 @@ const Assertions = ({ item, collection }) => {
         return (
           <SingleLineEditor
             value={assertionValue}
+            historyKey={historyKey}
             theme={storedTheme}
             onSave={onSave}
             onChange={(newValue) => onChange(`${operator} ${newValue}`)}
@@ -164,6 +205,7 @@ const Assertions = ({ item, collection }) => {
         reorderable={true}
         onReorder={handleAssertionDrag}
         testId="assertions-table"
+        historyScope={`${item.uid}:assertions`}
       />
     </StyledWrapper>
   );

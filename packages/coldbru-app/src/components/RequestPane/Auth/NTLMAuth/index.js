@@ -6,7 +6,10 @@ import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
 import SingleLineEditor from 'components/SingleLineEditor';
 import { updateAuth } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 
 const NTLMAuth = ({ item, collection, request, save, updateAuth }) => {
@@ -74,6 +77,7 @@ const NTLMAuth = ({ item, collection, request, save, updateAuth }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={ntlmAuth.username || ''}
+          historyKey={`${item.uid}:auth:ntlm:username`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleUsernameChange(val)}
@@ -88,6 +92,7 @@ const NTLMAuth = ({ item, collection, request, save, updateAuth }) => {
       <div className="single-line-editor-wrapper mb-3 flex items-center">
         <SingleLineEditor
           value={ntlmAuth.password || ''}
+          historyKey={`${item.uid}:auth:ntlm:password`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handlePasswordChange(val)}
@@ -97,13 +102,19 @@ const NTLMAuth = ({ item, collection, request, save, updateAuth }) => {
           isSecret={true}
           isCompact
         />
-        {showWarning && <SensitiveFieldWarning fieldName="ntlm-password" warningMessage={warningMessage} />}
+        {showWarning && (
+          <SensitiveFieldWarning
+            fieldName="ntlm-password"
+            warningMessage={warningMessage}
+          />
+        )}
       </div>
 
       <label className="block mb-1">Domain</label>
       <div className="single-line-editor-wrapper">
         <SingleLineEditor
           value={ntlmAuth.domain || ''}
+          historyKey={`${item.uid}:auth:ntlm:domain`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleDomainChange(val)}

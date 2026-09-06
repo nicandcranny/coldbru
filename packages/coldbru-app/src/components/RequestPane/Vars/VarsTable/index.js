@@ -1,8 +1,14 @@
 import React, { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { useTheme } from 'providers/Theme';
-import { moveVar, setRequestVars } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  moveVar,
+  setRequestVars
+} from 'providers/ReduxStore/slices/collections';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import MultiLineEditor from 'components/MultiLineEditor';
 import InfoTip from 'components/InfoTip';
 import EditableTable from 'components/EditableTable';
@@ -17,23 +23,33 @@ const VarsTable = ({ item, collection, vars, varType }) => {
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleVarsChange = useCallback((updatedVars) => {
-    dispatch(setRequestVars({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      vars: updatedVars,
-      type: varType
-    }));
-  }, [dispatch, collection.uid, item.uid, varType]);
+  const handleVarsChange = useCallback(
+    (updatedVars) => {
+      dispatch(
+        setRequestVars({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          vars: updatedVars,
+          type: varType
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid, varType]
+  );
 
-  const handleVarDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveVar({
-      type: varType,
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, varType, collection.uid, item.uid]);
+  const handleVarDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveVar({
+          type: varType,
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, varType, collection.uid, item.uid]
+  );
 
   const getRowError = useCallback((row, index, key) => {
     if (key !== 'name') return null;
@@ -54,16 +70,23 @@ const VarsTable = ({ item, collection, vars, varType }) => {
     },
     {
       key: 'value',
-      name: varType === 'request' ? 'Value' : (
-        <div className="flex items-center">
-          <span>Expr</span>
-          <InfoTip content="You can write any valid JS expression here" infotipId={`request-${varType}-var`} />
-        </div>
-      ),
+      name:
+        varType === 'request' ? (
+          'Value'
+        ) : (
+          <div className="flex items-center">
+            <span>Expr</span>
+            <InfoTip
+              content="You can write any valid JS expression here"
+              infotipId={`request-${varType}-var`}
+            />
+          </div>
+        ),
       placeholder: varType === 'request' ? 'Value' : 'Expr',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <MultiLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
           onChange={onChange}
@@ -92,6 +115,7 @@ const VarsTable = ({ item, collection, vars, varType }) => {
         getRowError={getRowError}
         reorderable={true}
         onReorder={handleVarDrag}
+        historyScope={`${item.uid}:vars:${varType}`}
       />
     </StyledWrapper>
   );

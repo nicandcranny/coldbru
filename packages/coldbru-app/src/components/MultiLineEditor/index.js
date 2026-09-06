@@ -8,6 +8,11 @@ import StyledWrapper from './StyledWrapper';
 import { setupLinkAware } from 'utils/codemirror/linkAware';
 import { setupShortcuts } from 'utils/codemirror/shortcuts';
 import { IconEye, IconEyeOff } from '@tabler/icons';
+import {
+  MAX_UNDO_DEPTH,
+  restoreEditorHistory,
+  saveEditorHistory
+} from 'utils/codemirror/editorHistory';
 
 const CodeMirror = require('codemirror');
 
@@ -35,17 +40,23 @@ class MultiLineEditor extends Component {
     /** @type {import("codemirror").Editor} */
     const variables = getAllVariables(this.props.collection, this.props.item);
 
+    const initialValue = String(this.props.value ?? '');
     this.editor = CodeMirror(this.editorRef.current, {
+      value: initialValue,
+      undoDepth: MAX_UNDO_DEPTH,
       lineWrapping: false,
       lineNumbers: false,
       theme: this.props.theme === 'dark' ? 'monokai' : 'default',
       placeholder: this.props.placeholder,
       mode: 'brunovariables',
-      coldbruVarInfo: this.props.enableBrunoVarInfo !== false ? {
-        variables,
-        collection: this.props.collection,
-        item: this.props.item
-      } : false,
+      coldbruVarInfo:
+        this.props.enableBrunoVarInfo !== false
+          ? {
+              variables,
+              collection: this.props.collection,
+              item: this.props.item
+            }
+          : false,
       readOnly: this.props.readOnly,
       tabindex: 0,
       extraKeys: {
@@ -77,7 +88,8 @@ class MultiLineEditor extends Component {
       }
     });
 
-    const getAllVariablesHandler = () => getAllVariables(this.props.collection, this.props.item);
+    const getAllVariablesHandler = () =>
+      getAllVariables(this.props.collection, this.props.item);
     const getAnywordAutocompleteHints = () => this.props.autocomplete || [];
 
     // Setup AutoComplete Helper
@@ -97,7 +109,7 @@ class MultiLineEditor extends Component {
     // Setup keyboard shortcuts
     this._shortcutsCleanup = setupShortcuts(this.editor, this);
 
-    this.editor.setValue(String(this.props.value) || '');
+    restoreEditorHistory(this.props.historyKey, this.editor, initialValue);
     this.editor.on('change', this._onEdit);
     this.addOverlay(variables);
 
@@ -120,7 +132,8 @@ class MultiLineEditor extends Component {
     if (typeof enabled !== 'boolean') return;
 
     if (enabled == true) {
-      if (!this.maskedEditor) this.maskedEditor = new MaskedEditor(this.editor, '*');
+      if (!this.maskedEditor)
+        this.maskedEditor = new MaskedEditor(this.editor, '*');
       this.maskedEditor.enable();
     } else {
       if (this.maskedEditor) {
@@ -139,15 +152,26 @@ class MultiLineEditor extends Component {
 
     let variables = getAllVariables(this.props.collection, this.props.item);
     if (!isEqual(variables, this.variables)) {
-      if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
+      if (
+        this.props.enableBrunoVarInfo !== false
+        && this.editor.options.coldbruVarInfo
+      ) {
         this.editor.options.coldbruVarInfo.variables = variables;
       }
       this.addOverlay(variables);
     }
 
     // Update collection and item when they change
-    if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
-      if (!isEqual(this.props.collection, this.editor.options.coldbruVarInfo.collection)) {
+    if (
+      this.props.enableBrunoVarInfo !== false
+      && this.editor.options.coldbruVarInfo
+    ) {
+      if (
+        !isEqual(
+          this.props.collection,
+          this.editor.options.coldbruVarInfo.collection
+        )
+      ) {
         this.editor.options.coldbruVarInfo.collection = this.props.collection;
       }
       if (!isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)) {
@@ -155,12 +179,19 @@ class MultiLineEditor extends Component {
       }
     }
     if (this.props.theme !== prevProps.theme && this.editor) {
-      this.editor.setOption('theme', this.props.theme === 'dark' ? 'monokai' : 'default');
+      this.editor.setOption(
+        'theme',
+        this.props.theme === 'dark' ? 'monokai' : 'default'
+      );
     }
     if (this.props.readOnly !== prevProps.readOnly && this.editor) {
       this.editor.setOption('readOnly', this.props.readOnly);
     }
-    if (this.props.value !== prevProps.value && this.props.value !== this.cachedValue && this.editor) {
+    if (
+      this.props.value !== prevProps.value
+      && this.props.value !== this.cachedValue
+      && this.editor
+    ) {
       // TODO: temporary fix for keeping cursor state when auto save and new line insertion collide PR#7098
       const nextValue = String(this.props.value ?? '');
       const currentValue = this.editor.getValue();
@@ -195,6 +226,7 @@ class MultiLineEditor extends Component {
     if (this.brunoAutoCompleteCleanup) {
       this.brunoAutoCompleteCleanup();
     }
+    saveEditorHistory(this.props.historyKey, this.editor);
     if (this.editor?._destroyLinkAware) {
       this.editor._destroyLinkAware();
     }
@@ -239,7 +271,9 @@ class MultiLineEditor extends Component {
   render() {
     const wrapperClass = `multi-line-editor grow ${this.props.readOnly ? 'read-only' : ''}`;
     return (
-      <div className={`flex flex-row justify-between w-full overflow-x-auto ${this.props.className}`}>
+      <div
+        className={`flex flex-row justify-between w-full overflow-x-auto ${this.props.className}`}
+      >
         <StyledWrapper ref={this.editorRef} className={wrapperClass} />
         {this.secretEye(this.props.isSecret)}
       </div>

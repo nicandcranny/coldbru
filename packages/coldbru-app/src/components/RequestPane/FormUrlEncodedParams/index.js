@@ -7,33 +7,48 @@ import {
   setFormUrlEncodedParams
 } from 'providers/ReduxStore/slices/collections';
 import MultiLineEditor from 'components/MultiLineEditor';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
 
 const FormUrlEncodedParams = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const params = item.draft ? get(item, 'draft.request.body.formUrlEncoded') : get(item, 'request.body.formUrlEncoded');
+  const params = item.draft
+    ? get(item, 'draft.request.body.formUrlEncoded')
+    : get(item, 'request.body.formUrlEncoded');
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleParamsChange = useCallback((updatedParams) => {
-    dispatch(setFormUrlEncodedParams({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      params: updatedParams
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleParamsChange = useCallback(
+    (updatedParams) => {
+      dispatch(
+        setFormUrlEncodedParams({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          params: updatedParams
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleParamDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveFormUrlEncodedParam({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleParamDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveFormUrlEncodedParam({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
   const columns = [
     {
@@ -47,9 +62,10 @@ const FormUrlEncodedParams = ({ item, collection }) => {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <MultiLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
           onChange={onChange}
@@ -78,6 +94,7 @@ const FormUrlEncodedParams = ({ item, collection }) => {
         defaultRow={defaultRow}
         reorderable={true}
         onReorder={handleParamDrag}
+        historyScope={`${item.uid}:body:form-url-encoded`}
       />
     </StyledWrapper>
   );

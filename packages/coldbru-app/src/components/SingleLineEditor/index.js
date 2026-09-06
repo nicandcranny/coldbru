@@ -8,6 +8,11 @@ import StyledWrapper from './StyledWrapper';
 import { IconEye, IconEyeOff } from '@tabler/icons';
 import { setupLinkAware } from 'utils/codemirror/linkAware';
 import { setupShortcuts } from 'utils/codemirror/shortcuts';
+import {
+  MAX_UNDO_DEPTH,
+  restoreEditorHistory,
+  saveEditorHistory
+} from 'utils/codemirror/editorHistory';
 
 const CodeMirror = require('codemirror');
 
@@ -45,19 +50,25 @@ class SingleLineEditor extends Component {
         this.props.onSave();
       }
     };
-    const noopHandler = () => { };
+    const noopHandler = () => {};
 
+    const initialValue = String(this.props.value ?? '');
     this.editor = CodeMirror(this.editorRef.current, {
+      value: initialValue,
+      undoDepth: MAX_UNDO_DEPTH,
       placeholder: this.props.placeholder ?? '',
       lineWrapping: false,
       lineNumbers: false,
       theme: this.props.theme === 'dark' ? 'monokai' : 'default',
       mode: 'brunovariables',
-      coldbruVarInfo: this.props.enableBrunoVarInfo !== false ? {
-        variables,
-        collection: this.props.collection,
-        item: this.props.item
-      } : false,
+      coldbruVarInfo:
+        this.props.enableBrunoVarInfo !== false
+          ? {
+              variables,
+              collection: this.props.collection,
+              item: this.props.item
+            }
+          : false,
       scrollbarStyle: null,
       tabindex: 0,
       readOnly: this.props.readOnly,
@@ -84,7 +95,8 @@ class SingleLineEditor extends Component {
       }
     });
 
-    const getAllVariablesHandler = () => getAllVariables(this.props.collection, this.props.item);
+    const getAllVariablesHandler = () =>
+      getAllVariables(this.props.collection, this.props.item);
     const getAnywordAutocompleteHints = () => this.props.autocomplete || [];
 
     // Setup AutoComplete Helper
@@ -100,7 +112,7 @@ class SingleLineEditor extends Component {
       autoCompleteOptions
     );
 
-    this.editor.setValue(String(this.props.value ?? ''));
+    restoreEditorHistory(this.props.historyKey, this.editor, initialValue);
     this.editor.on('change', this._onEdit);
     this.editor.on('paste', this._onPaste);
     this.addOverlay(variables);
@@ -122,7 +134,8 @@ class SingleLineEditor extends Component {
     if (typeof enabled !== 'boolean') return;
 
     if (enabled == true) {
-      if (!this.maskedEditor) this.maskedEditor = new MaskedEditor(this.editor, '*');
+      if (!this.maskedEditor)
+        this.maskedEditor = new MaskedEditor(this.editor, '*');
       this.maskedEditor.enable();
     } else {
       if (this.maskedEditor) {
@@ -136,7 +149,7 @@ class SingleLineEditor extends Component {
   _onEdit = () => {
     if (!this.ignoreChangeEvent && this.editor) {
       this.cachedValue = this.editor.getValue();
-      if (this.props.onChange && (this.props.value !== this.cachedValue)) {
+      if (this.props.onChange && this.props.value !== this.cachedValue) {
         this.props.onChange(this.cachedValue);
       }
 
@@ -157,15 +170,26 @@ class SingleLineEditor extends Component {
 
     let variables = getAllVariables(this.props.collection, this.props.item);
     if (!isEqual(variables, this.variables)) {
-      if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
+      if (
+        this.props.enableBrunoVarInfo !== false
+        && this.editor.options.coldbruVarInfo
+      ) {
         this.editor.options.coldbruVarInfo.variables = variables;
       }
       this.addOverlay(variables);
     }
 
     // Update collection and item when they change
-    if (this.props.enableBrunoVarInfo !== false && this.editor.options.coldbruVarInfo) {
-      if (!isEqual(this.props.collection, this.editor.options.coldbruVarInfo.collection)) {
+    if (
+      this.props.enableBrunoVarInfo !== false
+      && this.editor.options.coldbruVarInfo
+    ) {
+      if (
+        !isEqual(
+          this.props.collection,
+          this.editor.options.coldbruVarInfo.collection
+        )
+      ) {
         this.editor.options.coldbruVarInfo.collection = this.props.collection;
       }
       if (!isEqual(this.props.item, this.editor.options.coldbruVarInfo.item)) {
@@ -173,13 +197,24 @@ class SingleLineEditor extends Component {
       }
     }
     if (this.props.theme !== prevProps.theme && this.editor) {
-      this.editor.setOption('theme', this.props.theme === 'dark' ? 'monokai' : 'default');
+      this.editor.setOption(
+        'theme',
+        this.props.theme === 'dark' ? 'monokai' : 'default'
+      );
     }
-    if (this.props.value !== prevProps.value && this.props.value !== this.cachedValue && this.editor) {
+    if (
+      this.props.value !== prevProps.value
+      && this.props.value !== this.cachedValue
+      && this.editor
+    ) {
       // TODO: temporary fix for keeping cursor state when auto save and new line insertion collide PR#7098
       const nextValue = String(this.props.value ?? '');
       const currentValue = this.editor.getValue();
-      if (this.editor.hasFocus?.() && currentValue !== nextValue && nextValue !== '') {
+      if (
+        this.editor.hasFocus?.()
+        && currentValue !== nextValue
+        && nextValue !== ''
+      ) {
         this.cachedValue = currentValue;
       } else {
         const cursor = this.editor.getCursor();
@@ -216,6 +251,7 @@ class SingleLineEditor extends Component {
     }
 
     if (this.editor) {
+      saveEditorHistory(this.props.historyKey, this.editor);
       if (this.editor?._destroyLinkAware) {
         this.editor._destroyLinkAware();
       }
@@ -236,7 +272,12 @@ class SingleLineEditor extends Component {
 
   addOverlay = (variables) => {
     this.variables = variables;
-    defineCodeMirrorBrunoVariablesMode(variables, 'text/plain', this.props.highlightPathParams, true);
+    defineCodeMirrorBrunoVariablesMode(
+      variables,
+      'text/plain',
+      this.props.highlightPathParams,
+      true
+    );
     this.editor.setOption('mode', 'brunovariables');
   };
 
@@ -309,7 +350,11 @@ class SingleLineEditor extends Component {
    */
   secretEye = (isSecret) => {
     return isSecret === true ? (
-      <button type="button" className="mx-2" onClick={() => this.toggleVisibleSecret()}>
+      <button
+        type="button"
+        className="mx-2"
+        onClick={() => this.toggleVisibleSecret()}
+      >
         {this.state.maskInput === true ? (
           <IconEyeOff size={18} strokeWidth={2} />
         ) : (
@@ -321,12 +366,16 @@ class SingleLineEditor extends Component {
 
   render() {
     return (
-      <div className={`flex flex-row items-center w-full overflow-x-auto ${this.props.className}`}>
+      <div
+        className={`flex flex-row items-center w-full overflow-x-auto ${this.props.className}`}
+      >
         <StyledWrapper
           ref={this.editorRef}
           className={`single-line-editor grow ${this.props.readOnly ? 'read-only' : ''}`}
           $isCompact={this.props.isCompact}
-          {...(this.props['data-testid'] ? { 'data-testid': this.props['data-testid'] } : {})}
+          {...(this.props['data-testid']
+            ? { 'data-testid': this.props['data-testid'] }
+            : {})}
         />
         <div className="flex items-center">
           {this.secretEye(this.props.isSecret)}

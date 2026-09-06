@@ -3,8 +3,15 @@ import { get, cloneDeep, isArray } from 'lodash';
 import { IconTrash } from '@tabler/icons';
 import { useDispatch } from 'react-redux';
 import { useTheme } from 'providers/Theme';
-import { addFile as _addFile, updateFile, deleteFile } from 'providers/ReduxStore/slices/collections/index';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  addFile as _addFile,
+  updateFile,
+  deleteFile
+} from 'providers/ReduxStore/slices/collections/index';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import FilePickerEditor from 'components/FilePickerEditor/index';
 import SingleLineEditor from 'components/SingleLineEditor/index';
@@ -12,9 +19,13 @@ import SingleLineEditor from 'components/SingleLineEditor/index';
 const FileBody = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const params = item.draft ? get(item, 'draft.request.body.file') : get(item, 'request.body.file');
+  const params = item.draft
+    ? get(item, 'draft.request.body.file')
+    : get(item, 'request.body.file');
 
-  const [enabledFileUid, setEnableFileUid] = useState(params && params.length ? params[0].uid : '');
+  const [enabledFileUid, setEnableFileUid] = useState(
+    params && params.length ? params[0].uid : ''
+  );
 
   const addFile = () => {
     dispatch(
@@ -74,7 +85,9 @@ const FileBody = ({ item, collection }) => {
               <div className="flex items-center justify-center">File</div>
             </td>
             <td>
-              <div className="flex items-center justify-center">Content-Type</div>
+              <div className="flex items-center justify-center">
+                Content-Type
+              </div>
             </td>
             <td>
               <div className="flex items-center justify-center">Selected</div>
@@ -112,6 +125,7 @@ const FileBody = ({ item, collection }) => {
                         theme={storedTheme}
                         placeholder="Auto"
                         value={param.contentType}
+                        historyKey={`${item.uid}:body:file:${param.uid}:content-type`}
                         onChange={(newValue) =>
                           handleParamChange(
                             {
@@ -132,16 +146,22 @@ const FileBody = ({ item, collection }) => {
                           key={param.uid}
                           type="radio"
                           name="selected"
-                          checked={enabledFileUid === param.uid || param.selected}
+                          checked={
+                            enabledFileUid === param.uid || param.selected
+                          }
                           tabIndex="-1"
                           className="mr-1 mousetrap"
-                          onChange={(e) => handleParamChange(e, param, 'selected')}
+                          onChange={(e) =>
+                            handleParamChange(e, param, 'selected')}
                         />
                       </div>
                     </td>
                     <td>
                       <div className="flex items-center justify-center">
-                        <button tabIndex="-1" onClick={() => handleRemoveParams(param)}>
+                        <button
+                          tabIndex="-1"
+                          onClick={() => handleRemoveParams(param)}
+                        >
                           <IconTrash strokeWidth={1.5} size={20} />
                         </button>
                       </div>
@@ -153,7 +173,10 @@ const FileBody = ({ item, collection }) => {
         </tbody>
       </table>
       <div>
-        <button className="btn-add-param text-link pr-2 pt-3 select-none" onClick={addFile}>
+        <button
+          className="btn-add-param text-link pr-2 pt-3 select-none"
+          onClick={addFile}
+        >
           + Add File
         </button>
       </div>

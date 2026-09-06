@@ -6,7 +6,10 @@ import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
 import SingleLineEditor from 'components/SingleLineEditor';
 import { updateAuth } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 
 const BasicAuth = ({ item, collection, updateAuth, request, save }) => {
@@ -57,6 +60,7 @@ const BasicAuth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={basicAuth.username || ''}
+          historyKey={`${item.uid}:auth:basic:username`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleUsernameChange(val)}
@@ -71,6 +75,7 @@ const BasicAuth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper flex items-center">
         <SingleLineEditor
           value={basicAuth.password || ''}
+          historyKey={`${item.uid}:auth:basic:password`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handlePasswordChange(val)}
@@ -80,7 +85,12 @@ const BasicAuth = ({ item, collection, updateAuth, request, save }) => {
           isSecret={true}
           isCompact
         />
-        {showWarning && <SensitiveFieldWarning fieldName="basic-password" warningMessage={warningMessage} />}
+        {showWarning && (
+          <SensitiveFieldWarning
+            fieldName="basic-password"
+            warningMessage={warningMessage}
+          />
+        )}
       </div>
     </StyledWrapper>
   );

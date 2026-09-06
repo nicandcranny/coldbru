@@ -89,6 +89,8 @@ Listener middleware. Keeps the request tab view mode in sync with the active tab
 
 Triggers on `addTab`, `focusTab`, `navigateBack`, and `navigateForward`. If the view is `home` and a workspace tab is focused, switches to `all`. If the view is `collection` and the focused tab belongs to a different collection, switches to that collection. History navigation reads the active tab after the tabs reducer runs so browser-style back/forward navigation can cross collection and workspace-home views. Global-environment settings preserve the current request-tab filter because they can be opened from any view.
 
+It also listens for `closeTabs` and clears bounded, in-memory CodeMirror undo histories for closed request UIDs. This prevents editors unmounting after tab closure from retaining session history; ordinary request-tab and request-subtab switches preserve history.
+
 ### Draft Detect
 
 Manual middleware. Runs before the reducer.

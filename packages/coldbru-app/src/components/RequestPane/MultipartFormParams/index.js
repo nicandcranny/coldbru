@@ -10,7 +10,10 @@ import {
 import { browseFiles } from 'providers/ReduxStore/slices/collections/actions';
 import MultiLineEditor from 'components/MultiLineEditor';
 import SingleLineEditor from 'components/SingleLineEditor';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
 import path from 'utils/common/path';
@@ -19,80 +22,101 @@ import { isWindowsOS } from 'utils/common/platform';
 const MultipartFormParams = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const params = item.draft ? get(item, 'draft.request.body.multipartForm') : get(item, 'request.body.multipartForm');
+  const params = item.draft
+    ? get(item, 'draft.request.body.multipartForm')
+    : get(item, 'request.body.multipartForm');
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleParamsChange = useCallback((updatedParams) => {
-    dispatch(setMultipartFormParams({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      params: updatedParams
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleParamsChange = useCallback(
+    (updatedParams) => {
+      dispatch(
+        setMultipartFormParams({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          params: updatedParams
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleParamDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveMultipartFormParam({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleParamDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveMultipartFormParam({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleBrowseFiles = useCallback((row, onChange) => {
-    dispatch(browseFiles())
-      .then((filePaths) => {
-        const processedPaths = filePaths.map((filePath) => {
-          const collectionDir = collection.pathname;
-          if (filePath.startsWith(collectionDir)) {
-            return path.relative(collectionDir, filePath);
-          }
-          return filePath;
+  const handleBrowseFiles = useCallback(
+    (row, onChange) => {
+      dispatch(browseFiles())
+        .then((filePaths) => {
+          const processedPaths = filePaths.map((filePath) => {
+            const collectionDir = collection.pathname;
+            if (filePath.startsWith(collectionDir)) {
+              return path.relative(collectionDir, filePath);
+            }
+            return filePath;
+          });
+
+          const currentParams = item.draft
+            ? get(item, 'draft.request.body.multipartForm')
+            : get(item, 'request.body.multipartForm');
+          const updatedParams = (currentParams || []).map((p) => {
+            if (p.uid === row.uid) {
+              return { ...p, type: 'file', value: processedPaths };
+            }
+            return p;
+          });
+          handleParamsChange(updatedParams);
+        })
+        .catch((error) => {
+          console.error(error);
         });
+    },
+    [dispatch, collection.pathname, item, handleParamsChange]
+  );
 
-        const currentParams = item.draft
-          ? get(item, 'draft.request.body.multipartForm')
-          : get(item, 'request.body.multipartForm');
-        const updatedParams = (currentParams || []).map((p) => {
-          if (p.uid === row.uid) {
-            return { ...p, type: 'file', value: processedPaths };
-          }
-          return p;
-        });
-        handleParamsChange(updatedParams);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
-  }, [dispatch, collection.pathname, item, handleParamsChange]);
-
-  const handleClearFile = useCallback((row) => {
-    const currentParams = params || [];
-    const updatedParams = currentParams.map((p) => {
-      if (p.uid === row.uid) {
-        return { ...p, type: 'text', value: '' };
-      }
-      return p;
-    });
-    handleParamsChange(updatedParams);
-  }, [params, handleParamsChange]);
-
-  const handleValueChange = useCallback((row, newValue, onChange) => {
-    const currentParams = params || [];
-    const existingParam = currentParams.find((p) => p.uid === row.uid);
-    if (existingParam) {
+  const handleClearFile = useCallback(
+    (row) => {
+      const currentParams = params || [];
       const updatedParams = currentParams.map((p) => {
         if (p.uid === row.uid) {
-          return { ...p, type: 'text', value: newValue };
+          return { ...p, type: 'text', value: '' };
         }
         return p;
       });
       handleParamsChange(updatedParams);
-    } else {
-      onChange(newValue);
-    }
-  }, [params, handleParamsChange]);
+    },
+    [params, handleParamsChange]
+  );
+
+  const handleValueChange = useCallback(
+    (row, newValue, onChange) => {
+      const currentParams = params || [];
+      const existingParam = currentParams.find((p) => p.uid === row.uid);
+      if (existingParam) {
+        const updatedParams = currentParams.map((p) => {
+          if (p.uid === row.uid) {
+            return { ...p, type: 'text', value: newValue };
+          }
+          return p;
+        });
+        handleParamsChange(updatedParams);
+      } else {
+        onChange(newValue);
+      }
+    },
+    [params, handleParamsChange]
+  );
 
   const getFileName = (filePaths) => {
     if (!filePaths || (Array.isArray(filePaths) && filePaths.length === 0)) {
@@ -122,7 +146,7 @@ const MultipartFormParams = ({ item, collection }) => {
       name: 'Value',
       placeholder: 'Value',
       width: '35%',
-      render: ({ row, value, onChange, isLastEmptyRow }) => {
+      render: ({ row, value, onChange, isLastEmptyRow, historyKey }) => {
         const isFile = row.type === 'file';
         const fileName = isFile ? getFileName(value) : null;
         const hasTextValue = !isFile && value && value.length > 0;
@@ -131,7 +155,10 @@ const MultipartFormParams = ({ item, collection }) => {
           return (
             <div className="flex items-center file-value-cell">
               <IconFile size={16} className="text-muted mr-1" />
-              <span className="file-name flex-1 truncate" title={Array.isArray(value) ? value.join(', ') : value}>
+              <span
+                className="file-name flex-1 truncate"
+                title={Array.isArray(value) ? value.join(', ') : value}
+              >
                 {fileName}
               </span>
               <button
@@ -152,7 +179,9 @@ const MultipartFormParams = ({ item, collection }) => {
                 onSave={onSave}
                 theme={storedTheme}
                 value={value || ''}
-                onChange={(newValue) => handleValueChange(row, newValue, onChange)}
+                historyKey={historyKey}
+                onChange={(newValue) =>
+                  handleValueChange(row, newValue, onChange)}
                 onRun={handleRun}
                 allowNewlines={true}
                 collection={collection}
@@ -178,8 +207,9 @@ const MultipartFormParams = ({ item, collection }) => {
       name: 'Content-Type',
       placeholder: 'Auto',
       width: '20%',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <SingleLineEditor
+          historyKey={historyKey}
           onSave={onSave}
           theme={storedTheme}
           placeholder={!value ? 'Auto' : ''}
@@ -208,6 +238,7 @@ const MultipartFormParams = ({ item, collection }) => {
         defaultRow={defaultRow}
         reorderable={true}
         onReorder={handleParamDrag}
+        historyScope={`${item.uid}:body:multipart`}
       />
     </StyledWrapper>
   );

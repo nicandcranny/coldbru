@@ -6,7 +6,10 @@ import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
 import SingleLineEditor from 'components/SingleLineEditor';
 import { updateAuth } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 
 const BearerAuth = ({ item, collection, updateAuth, request, save }) => {
@@ -43,6 +46,7 @@ const BearerAuth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper flex items-center">
         <SingleLineEditor
           value={bearerToken}
+          historyKey={`${item.uid}:auth:bearer:token`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleTokenChange(val)}
@@ -52,7 +56,12 @@ const BearerAuth = ({ item, collection, updateAuth, request, save }) => {
           isSecret={true}
           isCompact
         />
-        {showWarning && <SensitiveFieldWarning fieldName="bearer-token" warningMessage={warningMessage} />}
+        {showWarning && (
+          <SensitiveFieldWarning
+            fieldName="bearer-token"
+            warningMessage={warningMessage}
+          />
+        )}
       </div>
     </StyledWrapper>
   );

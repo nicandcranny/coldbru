@@ -2,6 +2,7 @@ import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { setRequestTabView } from 'providers/ReduxStore/slices/requestTabView';
 import {
   addTab,
+  closeTabs,
   focusTab,
   navigateBack,
   navigateForward
@@ -10,6 +11,7 @@ import {
   getWorkspaceCollectionUids,
   selectActiveWorkspace
 } from '../../../../selectors/requestTabView';
+import { clearEditorHistory } from 'utils/codemirror/editorHistory';
 
 const requestTabViewMiddleware = createListenerMiddleware();
 
@@ -100,6 +102,13 @@ requestTabViewMiddleware.startListening({
       listenerApi,
       listenerApi.getState().tabs.activeTabUid
     );
+  }
+});
+
+requestTabViewMiddleware.startListening({
+  actionCreator: closeTabs,
+  effect: (action) => {
+    action.payload?.tabUids?.forEach(clearEditorHistory);
   }
 });
 

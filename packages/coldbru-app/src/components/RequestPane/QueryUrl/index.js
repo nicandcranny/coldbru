@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback
+} from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
 import {
@@ -12,11 +18,19 @@ import {
   updateRequestAuthMode,
   updateAuth
 } from 'providers/ReduxStore/slices/collections';
-import { saveRequest, cancelRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  saveRequest,
+  cancelRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import { getRequestFromCurlCommand } from 'utils/curl';
 import HttpMethodSelector from './HttpMethodSelector';
 import { useTheme } from 'providers/Theme';
-import { IconDeviceFloppy, IconArrowRight, IconCode, IconSquareRoundedX } from '@tabler/icons';
+import {
+  IconDeviceFloppy,
+  IconArrowRight,
+  IconCode,
+  IconSquareRoundedX
+} from '@tabler/icons';
 import SingleLineEditor from 'components/SingleLineEditor';
 import { isMacOS } from 'utils/common/platform';
 import { hasRequestChanges } from 'utils/collections';
@@ -27,14 +41,19 @@ import toast from 'react-hot-toast';
 const QueryUrl = ({ item, collection, handleRun }) => {
   const { theme, storedTheme } = useTheme();
   const dispatch = useDispatch();
-  const method = item.draft ? get(item, 'draft.request.method') : get(item, 'request.method');
-  const url = item.draft ? get(item, 'draft.request.url', '') : get(item, 'request.url', '');
+  const method = item.draft
+    ? get(item, 'draft.request.method')
+    : get(item, 'request.method');
+  const url = item.draft
+    ? get(item, 'draft.request.url', '')
+    : get(item, 'request.url', '');
   const isMac = isMacOS();
   const saveShortcut = isMac ? 'Cmd + S' : 'Ctrl + S';
   const editorRef = useRef(null);
   const isLoading = ['queued', 'sending'].includes(item.requestState);
 
-  const [generateCodeItemModalOpen, setGenerateCodeItemModalOpen] = useState(false);
+  const [generateCodeItemModalOpen, setGenerateCodeItemModalOpen]
+    = useState(false);
   const hasChanges = useMemo(() => hasRequestChanges(item), [item]);
 
   const onSave = () => {
@@ -78,124 +97,51 @@ const QueryUrl = ({ item, collection, handleRun }) => {
 
   const handleGenerateCode = (e) => {
     e.stopPropagation();
-    if (item?.request?.url !== '' || (item.draft?.request?.url !== undefined && item.draft?.request?.url !== '')) {
+    if (
+      item?.request?.url !== ''
+      || (item.draft?.request?.url !== undefined
+        && item.draft?.request?.url !== '')
+    ) {
       setGenerateCodeItemModalOpen(true);
     } else {
       toast.error('URL is required');
     }
   };
 
-  const handleGraphqlPaste = useCallback((event) => {
-    if (item.type !== 'graphql-request') {
-      return;
-    }
-
-    const clipboardData = event.clipboardData || window.clipboardData;
-    const pastedData = clipboardData.getData('Text');
-
-    const curlCommandRegex = /^\s*curl\s/i;
-    if (!curlCommandRegex.test(pastedData)) {
-      // Not a curl command, allow normal paste behavior
-      return;
-    }
-    event.preventDefault();
-    try {
-      const request = getRequestFromCurlCommand(pastedData, 'graphql-request');
-      if (!request || !request.url) {
-        toast.error('Invalid cURL command');
+  const handleGraphqlPaste = useCallback(
+    (event) => {
+      if (item.type !== 'graphql-request') {
         return;
       }
-      // Update URL
-      dispatch(requestUrlChanged({
-        itemUid: item.uid,
-        collectionUid: collection.uid,
-        url: request.url
-      }));
 
-      // Update method
-      dispatch(updateRequestMethod({
-        method: request.method.toUpperCase(), // Convert to uppercase
-        itemUid: item.uid,
-        collectionUid: collection.uid
-      }));
+      const clipboardData = event.clipboardData || window.clipboardData;
+      const pastedData = clipboardData.getData('Text');
 
-      // Update headers
-      if (request.headers && request.headers.length > 0) {
-        dispatch(setRequestHeaders({
-          collectionUid: collection.uid,
-          itemUid: item.uid,
-          headers: request.headers
-        }));
+      const curlCommandRegex = /^\s*curl\s/i;
+      if (!curlCommandRegex.test(pastedData)) {
+        // Not a curl command, allow normal paste behavior
+        return;
       }
-
-      // Update body
-      if (request.body) {
-        const bodyMode = request.body.mode;
-        if (bodyMode === 'graphql') {
-          dispatch(updateRequestGraphqlQuery({
-            itemUid: item.uid,
-            collectionUid: collection.uid,
-            query: request.body.graphql.query
-          }));
-          let variables = request.body.graphql.variables;
-          try {
-            variables = JSON.parse(variables);
-          } catch (error) {
-            // Keep variables as-is if JSON parsing fails
-          }
-          dispatch(updateRequestGraphqlVariables({
-            itemUid: item.uid,
-            collectionUid: collection.uid,
-            variables: variables
-          }));
+      event.preventDefault();
+      try {
+        const request = getRequestFromCurlCommand(
+          pastedData,
+          'graphql-request'
+        );
+        if (!request || !request.url) {
+          toast.error('Invalid cURL command');
+          return;
         }
+        // Update URL
+        dispatch(
+          requestUrlChanged({
+            itemUid: item.uid,
+            collectionUid: collection.uid,
+            url: request.url
+          })
+        );
 
-        toast.success('GraphQL query imported successfully');
-      }
-    } catch (error) {
-      console.error('Error parsing cURL command:', error);
-      toast.error('Failed to parse GraphQL query');
-    }
-  }, [dispatch, item.uid, collection.uid]);
-
-  const handleHttpPaste = useCallback((event) => {
-    // Only enable curl paste detection for HTTP requests
-    if (item.type !== 'http-request') {
-      return;
-    }
-
-    const clipboardData = event.clipboardData || window.clipboardData;
-    const pastedData = clipboardData.getData('Text');
-
-    // Check if pasted data looks like a cURL command
-    const curlCommandRegex = /^\s*curl\s/i;
-    if (!curlCommandRegex.test(pastedData)) {
-      // Not a curl command, allow normal paste behavior
-      return;
-    }
-
-    // Prevent the default paste behavior
-    event.preventDefault();
-
-    try {
-      // Parse the curl command
-      const request = getRequestFromCurlCommand(pastedData);
-      if (!request || !request.url) {
-        toast.error('Invalid cURL command');
-        return;
-      }
-
-      // Update URL
-      dispatch(
-        requestUrlChanged({
-          itemUid: item.uid,
-          collectionUid: collection.uid,
-          url: request.url
-        })
-      );
-
-      // Update method
-      if (request.method) {
+        // Update method
         dispatch(
           updateRequestMethod({
             method: request.method.toUpperCase(), // Convert to uppercase
@@ -203,59 +149,22 @@ const QueryUrl = ({ item, collection, handleRun }) => {
             collectionUid: collection.uid
           })
         );
-      }
 
-      // Update headers
-      if (request.headers && request.headers.length > 0) {
-        dispatch(
-          setRequestHeaders({
-            collectionUid: collection.uid,
-            itemUid: item.uid,
-            headers: request.headers
-          })
-        );
-      }
-
-      // Update body
-      if (request.body) {
-        const bodyMode = request.body.mode;
-
-        // Set body mode first
-        dispatch(
-          updateRequestBodyMode({
-            itemUid: item.uid,
-            collectionUid: collection.uid,
-            mode: bodyMode
-          })
-        );
-
-        // Set body content based on mode
-        if (bodyMode === 'json' && request.body.json) {
+        // Update headers
+        if (request.headers && request.headers.length > 0) {
           dispatch(
-            updateRequestBody({
-              itemUid: item.uid,
+            setRequestHeaders({
               collectionUid: collection.uid,
-              content: request.body.json
+              itemUid: item.uid,
+              headers: request.headers
             })
           );
-        } else if (bodyMode === 'text' && request.body.text) {
-          dispatch(
-            updateRequestBody({
-              itemUid: item.uid,
-              collectionUid: collection.uid,
-              content: request.body.text
-            })
-          );
-        } else if (bodyMode === 'xml' && request.body.xml) {
-          dispatch(
-            updateRequestBody({
-              itemUid: item.uid,
-              collectionUid: collection.uid,
-              content: request.body.xml
-            })
-          );
-        } else if (bodyMode === 'graphql' && request.body.graphql) {
-          if (request.body.graphql.query) {
+        }
+
+        // Update body
+        if (request.body) {
+          const bodyMode = request.body.mode;
+          if (bodyMode === 'graphql') {
             dispatch(
               updateRequestGraphqlQuery({
                 itemUid: item.uid,
@@ -263,105 +172,242 @@ const QueryUrl = ({ item, collection, handleRun }) => {
                 query: request.body.graphql.query
               })
             );
-          }
-          if (request.body.graphql.variables) {
+            let variables = request.body.graphql.variables;
+            try {
+              variables = JSON.parse(variables);
+            } catch (error) {
+              // Keep variables as-is if JSON parsing fails
+            }
             dispatch(
               updateRequestGraphqlVariables({
                 itemUid: item.uid,
                 collectionUid: collection.uid,
-                variables: request.body.graphql.variables
+                variables: variables
               })
             );
           }
-        } else if (bodyMode === 'formUrlEncoded' && request.body.formUrlEncoded) {
-          // For formUrlEncoded, we need to set each param individually
-          // This is a limitation - we'd need to clear existing params first
-          // For now, we'll set the body mode and the user can manually adjust
-          // TODO: Implement proper formUrlEncoded param setting
-        } else if (bodyMode === 'multipartForm' && request.body.multipartForm) {
-          // For multipartForm, similar limitation
-          // TODO: Implement proper multipartForm param setting
+
+          toast.success('GraphQL query imported successfully');
         }
+      } catch (error) {
+        console.error('Error parsing cURL command:', error);
+        toast.error('Failed to parse GraphQL query');
+      }
+    },
+    [dispatch, item.uid, collection.uid]
+  );
+
+  const handleHttpPaste = useCallback(
+    (event) => {
+      // Only enable curl paste detection for HTTP requests
+      if (item.type !== 'http-request') {
+        return;
       }
 
-      // Update auth
-      if (request.auth) {
-        const authMode = request.auth.mode;
-        if (authMode) {
+      const clipboardData = event.clipboardData || window.clipboardData;
+      const pastedData = clipboardData.getData('Text');
+
+      // Check if pasted data looks like a cURL command
+      const curlCommandRegex = /^\s*curl\s/i;
+      if (!curlCommandRegex.test(pastedData)) {
+        // Not a curl command, allow normal paste behavior
+        return;
+      }
+
+      // Prevent the default paste behavior
+      event.preventDefault();
+
+      try {
+        // Parse the curl command
+        const request = getRequestFromCurlCommand(pastedData);
+        if (!request || !request.url) {
+          toast.error('Invalid cURL command');
+          return;
+        }
+
+        // Update URL
+        dispatch(
+          requestUrlChanged({
+            itemUid: item.uid,
+            collectionUid: collection.uid,
+            url: request.url
+          })
+        );
+
+        // Update method
+        if (request.method) {
           dispatch(
-            updateRequestAuthMode({
+            updateRequestMethod({
+              method: request.method.toUpperCase(), // Convert to uppercase
+              itemUid: item.uid,
+              collectionUid: collection.uid
+            })
+          );
+        }
+
+        // Update headers
+        if (request.headers && request.headers.length > 0) {
+          dispatch(
+            setRequestHeaders({
+              collectionUid: collection.uid,
+              itemUid: item.uid,
+              headers: request.headers
+            })
+          );
+        }
+
+        // Update body
+        if (request.body) {
+          const bodyMode = request.body.mode;
+
+          // Set body mode first
+          dispatch(
+            updateRequestBodyMode({
               itemUid: item.uid,
               collectionUid: collection.uid,
-              mode: authMode
+              mode: bodyMode
             })
           );
 
-          // Set auth content based on mode
-          if (request.auth.basic) {
+          // Set body content based on mode
+          if (bodyMode === 'json' && request.body.json) {
             dispatch(
-              updateAuth({
-                mode: 'basic',
-                collectionUid: collection.uid,
+              updateRequestBody({
                 itemUid: item.uid,
-                content: request.auth.basic
+                collectionUid: collection.uid,
+                content: request.body.json
               })
             );
-          } else if (request.auth.bearer) {
+          } else if (bodyMode === 'text' && request.body.text) {
             dispatch(
-              updateAuth({
-                mode: 'bearer',
-                collectionUid: collection.uid,
+              updateRequestBody({
                 itemUid: item.uid,
-                content: request.auth.bearer
+                collectionUid: collection.uid,
+                content: request.body.text
               })
             );
-          } else if (request.auth.digest) {
+          } else if (bodyMode === 'xml' && request.body.xml) {
             dispatch(
-              updateAuth({
-                mode: 'digest',
-                collectionUid: collection.uid,
+              updateRequestBody({
                 itemUid: item.uid,
-                content: request.auth.digest
+                collectionUid: collection.uid,
+                content: request.body.xml
               })
             );
-          } else if (request.auth.ntlm) {
-            dispatch(
-              updateAuth({
-                mode: 'ntlm',
-                collectionUid: collection.uid,
-                itemUid: item.uid,
-                content: request.auth.ntlm
-              })
-            );
-          } else if (request.auth.awsv4) {
-            dispatch(
-              updateAuth({
-                mode: 'awsv4',
-                collectionUid: collection.uid,
-                itemUid: item.uid,
-                content: request.auth.awsv4
-              })
-            );
-          } else if (request.auth.apikey) {
-            dispatch(
-              updateAuth({
-                mode: 'apikey',
-                collectionUid: collection.uid,
-                itemUid: item.uid,
-                content: request.auth.apikey
-              })
-            );
+          } else if (bodyMode === 'graphql' && request.body.graphql) {
+            if (request.body.graphql.query) {
+              dispatch(
+                updateRequestGraphqlQuery({
+                  itemUid: item.uid,
+                  collectionUid: collection.uid,
+                  query: request.body.graphql.query
+                })
+              );
+            }
+            if (request.body.graphql.variables) {
+              dispatch(
+                updateRequestGraphqlVariables({
+                  itemUid: item.uid,
+                  collectionUid: collection.uid,
+                  variables: request.body.graphql.variables
+                })
+              );
+            }
+          } else if (
+            bodyMode === 'formUrlEncoded'
+            && request.body.formUrlEncoded
+          ) {
+            // For formUrlEncoded, we need to set each param individually
+            // This is a limitation - we'd need to clear existing params first
+            // For now, we'll set the body mode and the user can manually adjust
+            // TODO: Implement proper formUrlEncoded param setting
+          } else if (
+            bodyMode === 'multipartForm'
+            && request.body.multipartForm
+          ) {
+            // For multipartForm, similar limitation
+            // TODO: Implement proper multipartForm param setting
           }
         }
-      }
 
-      toast.success('cURL command imported successfully');
-    } catch (error) {
-      console.error('Error parsing cURL command:', error);
-      toast.error('Failed to parse cURL command');
-    }
-  },
-  [dispatch, item.uid, item.type, collection.uid]
+        // Update auth
+        if (request.auth) {
+          const authMode = request.auth.mode;
+          if (authMode) {
+            dispatch(
+              updateRequestAuthMode({
+                itemUid: item.uid,
+                collectionUid: collection.uid,
+                mode: authMode
+              })
+            );
+
+            // Set auth content based on mode
+            if (request.auth.basic) {
+              dispatch(
+                updateAuth({
+                  mode: 'basic',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.basic
+                })
+              );
+            } else if (request.auth.bearer) {
+              dispatch(
+                updateAuth({
+                  mode: 'bearer',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.bearer
+                })
+              );
+            } else if (request.auth.digest) {
+              dispatch(
+                updateAuth({
+                  mode: 'digest',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.digest
+                })
+              );
+            } else if (request.auth.ntlm) {
+              dispatch(
+                updateAuth({
+                  mode: 'ntlm',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.ntlm
+                })
+              );
+            } else if (request.auth.awsv4) {
+              dispatch(
+                updateAuth({
+                  mode: 'awsv4',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.awsv4
+                })
+              );
+            } else if (request.auth.apikey) {
+              dispatch(
+                updateAuth({
+                  mode: 'apikey',
+                  collectionUid: collection.uid,
+                  itemUid: item.uid,
+                  content: request.auth.apikey
+                })
+              );
+            }
+          }
+        }
+
+        toast.success('cURL command imported successfully');
+      } catch (error) {
+        console.error('Error parsing cURL command:', error);
+        toast.error('Failed to parse cURL command');
+      }
+    },
+    [dispatch, item.uid, item.type, collection.uid]
   );
   const handleCancelRequest = (e) => {
     e.preventDefault();
@@ -380,20 +426,30 @@ const QueryUrl = ({ item, collection, handleRun }) => {
         <SingleLineEditor
           ref={editorRef}
           value={url}
+          historyKey={`${item.uid}:url`}
           placeholder="Enter URL or paste a cURL request"
           onSave={(finalValue) => onSave(finalValue)}
           theme={storedTheme}
           onChange={(newValue) => onUrlChange(newValue)}
           onRun={handleRun}
-          onPaste={item.type === 'http-request' ? handleHttpPaste : item.type === 'graphql-request' ? handleGraphqlPaste : null}
+          onPaste={
+            item.type === 'http-request'
+              ? handleHttpPaste
+              : item.type === 'graphql-request'
+                ? handleGraphqlPaste
+                : null
+          }
           collection={collection}
           highlightPathParams={true}
           item={item}
           showNewlineArrow={true}
         />
-
       </div>
-      <div className="flex items-center h-full mx-2 gap-3 cursor-pointer" id="send-request" onClick={handleRun}>
+      <div
+        className="flex items-center h-full mx-2 gap-3 cursor-pointer"
+        id="send-request"
+        onClick={handleRun}
+      >
         <div
           title="Generate Code"
           className="infotip"
@@ -401,7 +457,12 @@ const QueryUrl = ({ item, collection, handleRun }) => {
             handleGenerateCode(e);
           }}
         >
-          <IconCode color={theme.requestTabs.icon.color} strokeWidth={1.5} size={20} className="cursor-pointer" />
+          <IconCode
+            color={theme.requestTabs.icon.color}
+            strokeWidth={1.5}
+            size={20}
+            className="cursor-pointer"
+          />
           <span className="infotiptext text-xs">Generate Code</span>
         </div>
         <div

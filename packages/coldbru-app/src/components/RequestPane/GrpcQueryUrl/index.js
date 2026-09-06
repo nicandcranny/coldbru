@@ -1,7 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { requestUrlChanged, updateRequestMethod, updateRequestProtoPath } from 'providers/ReduxStore/slices/collections';
-import { saveRequest, generateGrpcurlCommand } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  requestUrlChanged,
+  updateRequestMethod,
+  updateRequestProtoPath
+} from 'providers/ReduxStore/slices/collections';
+import {
+  saveRequest,
+  generateGrpcurlCommand
+} from 'providers/ReduxStore/slices/collections/actions';
 import { useTheme } from 'providers/Theme';
 import SingleLineEditor from 'components/SingleLineEditor/index';
 import { isMacOS } from 'utils/common/platform';
@@ -15,10 +22,7 @@ import {
   IconCode
 } from '@tabler/icons';
 import toast from 'react-hot-toast';
-import {
-  cancelGrpcConnection,
-  endGrpcConnection
-} from 'utils/network/index';
+import { cancelGrpcConnection, endGrpcConnection } from 'utils/network/index';
 import GrpcurlModal from './GrpcurlModal';
 import { debounce } from 'lodash';
 import { getPropertyFromDraftOrRequest } from 'utils/collections';
@@ -27,7 +31,11 @@ import useProtoFileManagement from 'hooks/useProtoFileManagement/index';
 import MethodDropdown from './MethodDropdown';
 import ProtoFileDropdown from './ProtoFileDropdown';
 
-const STREAMING_METHOD_TYPES = ['client-streaming', 'server-streaming', 'bidi-streaming'];
+const STREAMING_METHOD_TYPES = [
+  'client-streaming',
+  'server-streaming',
+  'bidi-streaming'
+];
 const CLIENT_STREAMING_METHOD_TYPES = ['client-streaming', 'bidi-streaming'];
 
 const GrpcQueryUrl = ({ item, collection, handleRun }) => {
@@ -39,7 +47,9 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
   const isMac = isMacOS();
   const saveShortcut = isMac ? 'Cmd + S' : 'Ctrl + S';
   const editorRef = useRef(null);
-  const isConnectionActive = useSelector((state) => state.collections.activeConnections.includes(item.uid));
+  const isConnectionActive = useSelector((state) =>
+    state.collections.activeConnections.includes(item.uid)
+  );
 
   const [grpcMethods, setGrpcMethods] = useState([]);
   const [selectedGrpcMethod, setSelectedGrpcMethod] = useState({
@@ -47,7 +57,9 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     type: type
   });
   const [isReflectionMode, setIsReflectionMode] = useState(false);
-  const [protoFilePath, setProtoFilePath] = useState(item?.request?.protoPath || '');
+  const [protoFilePath, setProtoFilePath] = useState(
+    item?.request?.protoPath || ''
+  );
   const [showGrpcurlModal, setShowGrpcurlModal] = useState(false);
   const [grpcurlCommand, setGrpcurlCommand] = useState('');
   const [showProtoDropdown, setShowProtoDropdown] = useState(false);
@@ -70,19 +82,27 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
         });
     }
 
-    dispatch(updateRequestMethod({
-      method: path,
-      methodType: type,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestMethod({
+        method: path,
+        methodType: type,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   const onMethodDropdownCreate = (ref) => (methodDropdownRef.current = ref);
   const onProtoDropdownCreate = (ref) => (protoDropdownRef.current = ref);
 
-  const isStreamingMethod = selectedGrpcMethod && selectedGrpcMethod.type && STREAMING_METHOD_TYPES.includes(selectedGrpcMethod.type);
-  const isClientStreamingMethod = selectedGrpcMethod && selectedGrpcMethod.type && CLIENT_STREAMING_METHOD_TYPES.includes(selectedGrpcMethod.type);
+  const isStreamingMethod
+    = selectedGrpcMethod
+      && selectedGrpcMethod.type
+      && STREAMING_METHOD_TYPES.includes(selectedGrpcMethod.type);
+  const isClientStreamingMethod
+    = selectedGrpcMethod
+      && selectedGrpcMethod.type
+      && CLIENT_STREAMING_METHOD_TYPES.includes(selectedGrpcMethod.type);
 
   const onSave = () => {
     dispatch(saveRequest(item.uid, collection.uid));
@@ -118,10 +138,16 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
   };
 
   const handleReflection = async (url, isManualRefresh = false) => {
-    const { methods, error, fromCache } = await reflectionManagement.loadMethodsFromReflection(url, isManualRefresh);
+    const { methods, error, fromCache }
+      = await reflectionManagement.loadMethodsFromReflection(
+        url,
+        isManualRefresh
+      );
 
     if (error) {
-      toast.error(`Failed to load gRPC methods: ${error.message || 'Unknown error'}`);
+      toast.error(
+        `Failed to load gRPC methods: ${error.message || 'Unknown error'}`
+      );
       return;
     }
 
@@ -130,13 +156,19 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     setIsReflectionMode(true);
 
     // Only update protoPath if it was previously set (to avoid creating unnecessary draft state)
-    const currentProtoPath = getPropertyFromDraftOrRequest(item, 'request.protoPath', '');
+    const currentProtoPath = getPropertyFromDraftOrRequest(
+      item,
+      'request.protoPath',
+      ''
+    );
     if (currentProtoPath) {
-      dispatch(updateRequestProtoPath({
-        protoPath: '',
-        itemUid: item.uid,
-        collectionUid: collection.uid
-      }));
+      dispatch(
+        updateRequestProtoPath({
+          protoPath: '',
+          itemUid: item.uid,
+          collectionUid: collection.uid
+        })
+      );
     }
 
     if (!fromCache && methods && methods.length > 0) {
@@ -144,12 +176,16 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     }
 
     if (methods && methods.length > 0) {
-      const haveSelectedMethod = selectedGrpcMethod && methods.some((method) => method.path === selectedGrpcMethod.path);
+      const haveSelectedMethod
+        = selectedGrpcMethod
+          && methods.some((method) => method.path === selectedGrpcMethod.path);
       if (!haveSelectedMethod) {
         setSelectedGrpcMethod(null);
         onMethodSelect({ path: '', type: '' });
       } else if (selectedGrpcMethod) {
-        const currentMethod = methods.find((method) => method.path === selectedGrpcMethod.path);
+        const currentMethod = methods.find(
+          (method) => method.path === selectedGrpcMethod.path
+        );
         if (currentMethod) {
           setSelectedGrpcMethod({
             path: selectedGrpcMethod.path,
@@ -161,7 +197,11 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
   };
 
   const handleProtoFileLoad = async (filePath, isManualRefresh = false) => {
-    const { methods, error, fromCache } = await protoFileManagement.loadMethodsFromProtoFile(filePath, isManualRefresh);
+    const { methods, error, fromCache }
+      = await protoFileManagement.loadMethodsFromProtoFile(
+        filePath,
+        isManualRefresh
+      );
 
     if (error) {
       console.error('Failed to load gRPC methods:', error);
@@ -179,12 +219,16 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     }
 
     if (methods && methods.length > 0) {
-      const haveSelectedMethod = selectedGrpcMethod && methods.some((method) => method.path === selectedGrpcMethod.path);
+      const haveSelectedMethod
+        = selectedGrpcMethod
+          && methods.some((method) => method.path === selectedGrpcMethod.path);
       if (!haveSelectedMethod) {
         setSelectedGrpcMethod(null);
         onMethodSelect({ path: '', type: '' });
       } else if (selectedGrpcMethod) {
-        const currentMethod = methods.find((method) => method.path === selectedGrpcMethod.path);
+        const currentMethod = methods.find(
+          (method) => method.path === selectedGrpcMethod.path
+        );
         if (currentMethod) {
           setSelectedGrpcMethod({
             path: selectedGrpcMethod.path,
@@ -207,7 +251,9 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     }
 
     try {
-      const result = await dispatch(generateGrpcurlCommand(item, collection.uid));
+      const result = await dispatch(
+        generateGrpcurlCommand(item, collection.uid)
+      );
 
       if (result.success) {
         setGrpcurlCommand(result.command);
@@ -262,11 +308,13 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
     setIsReflectionMode(!isReflectionMode);
     if (!isReflectionMode) {
       setProtoFilePath('');
-      dispatch(updateRequestProtoPath({
-        protoPath: '',
-        itemUid: item.uid,
-        collectionUid: collection.uid
-      }));
+      dispatch(
+        updateRequestProtoPath({
+          protoPath: '',
+          itemUid: item.uid,
+          collectionUid: collection.uid
+        })
+      );
       if (url) {
         handleReflection(url);
       }
@@ -296,16 +344,28 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
   }, []);
 
   return (
-    <StyledWrapper className="flex items-center relative" data-testid="grpc-query-url-container">
+    <StyledWrapper
+      className="flex items-center relative"
+      data-testid="grpc-query-url-container"
+    >
       <div className="flex items-center h-full method-selector-container">
-        <div className="flex items-center justify-center h-full px-[10px]" data-testid="grpc-method-indicator">
-          <span className="text-xs font-medium" style={{ color: theme.request.grpc }}>gRPC</span>
+        <div
+          className="flex items-center justify-center h-full px-[10px]"
+          data-testid="grpc-method-indicator"
+        >
+          <span
+            className="text-xs font-medium"
+            style={{ color: theme.request.grpc }}
+          >
+            gRPC
+          </span>
         </div>
       </div>
       <div className="flex items-center w-full input-container h-full relative overflow-auto">
         <SingleLineEditor
           ref={editorRef}
           value={url}
+          historyKey={`${item.uid}:url`}
           onSave={(finalValue) => onSave(finalValue)}
           theme={storedTheme}
           onChange={(newValue) => debouncedOnUrlChange(newValue)}
@@ -314,7 +374,6 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
           highlightPathParams={true}
           item={item}
         />
-
       </div>
 
       <div className="flex items-center h-full mx-2 gap-3" id="send-request">
@@ -357,7 +416,9 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
             data-testid="refresh-methods-icon"
           />
           <span className="infotip-text text-xs">
-            {isReflectionMode ? 'Refresh server reflection' : 'Refresh proto file methods'}
+            {isReflectionMode
+              ? 'Refresh server reflection'
+              : 'Refresh proto file methods'}
           </span>
         </div>
 
@@ -397,13 +458,25 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
 
         {isConnectionActive && isStreamingMethod && (
           <div className="connection-controls relative flex items-center h-full gap-3">
-            <div className="infotip" onClick={handleCancelConnection} data-testid="grpc-cancel-connection-button">
-              <IconX color={theme.requestTabs.icon.color} strokeWidth={1.5} size={20} className="cursor-pointer" />
+            <div
+              className="infotip"
+              onClick={handleCancelConnection}
+              data-testid="grpc-cancel-connection-button"
+            >
+              <IconX
+                color={theme.requestTabs.icon.color}
+                strokeWidth={1.5}
+                size={20}
+                className="cursor-pointer"
+              />
               <span className="infotip-text text-xs">Cancel</span>
             </div>
 
             {isClientStreamingMethod && (
-              <div onClick={handleEndConnection} data-testid="grpc-end-connection-button">
+              <div
+                onClick={handleEndConnection}
+                data-testid="grpc-end-connection-button"
+              >
                 <IconCheck
                   color={theme.colors.text.green}
                   strokeWidth={2}
@@ -424,7 +497,11 @@ const GrpcQueryUrl = ({ item, collection, handleRun }) => {
               handleRun(e);
             }}
           >
-            <IconArrowRight color={theme.requestTabPanel.url.icon} strokeWidth={1.5} size={20} />
+            <IconArrowRight
+              color={theme.requestTabPanel.url.icon}
+              strokeWidth={1.5}
+              size={20}
+            />
           </div>
         )}
       </div>

@@ -9,7 +9,7 @@ All paths are relative to `packages/coldbru-app/src/`.
 Low-level, generic building blocks. Use these first.
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Button | `ui/Button` | Themed button with size/variant/color options, loading spinner, and optional icon. Props: `size`, `variant`, `color`, `disabled`, `loading`, `icon`, `iconPosition`, `fullWidth`, `rounded`, `fontWeight`. |
 | ActionIcon | `ui/ActionIcon` | Icon-only button with variant styling and hover color. Polymorphic via `component` prop. Props: `variant`, `size`, `disabled`, `colorOnHover`, `color`, `label`. |
 | MenuDropdown | `ui/MenuDropdown` | Full dropdown menu with keyboard nav, submenus, grouped/flat items, controlled/uncontrolled modes. Exposes `show`/`hide`/`toggle` via ref. Props: `items`, `placement`, `selectedItemId`, `opened`, `onChange`, `header`, `footer`, `showTickMark`, `groupStyle`. |
@@ -24,7 +24,7 @@ Low-level, generic building blocks. Use these first.
 ### Layout & Feedback
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Modal | `components/Modal` | Dialog with header/content/footer, focus trapping, ESC/Enter handling, backdrop click-to-close. Props: `size`, `title`, `confirmText`, `cancelText`, `handleCancel`, `handleConfirm`, `hideCancel`, `hideFooter`, `hideClose`, `disableCloseOnOutsideClick`, `confirmButtonColor`. |
 | Spinner | `components/Spinner` | Loading spinner with optional child content. Props: `size`, `color`. |
 | Portal | `components/Portal` | Renders children into `document.body` via React portal. |
@@ -35,7 +35,7 @@ Low-level, generic building blocks. Use these first.
 ### Form Controls
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Checkbox | `components/Checkbox` | Styled checkbox with custom checkmark. Props: `checked`, `disabled`, `onChange`, `dataTestId`. |
 | RadioButton | `components/RadioButton` | Styled radio button. Props: `checked`, `disabled`, `onChange`, `name`, `value`. |
 | ToggleSwitch | `components/ToggleSwitch` | On/off toggle. Props: `isOn`, `handleToggle`, `size`, `activeColor`. |
@@ -51,9 +51,9 @@ Low-level, generic building blocks. Use these first.
 ### Data Display
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Table | `components/Table` | Table with resizable columns via mouse-drag. Props: `minColumnWidth`, `headers`, `children`. |
-| EditableTable | `components/EditableTable` | Key/value table with inline editing, resizable columns, row checkboxes, delete, drag-and-drop reorder. Props: `columns`, `rows`, `onChange`, `defaultRow`, `showCheckbox`, `showDelete`, `reorderable`, `onReorder`. |
+| EditableTable | `components/EditableTable` | Key/value table with inline editing, resizable columns, row checkboxes, delete, drag-and-drop reorder. `historyScope` enables persistent bounded undo history for its cells. Props: `columns`, `rows`, `onChange`, `defaultRow`, `showCheckbox`, `showDelete`, `reorderable`, `onReorder`, `historyScope`. |
 | EnvironmentVariablesTable | `components/EnvironmentVariablesTable` | Virtualized env vars editor with name validation, secret toggle, draft/save workflow, search highlighting. Props: `environment`, `collection`, `onSave`, `draft`, `onDraftChange`, `searchQuery`. |
 | ReorderTable | `components/ReorderTable` | `<tbody>` wrapper adding drag-and-drop reordering with grip handles. Props: `updateReorderedItem`. |
 | TagList | `components/TagList` | Tag input with autocomplete hints, validation, and add/remove. Props: `tags`, `tagsHintList`, `handleAddTag`, `handleRemoveTag`, `onSave`. |
@@ -62,7 +62,7 @@ Low-level, generic building blocks. Use these first.
 ### Tabs & Navigation
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Tabs | `components/Tabs` | Compound tab component (`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`) using context. Props: `value`, `onValueChange`. |
 | Tab | `components/Tab` | Single tab button with label and optional count badge. Props: `name`, `label`, `isActive`, `onClick`, `count`. |
 | Accordion | `components/Accordion` | Expand/collapse sections (`Accordion.Item`, `.Header`, `.Content`). Props: `defaultIndex`, `dataTestId`. |
@@ -70,7 +70,7 @@ Low-level, generic building blocks. Use these first.
 ### Text & Content
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | Markdown | `components/MarkDown` | Renders markdown as HTML with relative link rewriting. Props: `collectionPath`, `content`, `onDoubleClick`. |
 | Documentation | `components/Documentation` | Toggle between CodeEditor (edit) and rendered Markdown (preview) with auto-save. Props: `item`, `collection`. |
 | TruncatedText | `components/TruncatedText` | Clamps text to max lines with "View More"/"View Less" toggle. Props: `text`, `maxLines`, `showButton`. |
@@ -81,15 +81,15 @@ Low-level, generic building blocks. Use these first.
 ### Editors (CodeMirror-based)
 
 | Component | Path | Description |
-|---|---|---|
-| CodeEditor | `components/CodeEditor` | Full CodeMirror editor with syntax highlighting, linting, variable overlays, autocomplete, folding, search. Props: `value`, `mode`, `theme`, `readOnly`, `collection`, `item`, `onEdit`, `onRun`, `onSave`, `schema`, `font`, `fontSize`. |
-| SingleLineEditor | `components/SingleLineEditor` | Single-line CodeMirror input with variable highlighting, secret masking (eye toggle), autocomplete. Props: `value`, `onChange`, `collection`, `item`, `isSecret`, `placeholder`, `autocomplete`, `highlightPathParams`. |
-| MultiLineEditor | `components/MultiLineEditor` | Multi-line CodeMirror editor with variable highlighting and secret masking. Props: `value`, `onChange`, `collection`, `item`, `isSecret`, `placeholder`, `autocomplete`. |
+| --- | --- | --- |
+| CodeEditor | `components/CodeEditor` | Full CodeMirror editor with syntax highlighting, linting, variable overlays, autocomplete, folding, search, and optional bounded history persistence across remounts. Props: `value`, `mode`, `theme`, `readOnly`, `collection`, `item`, `onEdit`, `onRun`, `onSave`, `schema`, `font`, `fontSize`, `historyKey`. |
+| SingleLineEditor | `components/SingleLineEditor` | Single-line CodeMirror input with variable highlighting, secret masking (eye toggle), autocomplete, and optional bounded history persistence across remounts. Props: `value`, `onChange`, `collection`, `item`, `isSecret`, `placeholder`, `autocomplete`, `highlightPathParams`, `historyKey`. |
+| MultiLineEditor | `components/MultiLineEditor` | Multi-line CodeMirror editor with variable highlighting, secret masking, and optional bounded history persistence across remounts. Props: `value`, `onChange`, `collection`, `item`, `isSecret`, `placeholder`, `autocomplete`, `historyKey`. |
 
 ### Indicators & Badges
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | ColorBadge | `components/ColorBadge` | Small colored circle dot. Props: `color`, `size`. |
 | StatusDot | `components/StatusDot` | Superscript dot icon, red when error. Props: `type` (`'default'` \| `'error'`). |
 | StopWatch | `components/StopWatch` | Live elapsed-time display updating every 100ms. Props: `startTime`. |
@@ -98,7 +98,7 @@ Low-level, generic building blocks. Use these first.
 ### Tooltips
 
 | Component | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | InfoTip | `components/InfoTip` | Inline info (ⓘ) icon with react-tooltip on hover. Props: `infotipId`. |
 | ToolHint | `components/ToolHint` | Theme-aware tooltip wrapper around react-tooltip. Props: `text`, `toolhintId`, `anchorSelect`, `place`, `offset`, `delayShow`. |
 
@@ -107,7 +107,7 @@ Low-level, generic building blocks. Use these first.
 Custom SVG icon components. Use `@tabler/icons` for standard icons; only use these for app-specific icons.
 
 | Icon | Path |
-|---|---|
+| --- | --- |
 | CloseAll | `components/Icons/CloseAll` |
 | Dot | `components/Icons/Dot` |
 | ExampleIcon | `components/Icons/ExampleIcon` |
@@ -128,7 +128,7 @@ Custom SVG icon components. Use `@tabler/icons` for standard icons; only use the
 ## Custom Hooks (`src/hooks/`)
 
 | Hook | Path | Description |
-|---|---|---|
+| --- | --- | --- |
 | useDebounce | `hooks/useDebounce` | Debounces a value by a given delay. |
 | useDetectSensitiveField | `hooks/useDetectSensitiveField` | Detects if a field name matches sensitive patterns (passwords, tokens, etc.). |
 | useLocalStorage | `hooks/useLocalStorage` | Reads/writes state to localStorage with a key. |

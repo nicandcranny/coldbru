@@ -3,7 +3,10 @@ import get from 'lodash/get';
 import { useDispatch, useSelector } from 'react-redux';
 import CodeEditor from 'components/CodeEditor';
 import { updateRequestGraphqlVariables } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import { useTheme } from 'providers/Theme';
 import StyledWrapper from './StyledWrapper';
 import { IconWand } from '@tabler/icons';
@@ -59,6 +62,7 @@ const GraphQLVariables = ({ variables, item, collection }) => {
       <CodeEditor
         collection={collection}
         value={variables || ''}
+        historyKey={`${item.uid}:body:graphql-variables`}
         theme={displayedTheme}
         font={get(preferences, 'font.codeFont', 'default')}
         fontSize={get(preferences, 'font.codeFontSize')}

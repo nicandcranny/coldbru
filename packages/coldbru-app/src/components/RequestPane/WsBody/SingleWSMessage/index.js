@@ -36,7 +36,9 @@ export const SingleWSMessage = ({
   const dispatch = useDispatch();
   const { displayedTheme } = useTheme();
   const preferences = useSelector((state) => state.app.preferences);
-  const body = item.draft ? get(item, 'draft.request.body') : get(item, 'request.body');
+  const body = item.draft
+    ? get(item, 'draft.request.body')
+    : get(item, 'request.body');
 
   const { name, content, type } = message;
   const [messageFormat, setMessageFormat] = useState(autoDetectLang(content));
@@ -51,11 +53,13 @@ export const SingleWSMessage = ({
       type: DECODER_BY_TYPE[type]
     };
 
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   const onEdit = (value) => {
@@ -67,11 +71,13 @@ export const SingleWSMessage = ({
       content: value
     };
 
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
@@ -81,11 +87,13 @@ export const SingleWSMessage = ({
 
     currentMessages.splice(index, 1);
 
-    dispatch(updateRequestBody({
-      content: currentMessages,
-      itemUid: item.uid,
-      collectionUid: collection.uid
-    }));
+    dispatch(
+      updateRequestBody({
+        content: currentMessages,
+        itemUid: item.uid,
+        collectionUid: collection.uid
+      })
+    );
   };
 
   let codeType = messageFormat;
@@ -109,11 +117,13 @@ export const SingleWSMessage = ({
           name: name ? name : `message ${index + 1}`,
           content: prettyBodyJson
         };
-        dispatch(updateRequestBody({
-          content: currentMessages,
-          itemUid: item.uid,
-          collectionUid: collection.uid
-        }));
+        dispatch(
+          updateRequestBody({
+            content: currentMessages,
+            itemUid: item.uid,
+            collectionUid: collection.uid
+          })
+        );
       } catch (e) {
         toastError(new Error('Unable to prettify. Invalid JSON format.'));
       }
@@ -130,25 +140,33 @@ export const SingleWSMessage = ({
           content: prettyBodyXML
         };
 
-        dispatch(updateRequestBody({
-          content: currentMessages,
-          itemUid: item.uid,
-          collectionUid: collection.uid
-        }));
+        dispatch(
+          updateRequestBody({
+            content: currentMessages,
+            itemUid: item.uid,
+            collectionUid: collection.uid
+          })
+        );
       } catch (e) {
         toastError(new Error('Unable to prettify. Invalid XML format.'));
       }
     }
   };
 
-  const isSingleMessage = !canClientSendMultipleMessages || body.ws.length === 1;
+  const isSingleMessage
+    = !canClientSendMultipleMessages || body.ws.length === 1;
 
   return (
-    <StyledWrapper className={`message-container ${isSingleMessage ? 'single' : ''} ${isLast ? 'last' : ''}`}>
+    <StyledWrapper
+      className={`message-container ${isSingleMessage ? 'single' : ''} ${isLast ? 'last' : ''}`}
+    >
       <div className="message-toolbar">
         <span className="message-label">Message {index + 1}</span>
         <div className="toolbar-actions">
-          <WSRequestBodyMode mode={messageFormat} onModeChange={onUpdateMessageType} />
+          <WSRequestBodyMode
+            mode={messageFormat}
+            onModeChange={onUpdateMessageType}
+          />
 
           <ToolHint text="Format" toolhintId={`prettify-msg-${index}`}>
             <button onClick={onPrettify} className="toolbar-btn">
@@ -172,6 +190,7 @@ export const SingleWSMessage = ({
           font={get(preferences, 'font.codeFont', 'default')}
           fontSize={get(preferences, 'font.codeFontSize')}
           value={content}
+          historyKey={`${item.uid}:body:websocket:${index}`}
           onEdit={onEdit}
           onRun={handleRun}
           onSave={onSave}

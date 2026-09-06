@@ -2,8 +2,14 @@ import React, { useState, useCallback } from 'react';
 import get from 'lodash/get';
 import { useDispatch } from 'react-redux';
 import { useTheme } from 'providers/Theme';
-import { moveRequestHeader, setRequestHeaders } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  moveRequestHeader,
+  setRequestHeaders
+} from 'providers/ReduxStore/slices/collections';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import SingleLineEditor from 'components/SingleLineEditor';
 import EditableTable from 'components/EditableTable';
 import StyledWrapper from './StyledWrapper';
@@ -17,27 +23,39 @@ const headerAutoCompleteList = StandardHTTPHeaders.map((e) => e.header);
 const RequestHeaders = ({ item, collection, addHeaderText }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const headers = item.draft ? get(item, 'draft.request.headers') : get(item, 'request.headers');
+  const headers = item.draft
+    ? get(item, 'draft.request.headers')
+    : get(item, 'request.headers');
   const [isBulkEditMode, setIsBulkEditMode] = useState(false);
 
   const onSave = () => dispatch(saveRequest(item.uid, collection.uid));
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
-  const handleHeadersChange = useCallback((updatedHeaders) => {
-    dispatch(setRequestHeaders({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      headers: updatedHeaders
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleHeadersChange = useCallback(
+    (updatedHeaders) => {
+      dispatch(
+        setRequestHeaders({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          headers: updatedHeaders
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
-  const handleHeaderDrag = useCallback(({ updateReorderedItem }) => {
-    dispatch(moveRequestHeader({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      updateReorderedItem
-    }));
-  }, [dispatch, collection.uid, item.uid]);
+  const handleHeaderDrag = useCallback(
+    ({ updateReorderedItem }) => {
+      dispatch(
+        moveRequestHeader({
+          collectionUid: collection.uid,
+          itemUid: item.uid,
+          updateReorderedItem
+        })
+      );
+    },
+    [dispatch, collection.uid, item.uid]
+  );
 
   const getRowError = useCallback((row, index, key) => {
     if (key === 'name') {
@@ -66,9 +84,10 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
       isKeyField: true,
       placeholder: 'Name',
       width: '30%',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <SingleLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
           onChange={(newValue) => onChange(newValue.replace(/[\r\n]/g, ''))}
@@ -84,9 +103,10 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
       key: 'value',
       name: 'Value',
       placeholder: 'Value',
-      render: ({ value, onChange }) => (
+      render: ({ value, onChange, historyKey }) => (
         <SingleLineEditor
           value={value || ''}
+          historyKey={historyKey}
           theme={storedTheme}
           onSave={onSave}
           onChange={onChange}
@@ -130,9 +150,13 @@ const RequestHeaders = ({ item, collection, addHeaderText }) => {
         getRowError={getRowError}
         reorderable={true}
         onReorder={handleHeaderDrag}
+        historyScope={`${item.uid}:headers`}
       />
       <div className="flex justify-end mt-2">
-        <button className="btn-action text-link select-none" onClick={toggleBulkEditMode}>
+        <button
+          className="btn-action text-link select-none"
+          onClick={toggleBulkEditMode}
+        >
           Bulk Edit
         </button>
       </div>

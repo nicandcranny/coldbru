@@ -17,7 +17,9 @@ import StyledWrapper from './StyledWrapper';
  * @returns
  */
 const getPropertyFromDraftOrRequest = (propertyKey, item) =>
-  item.draft ? get(item, `draft.${propertyKey}`, {}) : get(item, propertyKey, {});
+  item.draft
+    ? get(item, `draft.${propertyKey}`, {})
+    : get(item, propertyKey, {});
 
 const ERRORS = {
   timeout: {
@@ -31,25 +33,31 @@ const ERRORS = {
 const WSSettingsPane = ({ item, collection }) => {
   const dispatch = useDispatch();
   const { storedTheme } = useTheme();
-  const requestPreferences = useSelector((state) => state.app.preferences.request);
+  const requestPreferences = useSelector(
+    (state) => state.app.preferences.request
+  );
 
-  const { timeout: _connectionTimeout, keepAliveInterval = 0 } = getPropertyFromDraftOrRequest('settings', item);
+  const { timeout: _connectionTimeout, keepAliveInterval = 0 }
+    = getPropertyFromDraftOrRequest('settings', item);
 
   const connectionTimeout = _connectionTimeout ?? requestPreferences.timeout;
 
   const updateSetting = (key, value) => {
-    dispatch(updateItemSettings({
-      collectionUid: collection.uid,
-      itemUid: item.uid,
-      settings: {
-        [key]: value
-      }
-    }));
+    dispatch(
+      updateItemSettings({
+        collectionUid: collection.uid,
+        itemUid: item.uid,
+        settings: {
+          [key]: value
+        }
+      })
+    );
   };
 
   const formErrors = {
     timeout: isNaN(Number(connectionTimeout)) && ERRORS.timeout.invalid,
-    keepAliveInterval: isNaN(Number(keepAliveInterval)) && ERRORS.keepAliveInterval.invalid
+    keepAliveInterval:
+      isNaN(Number(keepAliveInterval)) && ERRORS.keepAliveInterval.invalid
   };
 
   return (
@@ -70,9 +78,10 @@ const WSSettingsPane = ({ item, collection }) => {
           />
         </div>
         <div>
-          <div className={cn('single-line-editor-wrapper', {
-            error: formErrors.timeout
-          })}
+          <div
+            className={cn('single-line-editor-wrapper', {
+              error: formErrors.timeout
+            })}
           >
             <ToolHint
               key="timeout"
@@ -82,6 +91,7 @@ const WSSettingsPane = ({ item, collection }) => {
             >
               <SingleLineEditor
                 value={connectionTimeout}
+                historyKey={`${item.uid}:settings:websocket:timeout`}
                 theme={storedTheme}
                 onChange={(newValue) => updateSetting('timeout', newValue)}
                 collection={collection}
@@ -99,7 +109,8 @@ const WSSettingsPane = ({ item, collection }) => {
               <div>
                 <p>
                   <span>
-                    Keep the websocket alive by sending ping requests to the server at every interval (in millseconds)
+                    Keep the websocket alive by sending ping requests to the
+                    server at every interval (in millseconds)
                   </span>
                 </p>
                 <p className="mt-2">0 (zero) = off</p>
@@ -108,20 +119,25 @@ const WSSettingsPane = ({ item, collection }) => {
           />
         </div>
         <div>
-          <div className={cn('single-line-editor-wrapper', {
-            error: formErrors.keepAliveInterval
-          })}
+          <div
+            className={cn('single-line-editor-wrapper', {
+              error: formErrors.keepAliveInterval
+            })}
           >
             <ToolHint
               key="timeout"
               toolhintId="ws-settings-keepAliveInterval"
               place="top"
-              text={formErrors.keepAliveInterval ? formErrors.keepAliveInterval : ''}
+              text={
+                formErrors.keepAliveInterval ? formErrors.keepAliveInterval : ''
+              }
             >
               <SingleLineEditor
                 value={keepAliveInterval}
+                historyKey={`${item.uid}:settings:websocket:keep-alive-interval`}
                 theme={storedTheme}
-                onChange={(newValue) => updateSetting('keepAliveInterval', newValue)}
+                onChange={(newValue) =>
+                  updateSetting('keepAliveInterval', newValue)}
                 collection={collection}
               />
             </ToolHint>

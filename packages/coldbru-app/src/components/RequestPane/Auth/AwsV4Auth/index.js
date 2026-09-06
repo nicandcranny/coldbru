@@ -4,7 +4,10 @@ import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
 import SingleLineEditor from 'components/SingleLineEditor';
 import { updateAuth } from 'providers/ReduxStore/slices/collections';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 import SensitiveFieldWarning from 'components/SensitiveFieldWarning';
 import { useDetectSensitiveField } from 'hooks/useDetectSensitiveField';
@@ -15,7 +18,9 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
 
   const awsv4Auth = get(request, 'auth.awsv4', {});
   const { isSensitive } = useDetectSensitiveField(collection);
-  const { showWarning, warningMessage } = isSensitive(awsv4Auth?.secretAccessKey);
+  const { showWarning, warningMessage } = isSensitive(
+    awsv4Auth?.secretAccessKey
+  );
 
   const handleRun = () => dispatch(sendRequest(item, collection.uid));
 
@@ -137,6 +142,7 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={awsv4Auth.accessKeyId || ''}
+          historyKey={`${item.uid}:auth:aws-v4:access-key-id`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleAccessKeyIdChange(val)}
@@ -151,6 +157,7 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3 flex items-center">
         <SingleLineEditor
           value={awsv4Auth.secretAccessKey || ''}
+          historyKey={`${item.uid}:auth:aws-v4:secret-access-key`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleSecretAccessKeyChange(val)}
@@ -161,13 +168,19 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
           isCompact
         />
 
-        {showWarning && <SensitiveFieldWarning fieldName="awsv4-secret-access-key" warningMessage={warningMessage} />}
+        {showWarning && (
+          <SensitiveFieldWarning
+            fieldName="awsv4-secret-access-key"
+            warningMessage={warningMessage}
+          />
+        )}
       </div>
 
       <label className="block mb-1">Session Token</label>
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={awsv4Auth.sessionToken || ''}
+          historyKey={`${item.uid}:auth:aws-v4:session-token`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleSessionTokenChange(val)}
@@ -182,6 +195,7 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={awsv4Auth.service || ''}
+          historyKey={`${item.uid}:auth:aws-v4:service`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleServiceChange(val)}
@@ -196,6 +210,7 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={awsv4Auth.region || ''}
+          historyKey={`${item.uid}:auth:aws-v4:region`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleRegionChange(val)}
@@ -210,6 +225,7 @@ const AwsV4Auth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper">
         <SingleLineEditor
           value={awsv4Auth.profileName || ''}
+          historyKey={`${item.uid}:auth:aws-v4:profile-name`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleProfileNameChange(val)}

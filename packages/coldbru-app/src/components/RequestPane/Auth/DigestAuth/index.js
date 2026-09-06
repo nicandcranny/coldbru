@@ -5,7 +5,10 @@ import get from 'lodash/get';
 import { useTheme } from 'providers/Theme';
 import { useDispatch } from 'react-redux';
 import SingleLineEditor from 'components/SingleLineEditor';
-import { sendRequest, saveRequest } from 'providers/ReduxStore/slices/collections/actions';
+import {
+  sendRequest,
+  saveRequest
+} from 'providers/ReduxStore/slices/collections/actions';
 import StyledWrapper from './StyledWrapper';
 
 const DigestAuth = ({ item, collection, updateAuth, request, save }) => {
@@ -56,6 +59,7 @@ const DigestAuth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper mb-3">
         <SingleLineEditor
           value={digestAuth.username || ''}
+          historyKey={`${item.uid}:auth:digest:username`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handleUsernameChange(val)}
@@ -70,6 +74,7 @@ const DigestAuth = ({ item, collection, updateAuth, request, save }) => {
       <div className="single-line-editor-wrapper flex items-center">
         <SingleLineEditor
           value={digestAuth.password || ''}
+          historyKey={`${item.uid}:auth:digest:password`}
           theme={storedTheme}
           onSave={handleSave}
           onChange={(val) => handlePasswordChange(val)}
@@ -79,7 +84,12 @@ const DigestAuth = ({ item, collection, updateAuth, request, save }) => {
           isSecret={true}
           isCompact
         />
-        {showWarning && <SensitiveFieldWarning fieldName="digest-password" warningMessage={warningMessage} />}
+        {showWarning && (
+          <SensitiveFieldWarning
+            fieldName="digest-password"
+            warningMessage={warningMessage}
+          />
+        )}
       </div>
     </StyledWrapper>
   );

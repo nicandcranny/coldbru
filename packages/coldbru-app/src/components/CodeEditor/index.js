@@ -21,6 +21,11 @@ import { setupLinkAware } from 'utils/codemirror/linkAware';
 import { setupLintErrorTooltip } from 'utils/codemirror/lint-errors';
 import { setupShortcuts } from 'utils/codemirror/shortcuts';
 import CodeMirrorSearch from 'components/CodeMirrorSearch/index';
+import {
+  MAX_UNDO_DEPTH,
+  restoreEditorHistory,
+  saveEditorHistory
+} from 'utils/codemirror/editorHistory';
 
 const CodeMirror = require('codemirror');
 window.jsonlint = jsonlint;
@@ -60,6 +65,7 @@ export default class CodeEditor extends React.Component {
 
     const editor = (this.editor = CodeMirror(this._node, {
       value: this.props.value || '',
+      undoDepth: MAX_UNDO_DEPTH,
       placeholder: '...',
       lineNumbers: true,
       lineWrapping: this.props.enableLineWrapping ?? true,
@@ -226,6 +232,11 @@ export default class CodeEditor extends React.Component {
     });
 
     if (editor) {
+      restoreEditorHistory(
+        this.props.historyKey,
+        editor,
+        this.props.value || ''
+      );
       editor.setOption(
         'lint',
         this.props.mode && editor.getValue().trim().length > 0
@@ -358,6 +369,7 @@ export default class CodeEditor extends React.Component {
     }
 
     if (this.editor) {
+      saveEditorHistory(this.props.historyKey, this.editor);
       if (this.props.onScroll) {
         this.props.onScroll(this.editor);
       }
