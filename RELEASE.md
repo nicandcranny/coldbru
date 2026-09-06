@@ -112,10 +112,7 @@ gh release upload v1.1.0 build/v1.1.0/* --clobber
 
 ### Local unsigned or internal release
 
-If no real Apple signing identity is configured, `scripts/release/build-electron.sh` falls back to:
-
-- Electron Builder ad-hoc signing during packaging
-- explicit post-build ad-hoc re-signing of every `.app` bundle under `packages/coldbru-electron/out`
+If no real Apple signing identity is configured, the `afterSign` hook in `packages/coldbru-electron/notarize.js` applies one consistent ad-hoc signature to each packaged `.app` before DMG creation. `scripts/release/build-electron.sh` then verifies the signatures.
 
 This matters because mismatched ad-hoc signatures across helper apps can crash on other Macs with a "different Team IDs" style failure.
 
@@ -228,6 +225,20 @@ Fix:
 npm run release:build:linux:docker
 ```
 
+The Docker script forwards optional `COLDBRU_ELECTRON_MIRROR` and `ELECTRON_BUILDER_BINARIES_MIRROR` values into the Linux build. Use mirrors when GitHub downloads time out, for example:
+
+```bash
+COLDBRU_ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ \
+ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ \
+npm run release:build:linux:docker
+```
+
+For a cached Electron zip, set `ELECTRON_DIST` when invoking a desktop build. The builder config accepts either a zip file or unpacked distribution directory:
+
+```bash
+ELECTRON_DIST=/path/to/electron-v41.2.1-win32-x64.zip npm run release:build:win
+```
+
 ### `build/v<version>/` exists but missing one artifact
 
 Run:
@@ -238,6 +249,16 @@ npm run release:verify
 ```
 
 If still missing, rerun only missing platform build.
+
+### Mac app icon differs from `assets/images/logo.png`
+
+Run:
+
+```bash
+npm run generate:icons
+```
+
+The macOS build configuration uses generated files under `packages/coldbru-electron/resources/icons/`. Do not override `mac.icon` with a stale `.icns` file.
 
 ### Wrong files changed in `package-lock.json`
 
@@ -259,7 +280,7 @@ That script updates only workspace package version entries.
 - deletes sourcemaps
 - runs target Electron build
 - copies target artifact into `build/v<version>/`
-- applies consistent ad-hoc re-signing for mac `.app` bundles when no real signing identity is configured
+- verifies mac `.app` signatures when no real signing identity is configured; ad-hoc signing runs in the `afterSign` hook before DMG creation
 
 ### `scripts/release/build-electron-linux-docker.sh`
 

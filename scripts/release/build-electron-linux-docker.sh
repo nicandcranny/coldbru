@@ -7,12 +7,20 @@ IMAGE="${COLDBRU_LINUX_DOCKER_IMAGE:-node:22-bookworm}"
 
 docker run --rm \
   --platform linux/amd64 \
+  -e "ELECTRON_MIRROR=${COLDBRU_ELECTRON_MIRROR:-}" \
+  -e "ELECTRON_BUILDER_BINARIES_MIRROR=${ELECTRON_BUILDER_BINARIES_MIRROR:-}" \
   -v "${REPO_ROOT}:/workspace" \
   -w /workspace \
   "${IMAGE}" \
   bash -lc "
     set -euo pipefail
     export DEBIAN_FRONTEND=noninteractive
+    if [ -n "\${ELECTRON_MIRROR}" ]; then
+      export ELECTRON_MIRROR
+    fi
+    if [ -n "\${ELECTRON_BUILDER_BINARIES_MIRROR}" ]; then
+      export ELECTRON_BUILDER_BINARIES_MIRROR
+    fi
     BUILD_ROOT=/tmp/coldbru-linux-build
 
     apt-get update

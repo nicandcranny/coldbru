@@ -79,6 +79,20 @@ ColdBru is currently distributed through GitHub releases:
 
 Package manager distribution names for ColdBru are not finalized yet. Until they exist, use the release binaries from GitHub.
 
+### MacOS Security Problem
+
+You may see a security warning when running ColdBru on MacOS with warning "Apple could not verify ...".
+
+To resolve this, after you've tried to open the app, follow this step:
+
+1. Open System Settings.
+2. Click Privacy & Security, scroll down, and click the Open Anyway button on the ColdBru app.
+3. The warning prompt should reappears and you can click "Open". If it deosn't appear, just try reopening the app.
+
+In the future, you can open it normally without having to repeat these steps.
+
+For more information, check the [Offical MacOS Guideline](https://support.apple.com/en-us/102445).
+
 ## Development
 
 ```bash
@@ -140,7 +154,3 @@ ColdBru is released under the [MIT License](LICENSE.md).
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
 - Permanent history feature
-
-### Bug Fixes
-
-- The undo redo is wonky

@@ -45,15 +45,11 @@ elif [ "$TARGET" == "mac" ]; then
   echo "Building mac distribution"
   npm run dist:mac --workspace=packages/coldbru-electron -- "$@"
 
-  # Re-sign .app bundles with a consistent ad-hoc signature when no real identity is configured.
-  # Without this, the main binary and Electron Framework end up with mismatched signatures,
-  # causing a "different Team IDs" crash on other Macs.
+  # Ad-hoc signing runs from the afterSign hook, before DMG creation. Verify every
+  # packaged app here so the signed app is also the one embedded in the DMG.
   if [ -z "$CSC_NAME" ] && [ -z "$CSC_LINK" ]; then
-    echo "No signing identity found — applying consistent ad-hoc signature to .app bundles"
-    find packages/coldbru-electron/out -name '*.app' -type d | while read -r app; do
-      codesign --force --deep --sign - "$app"
-      echo "Re-signed: $app"
-    done
+    echo "Verifying ad-hoc signatures"
+    find packages/coldbru-electron/out -name '*.app' -type d -exec codesign --verify --deep --strict {} \;
   fi
 elif [ "$TARGET" == "win" ]; then
   echo "Building windows distribution"

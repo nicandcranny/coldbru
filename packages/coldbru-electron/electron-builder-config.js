@@ -1,13 +1,19 @@
 require('dotenv').config({ path: process.env.DOTENV_PATH });
 
-const macIdentity = process.env.CSC_NAME || process.env.CSC_LINK ? undefined : '-';
-const requestedArchs = ['x64', 'arm64'].filter((arch) => process.argv.includes(`--${arch}`));
-const resolvedTargetArchs = requestedArchs.length ? requestedArchs : ['x64', 'arm64'];
+const macIdentity
+  = process.env.CSC_NAME || process.env.CSC_LINK ? undefined : '-';
+const requestedArchs = ['x64', 'arm64'].filter((arch) =>
+  process.argv.includes(`--${arch}`)
+);
+const resolvedTargetArchs = requestedArchs.length
+  ? requestedArchs
+  : ['x64', 'arm64'];
 
 const config = {
   appId: 'com.coldbru.app',
   productName: 'ColdBru',
   electronVersion: '41.2.1',
+  electronDist: process.env.ELECTRON_DIST || undefined,
   directories: {
     buildResources: 'resources',
     output: 'out'
@@ -47,7 +53,7 @@ const config = {
         arch: resolvedTargetArchs
       }
     ],
-    icon: 'resources/icons/png',
+    icon: 'resources/icons/mac/icon.icns',
     hardenedRuntime: true,
     identity: macIdentity,
     entitlements: 'resources/entitlements.mac.plist',
@@ -56,9 +62,7 @@ const config = {
     protocols: [
       {
         name: 'ColdBru',
-        schemes: [
-          'coldbru'
-        ]
+        schemes: ['coldbru']
       }
     ]
   },
