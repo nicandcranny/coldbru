@@ -79,7 +79,7 @@ ColdBru is currently distributed through GitHub releases:
 
 Package manager distribution names for ColdBru are not finalized yet. Until they exist, use the release binaries from GitHub.
 
-### MacOS Security Problem
+### MacOS Alert Prompt
 
 You may see a security warning when running ColdBru on MacOS with warning "Apple could not verify ...".
 
