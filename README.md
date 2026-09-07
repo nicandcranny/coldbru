@@ -73,11 +73,24 @@ Start with the import guide here:
 
 ## Installation
 
-ColdBru is currently distributed through GitHub releases:
+ColdBru is currently distributed through GitHub releases and HomeBrew.
+
+### GitHub Release
 
 - [Download the latest release](https://github.com/nicandcranny/coldbru/releases)
 
-Package manager distribution names for ColdBru are not finalized yet. Until they exist, use the release binaries from GitHub.
+### Homebrew
+
+```bash
+brew install --cask nicandcranny/tap/coldbru
+```
+
+To update to the latest version, run:
+
+```bash
+brew update
+brew upgrade --cask coldbru
+```
 
 ### MacOS Alert Prompt
 
@@ -87,7 +100,7 @@ To resolve this, after you've tried to open the app, follow this step:
 
 1. Open System Settings.
 2. Click Privacy & Security, scroll down, and click the Open Anyway button on the ColdBru app.
-3. The warning prompt should reappears and you can click "Open". If it deosn't appear, just try reopening the app.
+3. The warning prompt should reappears and you can click "Open Anyway". If it deosn't appear, just try reopening the app.
 
 In the future, you can open it normally without having to repeat these steps.
 
