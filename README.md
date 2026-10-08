@@ -166,4 +166,7 @@ ColdBru is released under the [MIT License](LICENSE.md).
 
 - Add more to instant action (like Cmd+Shift+P) - for git, etc.
 - Add go to request/environment feature in the Git menu
-- Permanent history feature
+
+### Bug Fix
+
+- Text can't be pasted into the environment key
