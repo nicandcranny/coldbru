@@ -25,7 +25,7 @@ jest.mock('../src/store/preferences', () => ({
   getPreferences: () => mockPreferences
 }));
 
-const { addEntry, getSummaries, getEntry, clearEntries } = require('../src/store/request-history');
+const { addEntry, getSummaries, getEntry, deleteEntry, clearEntries } = require('../src/store/request-history');
 
 const historyDir = path.join(mockUserData, 'request-history');
 
@@ -54,6 +54,15 @@ describe('request history store', () => {
 
   test('rejects ids that are not in the index', async () => {
     expect(await getEntry('../../etc/passwd')).toBeNull();
+  });
+
+  test('delete removes one entry and its file', async () => {
+    const [newest, older] = getSummaries();
+    await deleteEntry(newest.id);
+
+    expect(getSummaries().map((s) => s.id)).toEqual([older.id]);
+    expect(fs.readdirSync(historyDir)).toEqual([`${older.id}.json`]);
+    expect(await getEntry(newest.id)).toBeNull();
   });
 
   test('clear removes all entries and files', async () => {

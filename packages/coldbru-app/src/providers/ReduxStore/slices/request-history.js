@@ -35,6 +35,9 @@ export const requestHistorySlice = createSlice({
         state.entries = [summary, ...state.entries].slice(0, maxEntries);
       }
     },
+    requestHistoryEntryDeleted: (state, action) => {
+      state.entries = state.entries?.filter((entry) => entry.id !== action.payload);
+    },
     requestHistoryEntryOpened: (state, action) => {
       const { id, pathname } = action.payload;
       state.openedPathnames[id] = pathname;
@@ -42,11 +45,16 @@ export const requestHistorySlice = createSlice({
   }
 });
 
-export const { setRequestHistory, requestHistoryEntryAdded, requestHistoryEntryOpened } = requestHistorySlice.actions;
+export const { setRequestHistory, requestHistoryEntryAdded, requestHistoryEntryDeleted, requestHistoryEntryOpened } = requestHistorySlice.actions;
 
 export const loadRequestHistory = () => async (dispatch) => {
   const entries = await window.ipcRenderer.invoke('renderer:get-request-history');
   dispatch(setRequestHistory(entries));
+};
+
+export const deleteRequestHistoryEntry = (id) => async (dispatch) => {
+  await window.ipcRenderer.invoke('renderer:delete-request-history-entry', id);
+  dispatch(requestHistoryEntryDeleted(id));
 };
 
 export const clearRequestHistory = () => async (dispatch) => {

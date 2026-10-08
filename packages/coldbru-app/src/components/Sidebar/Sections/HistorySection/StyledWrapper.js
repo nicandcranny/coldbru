@@ -16,22 +16,44 @@ const StyledWrapper = styled.div`
   }
 
   .history-item {
+    position: relative;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
+    }
+
+    &:hover .history-item-delete,
+    .history-item-delete:focus-visible {
+      opacity: 1;
+    }
+
+    &:hover .history-item-time {
+      visibility: hidden;
+    }
+  }
+
+  .history-item-open {
     display: flex;
     flex-direction: column;
     gap: 4px;
     width: 100%;
     padding: 6px 10px;
     border: none;
-    border-radius: 6px;
     background: transparent;
     color: ${(props) => props.theme.sidebar.color};
     text-align: left;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+  }
 
-    &:hover {
-      background: ${(props) => props.theme.sidebar.collection.item.hoverBg};
-    }
+  /* Takes the time's place on hover so it doesn't take width from the URL and host */
+  .history-item-delete {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    opacity: 0;
   }
 
   .history-item-row {

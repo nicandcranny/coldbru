@@ -57,6 +57,16 @@ const getEntry = async (id) => {
   return JSON.parse(await fs.readFile(getEntryPath(id), 'utf8'));
 };
 
+const deleteEntry = async (id) => {
+  const summaries = getSummaries();
+  // Only ids from the index are deleted, so a renderer-supplied id can't point outside the history dir
+  if (!summaries.some((s) => s.id === id)) {
+    return;
+  }
+  index.set('summaries', summaries.filter((s) => s.id !== id));
+  await fs.rm(getEntryPath(id), { force: true });
+};
+
 const clearEntries = async () => {
   index.set('summaries', []);
   await fs.rm(getDir(), { recursive: true, force: true });
@@ -66,5 +76,6 @@ module.exports = {
   addEntry,
   getSummaries,
   getEntry,
+  deleteEntry,
   clearEntries
 };
