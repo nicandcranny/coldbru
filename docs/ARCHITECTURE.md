@@ -57,6 +57,7 @@ Every feature maps to an IPC file, a Redux slice, and a set of components:
 | Filesystem | `ipc/filesystem.js` (6 handlers) | — | — |
 | Notifications | `ipc/notifications.js` (1 handler) | `slices/notifications.js` | Notifications/ |
 | System Monitor | `ipc/system-monitor.js` (3 handlers) | `slices/performance.js` | — |
+| Request History | `ipc/request-history.js` (4 handlers) | `slices/request-history.js` | Sidebar/Sections/HistorySection |
 
 Workspace global-environment files are watched by `app/workspace-watcher.js`. It emits `main:global-environment-added`, `main:global-environment-changed`, and `main:global-environment-deleted`; `providers/App/useIpcEvents.js` handles these events by reloading the active workspace through `renderer:get-global-environments`.
 
@@ -362,6 +363,16 @@ Unlike HTTP (fire-and-forget), these maintain persistent connections:
 - When the user edits and saves, `renderer:save-transient-request` moves the file from temp to the real collection directory.
 - Autosave middleware skips transient requests.
 - The `SaveTransientRequest` modal handles the "save as" flow.
+
+### Request History
+
+- Every HTTP/GraphQL send (including error responses, excluding cancels) is recorded by `sendRequest` via `recordRequestHistory`.
+- gRPC calls are recorded from `grpc-event-listeners.js` on the `grpc:status` event, which grpc-js emits once after the final response; the request and accumulated response are read from the item's state at that point. Errors raised before a call starts (e.g. invalid message JSON) emit no status and are not recorded. WebSocket is not recorded.
+- An entry is an immutable snapshot: the raw request as sent (draft if present, variables uninterpolated) and the response. It does not remember its source collection. Each entry is written once to its own file, `<userData>/request-history/<id>.json`; small summaries live newest first in the `request-history-index` electron-store. On each add, entries beyond `preferences.history.maxEntries` (default 500) are dropped from the index and their files deleted. `renderer:clear-request-history` removes everything.
+- The renderer only holds summaries (`renderer:get-request-history`); the full entry is fetched on open (`renderer:get-request-history-entry`).
+- Opening an entry writes a new transient request into the active workspace's scratch collection (the same place the tab bar's + button creates requests), named after its URL and opened as a preview tab (italic, replaced by the next click until interacted with) and queues an `OPEN_REQUEST` task carrying the stored `response`; the tasks middleware restores it with `responseRestored` (which, unlike `responseReceived`, does not append to the timeline). Sending from that tab records a new entry; it never mutates the old one.
+- Clicking an entry again reuses the request it was last opened as (tracked in `requestHistory.openedPathnames`) as long as that request still exists in memory and has no draft; otherwise a fresh request is created.
+- Because the reopened request lives in the scratch collection, collection variables and inherited collection/folder auth from the original collection do not resolve there; global environment variables do.
 
 ### File Watchers vs Manual Saves
 

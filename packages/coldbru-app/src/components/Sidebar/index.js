@@ -9,7 +9,8 @@ import CollectionsSection from './Sections/CollectionsSection/index';
 import ApiSpecsSection from './Sections/ApiSpecsSection/index';
 import GlobalVariablesSection from './Sections/GlobalVariablesSection';
 import SourceControlSection from './Sections/SourceControlSection';
-import { IconBox, IconFileCode, IconGitBranch, IconWorld } from '@tabler/icons';
+import HistorySection from './Sections/HistorySection';
+import { IconBox, IconFileCode, IconGitBranch, IconHistory, IconWorld } from '@tabler/icons';
 import { openSidebarSection } from 'utils/sidebar';
 
 const MIN_LEFT_SIDEBAR_WIDTH = 220;
@@ -52,6 +53,15 @@ const SIDEBAR_SECTIONS = [
       collapsible: false
     }),
     component: SourceControlSection
+  },
+  {
+    id: 'history',
+    title: 'History',
+    icon: IconHistory,
+    getProps: () => ({
+      collapsible: false
+    }),
+    component: HistorySection
   }
 ];
 

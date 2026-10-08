@@ -44,6 +44,9 @@ const initialState = {
       enabled: false,
       interval: 1000
     },
+    history: {
+      maxEntries: 500
+    },
     cache: {
       sslSession: {
         enabled: false

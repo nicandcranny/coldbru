@@ -14,6 +14,7 @@ import apiSpecReducer from './slices/apiSpec';
 import openapiSyncReducer from './slices/openapi-sync';
 import gitReducer from './slices/git';
 import requestTabViewReducer from './slices/requestTabView';
+import requestHistoryReducer from './slices/request-history';
 import { draftDetectMiddleware } from './middlewares/draft/middleware';
 import { autosaveMiddleware } from './middlewares/autosave/middleware';
 
@@ -39,7 +40,8 @@ export const store = configureStore({
     apiSpec: apiSpecReducer,
     openapiSync: openapiSyncReducer,
     git: gitReducer,
-    requestTabView: requestTabViewReducer
+    requestTabView: requestTabViewReducer,
+    requestHistory: requestHistoryReducer
   },
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(middleware)
 });

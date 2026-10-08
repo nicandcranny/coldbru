@@ -93,6 +93,7 @@ import {
 } from 'providers/ReduxStore/slices/tabs';
 import { removeCollectionFromWorkspace } from 'providers/ReduxStore/slices/workspaces';
 import { resolveRequestFilename } from 'utils/common/platform';
+import { recordRequestHistory } from 'providers/ReduxStore/slices/request-history';
 import { interpolateUrl, parsePathParams, splitOnFirst } from 'utils/url/index';
 import { sendCollectionOauth2Request as _sendCollectionOauth2Request } from 'utils/network/index';
 import {
@@ -761,6 +762,7 @@ export const sendRequest = (item, collectionUid) => (dispatch, getState) => {
             }))
           };
 
+          dispatch(recordRequestHistory({ collectionUid, itemUid, item: itemCopy, response: serializedResponse }));
           return dispatch(
             responseReceived({
               itemUid,
@@ -794,6 +796,7 @@ export const sendRequest = (item, collectionUid) => (dispatch, getState) => {
             duration: 0
           };
 
+          dispatch(recordRequestHistory({ collectionUid, itemUid, item: itemCopy, response: errorResponse }));
           dispatch(
             responseReceived({
               itemUid,

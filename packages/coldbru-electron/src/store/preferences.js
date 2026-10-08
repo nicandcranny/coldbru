@@ -107,6 +107,9 @@ const defaultPreferences = {
   display: {
     zoomPercentage: 100
   },
+  history: {
+    maxEntries: 500
+  },
   cache: {
     sslSession: {
       enabled: false
@@ -169,6 +172,9 @@ const preferencesSchema = Yup.object().shape({
   }),
   display: Yup.object({
     zoomPercentage: Yup.number().min(50).max(150)
+  }),
+  history: Yup.object({
+    maxEntries: Yup.number().integer().min(1).max(1000)
   }),
   cache: Yup.object({
     sslSession: Yup.object({

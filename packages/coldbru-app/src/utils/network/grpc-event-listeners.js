@@ -3,6 +3,7 @@ import { grpcResponseReceived, runGrpcRequestEvent } from 'providers/ReduxStore/
 import { useDispatch } from 'react-redux';
 import { isElectron } from 'utils/common/platform';
 import { updateActiveConnectionsInStore } from 'providers/ReduxStore/slices/collections/actions';
+import { recordRequestHistory } from 'providers/ReduxStore/slices/request-history';
 
 const useGrpcEventListeners = () => {
   const { ipcRenderer } = window;
@@ -62,6 +63,8 @@ const useGrpcEventListeners = () => {
         eventType: 'status',
         eventData: data
       }));
+      // grpc-js emits 'status' exactly once, after the final response, so the call is complete here
+      dispatch(recordRequestHistory({ collectionUid, itemUid: requestId }));
     });
 
     // Handle gRPC errors

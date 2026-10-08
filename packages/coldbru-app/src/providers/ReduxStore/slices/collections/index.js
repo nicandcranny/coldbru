@@ -602,6 +602,15 @@ export const collectionsSlice = createSlice({
         }
       }
     },
+    // Restores a stored response (e.g. from request history) without logging it to the timeline
+    responseRestored: (state, action) => {
+      const collection = findCollectionByUid(state.collections, action.payload.collectionUid);
+      const item = collection && findItemInCollection(collection, action.payload.itemUid);
+      if (item) {
+        item.requestState = 'received';
+        item.response = action.payload.response;
+      }
+    },
     runGrpcRequestEvent: (state, action) => {
       const { itemUid, collectionUid, eventType, eventData } = action.payload;
       const collection = findCollectionByUid(state.collections, collectionUid);
@@ -3631,6 +3640,7 @@ export const {
   setDotEnvVariables,
   requestCancelled,
   responseReceived,
+  responseRestored,
   runGrpcRequestEvent,
   grpcResponseReceived,
   responseCleared,

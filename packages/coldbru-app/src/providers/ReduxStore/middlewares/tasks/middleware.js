@@ -4,7 +4,7 @@ import filter from 'lodash/filter';
 import { createListenerMiddleware } from '@reduxjs/toolkit';
 import { removeTaskFromQueue } from 'providers/ReduxStore/slices/app';
 import { addTab } from 'providers/ReduxStore/slices/tabs';
-import { collectionAddFileEvent, collectionChangeFileEvent } from 'providers/ReduxStore/slices/collections';
+import { collectionAddFileEvent, collectionChangeFileEvent, responseRestored } from 'providers/ReduxStore/slices/collections';
 import { findCollectionByUid, findItemInCollectionByPathname, getDefaultRequestPaneTab, findItemInCollectionByItemUid } from 'utils/collections/index';
 import { taskTypes } from './utils';
 
@@ -38,6 +38,9 @@ taskMiddleware.startListening({
                 preview: task?.preview ?? true
               })
             );
+            if (task.response) {
+              listenerApi.dispatch(responseRestored({ collectionUid, itemUid: item.uid, response: task.response }));
+            }
           }
         }
 

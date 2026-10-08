@@ -63,6 +63,7 @@ const {
 const { globalEnvironmentsManager } = require('./store/workspace-environments');
 const registerNotificationsIpc = require('./ipc/notifications');
 const registerGlobalEnvironmentsIpc = require('./ipc/global-environments');
+const registerRequestHistoryIpc = require('./ipc/request-history');
 const TerminalManager = require('./ipc/terminal');
 const { safeParseJSON, safeStringifyJSON } = require('./utils/common');
 const { getDomainsWithCookies } = require('./utils/cookies');
@@ -534,6 +535,7 @@ app.on('ready', async () => {
   registerSystemMonitorIpc(mainWindow, systemMonitor);
   registerGitIpc(mainWindow);
   registerOpenAPISyncIpc(mainWindow);
+  registerRequestHistoryIpc();
 });
 
 // Quit the app once all windows are closed

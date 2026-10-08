@@ -60,6 +60,12 @@ const General = () => {
     oauth2: Yup.object({
       useSystemBrowser: Yup.boolean()
     }),
+    historyMaxEntries: Yup.number()
+      .typeError('History Limit must be a number')
+      .integer('History Limit must be a whole number')
+      .min(1, 'History Limit must be at least 1')
+      .max(1000, 'History Limit must be at most 1000')
+      .required('History Limit is required'),
     defaultLocation: Yup.string().max(1024)
   });
 
@@ -83,6 +89,7 @@ const General = () => {
       oauth2: {
         useSystemBrowser: get(preferences, 'request.oauth2.useSystemBrowser', false)
       },
+      historyMaxEntries: get(preferences, 'history.maxEntries', 500),
       defaultLocation: get(preferences, 'general.defaultLocation', '')
     },
     validationSchema: preferencesSchema,
@@ -119,6 +126,9 @@ const General = () => {
         autoSave: {
           enabled: newPreferences.autoSave.enabled,
           interval: newPreferences.autoSave.interval
+        },
+        history: {
+          maxEntries: newPreferences.historyMaxEntries
         },
         general: {
           defaultLocation: newPreferences.defaultLocation
@@ -355,6 +365,30 @@ const General = () => {
         {formik.touched.autoSave?.interval && formik.errors.autoSave?.interval && (
           <div className="text-red-500">{formik.errors.autoSave.interval}</div>
         )}
+        <div className="flex flex-col mt-6">
+          <label className="block select-none" htmlFor="historyMaxEntries">
+            History Limit
+          </label>
+          <p className="text-muted mt-1 text-xs">
+            Maximum number of sent requests kept in History. Oldest entries are removed first.
+          </p>
+          <input
+            type="text"
+            name="historyMaxEntries"
+            id="historyMaxEntries"
+            data-testid="history-max-entries-input"
+            className="block textbox mt-2 w-24"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            onChange={formik.handleChange}
+            value={formik.values.historyMaxEntries}
+          />
+        </div>
+        {formik.touched.historyMaxEntries && formik.errors.historyMaxEntries ? (
+          <div className="text-red-500">{formik.errors.historyMaxEntries}</div>
+        ) : null}
         <div className="flex flex-col mt-6">
           <label className="block select-none default-location-label" htmlFor="defaultLocation">
             Default Location
